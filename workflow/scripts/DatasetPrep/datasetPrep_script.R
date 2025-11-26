@@ -11,7 +11,8 @@
 # setting name and path for the species
 input<-args[1]
 functionDataprep<-args[2]
-output<-args[3]
+disData<-args[3]
+output<-args[4]
 
 # Loading occurrences of sp from GBIF in 2025
 sp <- read.csv(input, sep = "\t") #
@@ -25,6 +26,7 @@ sp <- sp %>%
   )
 
 source(functionDataprep)
+load(disData)
 
 ### Cleaning------------------------------------------------------------------
 
