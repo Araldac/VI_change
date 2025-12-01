@@ -12,11 +12,10 @@ occurrencesGBIF<-args[1]
 distributionData<-args[2]
 output<-args[3]
 
-
-pkg <- c("spacesXYZ", "geosphere", "parallel", "raster", "readr", "colorspace", "rgl", "ade4", "farver")
-lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
-pkg <- c("magrittr", "CoordinateCleaner", "countrycode", "rnaturalearth", "sf", "sfheaders")
-lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
+# pkg <- c("spacesXYZ", "geosphere", "parallel", "raster", "readr", "colorspace", "rgl", "ade4", "farver")
+# lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
+# pkg <- c("magrittr", "CoordinateCleaner", "countrycode", "rnaturalearth", "sf", "sfheaders")
+# lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
 
 
 ################################################################################
