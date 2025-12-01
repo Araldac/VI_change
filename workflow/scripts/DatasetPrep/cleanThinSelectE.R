@@ -14,12 +14,14 @@ sf_lak <- args[3]
 sf_land <- args[4]
 sf_sea <- args[5]
 sf_unland <- args[6]
-output <- args[7]
+antmaps_pol <-args[7]
+output <- args[8]
 
-# pkg <- c("spacesXYZ", "geosphere", "parallel", "raster", "readr", "colorspace", "rgl", "ade4", "farver")
-# lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
-# pkg <- c("magrittr", "CoordinateCleaner", "countrycode", "rnaturalearth", "sf", "sfheaders")
-# lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
+ pkg <- c("spacesXYZ", "geosphere", "parallel", "raster", "readr", "colorspace", "rgl", "ade4", "farver")
+ lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
+
+ pkg <- c("magrittr", "CoordinateCleaner", "countrycode", "rnaturalearth", "sf", "sp", "sfheaders", "dplyr", "tidyr")
+lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
 
 
 ################################################################################
@@ -112,12 +114,12 @@ load(sf_unland)	# object unland (in fact l_esri_100): used to draw lakes when ma
   ind <- 1:nr
   
   ### Unvalid
-  val <- cc_val(occ, lon = lon, lat = lat, value = "flagged", verbose = FALSE)
+  val <- CoordinateCleaner::cc_val(occ, lon = lon, lat = lat, value = "flagged", verbose = FALSE)
   ind <- ind[val]
   occ <- occ[val,]
   
   ### Duplicated
-  dup <- cc_dupl(occ, lon = lon, lat = lat, value = "flagged", verbose = FALSE)
+  dup <- CoordinateCleaner::cc_dupl(occ, lon = lon, lat = lat, value = "flagged", verbose = FALSE)
   ind <- ind[dup]
   occ <- occ[dup,]
   
@@ -583,9 +585,42 @@ load(sf_unland)	# object unland (in fact l_esri_100): used to draw lakes when ma
 
 ####	#### Filter E only ####
 #needs to be modified bc it's specific to linepithema humile
+coords2admin2 <- function(data, admin = antmaps_pol) {
+
+  points <- data %>% dplyr::select(decimallongitude, decimallatitude)
+  
+  # Convert to spatial points
+  pointsSP <- SpatialPoints(points, proj4string = CRS("EPSG:4326"))
+  pointsSF <- st_as_sf(pointsSP)
+  
+  # Ensure CRS is set
+  if (is.na(st_crs(admin))) {
+    st_crs(admin) <- 4326
+  }
+  
+  # Try intersection first
+  indices <- st_intersects(pointsSF, admin, sparse = TRUE)
+  
+  # Fallback: assign nearest polygon if no intersection
+  result <- sapply(seq_along(indices), function(i) {
+    if (length(indices[[i]]) == 0) {
+      # Compute distances to all polygons
+      distances <- st_distance(pointsSF[i, ], admin)
+      nearest_idx <- which.min(distances)
+      return(nearest_idx)
+    } else {
+      return(indices[[i]][1])
+    }
+  })
+  
+  data$BEN <- admin$BEN[result]
+  data$ISO <- admin$ISO[result]
+  
+  return(data)
+}
 
 "select_E"<-function(data) {
-  assign('sp_disData', get(load(disData)))
+  assign('sp_disData', get(load(distributionData)))
   info_sp <- antmaps_dis[["Linepithema humile"]]
   exotic_ben <- info_sp$gid[info_sp$category == "E"]
   data_clean<-data[data$BEN %in% exotic_ben,]
@@ -612,7 +647,7 @@ sp <- sp %>%
   )
 
 
-load(disData)
+load(distributionData)
 
 ### Cleaning------------------------------------------------------------------
 
@@ -640,7 +675,9 @@ occ_thin20 <- thin_breaks(occ_cle, 20)
 
 ### Filter only E ####----------------------------------------
 #Filter occurences that are Exotic (remove indoor and native)
-occ_ben<-coords2admin2(occ_cle_thin20)
+load(antmaps_pol)
+
+occ_ben<-coords2admin2(occ_thin20)
 
 occ_E<-select_E(occ_ben)
 
