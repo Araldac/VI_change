@@ -1,0 +1,12 @@
+Assuming unrestricted shared filesystem usage.
+host: DESKTOP-C842MAU
+Building DAG of jobs...
+MissingInputException in rule cleanThinSelectE in file "/home/admin_ait/internship-snakemake-2025/workflow/rules/DatasetPrep.smk", line 3:
+Missing input files for rule cleanThinSelectE:
+    output: results/species/LH_ctsE.csv
+    affected files:
+        data/raster/sf/unland.Rdata
+        data/raster/sf/lak.Rdata
+        data/raster/sf/sea.Rdata
+        data/distribution/LH_Dis.Rdata
+        data/raster/sf/land.Rdata

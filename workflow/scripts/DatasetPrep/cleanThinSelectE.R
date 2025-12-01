@@ -8,9 +8,13 @@
 ## Load arguments ####
 
 args <- commandArgs(trailingOnly = TRUE)
-occurrencesGBIF<-args[1]
-distributionData<-args[2]
-output<-args[3]
+occurrencesGBIF <- args[1]
+distributionData <- args[2]
+sf_lak <- args[3]
+sf_land <- args[4]
+sf_sea <- args[5]
+sf_unland <- args[6]
+output <- args[7]
 
 # pkg <- c("spacesXYZ", "geosphere", "parallel", "raster", "readr", "colorspace", "rgl", "ade4", "farver")
 # lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
@@ -24,10 +28,10 @@ output<-args[3]
 
 ####	####	Cleaning ####	####
 
-load("/data/raster/sf/sea.RData")	# oject w_gadm (in fact w_gadm_41): used to find points in the sea
-load("/data/raster/sf/lak.RData")	# object l_esri (in fact l_esri_100): used to find points in the lakes
-load("/data/raster/sf/land.RData")	# object land (in fact land f naturalearth): used to draw sea and land when mapping results
-load("/data/raster/sf/unland.RData")	# object unland (in fact l_esri_100): used to draw lakes when mapping results
+load(sf_lak)	# oject w_gadm (in fact w_gadm_41): used to find points in the sea
+load(sf_land)	# object l_esri (in fact l_esri_100): used to find points in the lakes
+load(sf_sea)	# object land (in fact land f naturalearth): used to draw sea and land when mapping results
+load(sf_unland)	# object unland (in fact l_esri_100): used to draw lakes when mapping results
 
 "occ_cleaning" <- function(occ, lon = "decimallongitude", lat = "decimallatitude",
                            GBIF = TRUE, occ_precision = 0.01, occ_uncertainity1 = 50*1000,
@@ -642,4 +646,4 @@ occ_E<-select_E(occ_ben)
 
 occ_E_cols<- occ_E %>% dplyr::select(decimallatitude, decimallongitude, year, S, BEN, countrycode)
 
-save(occ_E_cols, file = output)
+write.csv(occ_E_cols, output)
