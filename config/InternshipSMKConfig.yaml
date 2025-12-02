@@ -1,4 +1,7 @@
 name: Internship
-species:
-  - LH
+species_name:
+  - "Linepithema humile"
+
+species_abv:
+ - LH
   
