@@ -4,4 +4,9 @@ species_name:
 
 species_abv:
  - LH
-  
+
+First_Record_Date:
+  - LH : 1885
+
+Native_Countries:  
+  - LH : ["ARG", "BRA", "PRY", "URY"]
