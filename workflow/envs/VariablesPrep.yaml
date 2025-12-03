@@ -33,5 +33,9 @@ dependencies: #by chatbot
   - r-purrr
   - r-pbapply
   - r-zoo
-  #- r-MazamaSpatialUtils
+  - r-stringr
+  - r-devtools
+  - r-pbapply 
+  - r-raster
+  #- r-MazamaSpatialUtils                 ##not present in conda, need to install it in the scrript
   

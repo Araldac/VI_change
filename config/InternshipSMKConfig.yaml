@@ -1,4 +1,7 @@
 name: Internship
+
+Path:
+  OB_NAS_Climate : "Z:/FAC/FBM/DEE/cbertels/default/D2c/obates/Data"
 species_name:
   - "Linepithema humile"
 
