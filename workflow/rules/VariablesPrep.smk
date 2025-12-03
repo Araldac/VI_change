@@ -88,6 +88,33 @@ rule Climate_DownloadPCA:
         >{log.out} 2> {log.err}
         """
 
+rule Climate_TestPCA:
+    '''
+    Testing wether the copy-paste from windows to WSL of the ouput of the Climate_DownloadPCA works
+    Result is a copy of the PCA_ax1-2.RData in the results
+    '''
+    input: 
+        pca = 'data/variables/PCA_ax1-2.RData'
+    
+    output:
+        out = 'results/variables/Climate_TEST_PCA.RData'
+        
+    log:
+        err = "logs/VariablesPrep/Climate_TestPCA.err",
+        out = "logs/VariablesPrep/Climate_TestPCA.out"
+    conda:
+	    '../envs/VariablesPrep.yaml'
+
+    shell:
+        r"""
+        Rscript --vanilla workflow/scripts/VariablesPrep/Climate_TestPCA.R \
+        {input.pca} \
+        {output.out} \
+        >{log.out} 2> {log.err}
+        """
+
+
+
 rule HM_RasterCreation:
     '''
     From the first occurrences at each country, sum the imports from the countries where the species is present. Needs to be adapted to each species
