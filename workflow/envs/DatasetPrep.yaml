@@ -27,12 +27,12 @@ dependencies: #by chatbot
   - r-argparse
   - r-dplyr=1.1.*
   - r-readr=2.1.*
-  - r-magrittr
-  - r-colorspace
-  - r-farver
+  - r-magrittr = 2.0.3
+  - r-colorspace = 2.1_1
+  - r-farver = 2.1.2
   - r-geosphere
   - r-ade4
-  - r-countrycode
+  - r-countrycode = 1.6.1
   - r-rnaturalearth
   - r-spacesXYZ
   - r-raster              # keep only if your script uses raster
