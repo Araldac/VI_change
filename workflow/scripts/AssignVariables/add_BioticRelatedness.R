@@ -17,7 +17,6 @@ our_sp_name <- args[5]
 tribe_list <-args[6]
 output <- args[7]
 
-
 #download/install packages
 pkg <- c("dplyr", "sp", "rworldmap", "stringr", "tidyverse", "tidyr", "sf", "rworldxtra")#, "", "", "")
 lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
@@ -136,6 +135,7 @@ sametrib_extraction<- function(data_species, tribe_genus_data){
 #### #### Load the necessary data #### #### 
 load(antmaps_pol)
 load(distributionData)
+
 list_relsp <- read.csv(relatedSpecies)
 occ_PA <- read.csv(occurrences)
 

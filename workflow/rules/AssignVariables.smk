@@ -34,8 +34,8 @@ rule add_Climate_PA:
         {output.out} \
         >{log.out} 2> {log.err}
         """
-#set -euo pipefail
-#    ulimit -s 65536  
+
+
 rule add_BioticRelatedness:
     '''
     General rule to Clean, Thin and Select Exotic occurrences, the following rules decompose these three steps
@@ -43,25 +43,32 @@ rule add_BioticRelatedness:
     input:
         occurrences = rules.add_Climate_PA.output.out ,
         distributionData = 'data/distribution/LH_dis.RData' ,
-        relatedSpecies = 'data/variables/biotic/LH_tribe_genus.csv',
+        relatedSpecies = 'data/variables/Biotic/LH_tribe_genus.csv',
         antmaps_pol = 'data/distribution/AntmapsPolGeneral.RData'
 
     output:
-        #out='results/species/LH_PA_B.csv'
+        out='results/species/LH_PA_B.csv'
         
     log:
-        err = "logs/AssignVariables/cleanThinSelectE.err",
-        out = "logs/AssignVariables/cleanThinSelectE.out"
+        err = "logs/AssignVariables/add_BioticRelatedness.err",
+        out = "logs/AssignVariables/add_BioticRelatedness.out"
+
     conda:
 	    '../envs/AssignVariables.yaml'
+
+    params:
+        sp_name = config['species_name'][0] ,# Access first species name from list
+        tribe_list = config['Tribe_list'][0]["LH"]
 
     shell:
         r"""
         Rscript workflow/scripts/AssignVariables/add_BioticRelatedness.R \
         {input.occurrences} \
-        {input.distributionData} \
         {input.relatedSpecies} \
+        {input.distributionData} \
         {input.antmaps_pol} \
+        "{params.sp_name}" \
+        "{params.tribe_list}" \
         {output.out} \
         >{log.out} 2> {log.err}
         """
