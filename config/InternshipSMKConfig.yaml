@@ -1,7 +1,5 @@
 name: Internship
 
-Path:
-  OB_NAS_Climate : "Z:/FAC/FBM/DEE/cbertels/default/D2c/obates/Data"
 species_name:
   - "Linepithema humile"
 
@@ -13,3 +11,6 @@ First_Record_Date:
 
 Native_Countries:  
   - LH : ["ARG", "BRA", "PRY", "URY"]
+
+Tribe_list:
+  - LH: ["Leptomyrmecini", "Tapinomini", "Bothriomyrmecini", "Dolichoderini"]

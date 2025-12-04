@@ -6,7 +6,7 @@ rule add_Climate_PA:
     '''
     input:
         occurrences = rules.selectE.output.out ,
-        climate = rules.Climate_TestPCA.output.out ,
+        climate = rules.Climate_DownloadPCA.output.out,
         antmaps_pol = 'data/distribution/AntmapsPolGeneral.RData',
         distributionData = 'data/distribution/LH_dis.RData'
 
@@ -24,18 +24,18 @@ rule add_Climate_PA:
 
     shell:
         r"""
-        set -euo pipefail
-        ulimit -s 65536            
+                  
         Rscript workflow/scripts/AssignVariables/add_Climate_PA.R \
         {input.occurrences} \
         {input.climate} \
         {input.antmaps_pol} \
         "{params.sp_name}" \
-        {input.distributionData}
+        {input.distributionData} \
         {output.out} \
         >{log.out} 2> {log.err}
         """
-
+#set -euo pipefail
+#    ulimit -s 65536  
 rule add_BioticRelatedness:
     '''
     General rule to Clean, Thin and Select Exotic occurrences, the following rules decompose these three steps

@@ -20,5 +20,7 @@ dependencies: #by chatbot
   - r-terra = 1.8_42
   - r-tidyverse
   - r-dismo
-
-
+  - r-tiff
+  - r-rworldmap
+  - r-stringr
+  - r-rworldxtra

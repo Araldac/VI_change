@@ -68,6 +68,9 @@ rule Climate_DownloadPCA:
     '''
     Load the 2PCA Axes from the NAS - Error: ca't be loaded from the wsl, needs to be runned on Windows
     '''
+    input:
+        ax1 = 'data/variables/Climate/pca_Worldclim_25p_2.tif',
+        ax2 = 'data/variables/Climate/pca_Worldclim_25p_2.tif'
     output:
         out='results/variables/Climate_PCA.RData'
         
@@ -77,13 +80,11 @@ rule Climate_DownloadPCA:
     conda:
 	    '../envs/VariablesPrep.yaml'
 
-    params:
-        path_NAS =  config["Path"]["OB_NAS_Climate"]
-
     shell:
         r"""
         Rscript --vanilla workflow/scripts/VariablesPrep/Climate_DownloadPCA.R \
-        "{params.path_NAS}" \
+        {input.ax1} \
+        {input.ax2} \
         {output.out} \
         >{log.out} 2> {log.err}
         """
