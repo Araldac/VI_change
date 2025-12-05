@@ -14,7 +14,7 @@ rule cleanThinSelectE:
         antmaps_pol = 'data/distribution/AntmapsPolGeneral.RData'
 
     output:
-        out='results/species/LH_ctsE.csv'
+        out='results/species/DatasetPrep/LH_ctsE.csv'
         
     log:
         err = "logs/DatasetPrep/cleanThinSelectE.err",
@@ -51,7 +51,7 @@ rule cleaning:
         #antmaps_pol = 'data/distribution/AntmapsPolGeneral.RData'
 
     output:
-        out='results/species/LH_cle.csv'
+        out='results/species/DatasetPrep/LH_cle.csv'
         
     log:
         err = "logs/DatasetPrep/cleaning.err",
@@ -86,7 +86,7 @@ rule thinning:
         #antmaps_pol = 'data/distribution/AntmapsPolGeneral.RData'
 
     output:
-        out='results/species/LH_thin.csv'
+        out='results/species/DatasetPrep/LH_thin.csv'
         
     log:
         err = "logs/DatasetPrep/thinning.err",
@@ -113,7 +113,7 @@ rule selectE:
         antmaps_pol = 'data/distribution/AntmapsPolGeneral.RData'
 
     output:
-        out='results/species/LH_selE.csv'
+        out='results/species/DatasetPrep/LH_selE.csv'
         
     log:
         err = "logs/DatasetPrep/selectE.err",

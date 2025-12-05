@@ -11,7 +11,7 @@ rule add_Climate_PA:
         distributionData = 'data/distribution/LH_dis.RData'
 
     output:
-        out='results/species/LH_PA.csv'
+        out='results/species/AssignVariables/LH_PA.csv'
         
     log:
         err = "logs/AssignVariables/add_Climate_PA.err",
@@ -47,7 +47,7 @@ rule add_BioticRelatedness:
         antmaps_pol = 'data/distribution/AntmapsPolGeneral.RData'
 
     output:
-        out='results/species/LH_PA_B.csv'
+        out='results/species/AssignVariables/LH_PA_B.csv'
         
     log:
         err = "logs/AssignVariables/add_BioticRelatedness.err",
