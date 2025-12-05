@@ -72,3 +72,83 @@ rule add_BioticRelatedness:
         {output.out} \
         >{log.out} 2> {log.err}
         """
+
+rule add_Trade:
+    '''
+    Adding cumulative trade values form Sum Import function
+    '''
+    input:
+        occurrences = rules.add_BioticRelatedness.output.out ,
+        sumimport = rules.Trade_SumImports.output.out
+
+    output:
+        out='results/species/AssignVariables/LH_PA_B_T.csv'
+        
+    log:
+        err = "logs/AssignVariables/add_Trade.err",
+        out = "logs/AssignVariables/add_Trade.out"
+
+    conda:
+	    '../envs/AssignVariables.yaml'
+
+    shell:
+        r"""
+        Rscript workflow/scripts/AssignVariables/add_Trade.R \
+        {input.occurrences} \
+        {input.sumimport} \
+        {output.out} \
+        >{log.out} 2> {log.err}
+        """
+
+rule add_HM:
+    '''
+    Add human modification values 
+    '''
+    input:
+        occurrences = rules.add_Trade.output.out ,
+        hm1970 = 'results/variables/hm_1970.RData',
+        hm2025 = 'results/variables/hm_2025.RData'
+
+    output:
+        out='results/species/AssignVariables/LH_PA_B_T_HM.csv'
+        
+    log:
+        err = "logs/AssignVariables/add_HM.err",
+        out = "logs/AssignVariables/add_HM.out"
+
+    conda:
+	    '../envs/AssignVariables.yaml'
+
+    shell:
+        r"""
+        Rscript workflow/scripts/AssignVariables/add_HM.R \
+        {input.occurrences} \
+        {input.hm1970} \
+        {input.hm2025} \
+        {output.out} \
+        >{log.out} 2> {log.err}
+        """
+
+rule formatDataset:
+    '''
+    Format dataset to have : longitude, latitude, occurences, S1 PA_N
+    '''
+    input:
+        occurrences = rules.add_HM.output.out ,
+    output:
+        out='results/species/AssignVariables/LH_allv.csv'
+        
+    log:
+        err = "logs/AssignVariables/formatDataset.err",
+        out = "logs/AssignVariables/formatDataset.out"
+
+    conda:
+	    '../envs/AssignVariables.yaml'
+
+    shell:
+        r"""
+        Rscript workflow/scripts/AssignVariables/formatDataset.R \
+        {input.occurrences} \
+        {output.out} \
+        >{log.out} 2> {log.err}
+        """
