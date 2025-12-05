@@ -1,0 +1,17 @@
+name: BRT
+
+channels:
+    - conda-forge
+    - bioconda
+    - r
+
+dependencies: 
+  - r-base=4.3
+  - r-gbm
+  - r-dismo
+  - r-dplyr
+  - r-tidyr
+  - r-foreach
+  - r-pbapply
+  - r-doParallel
+

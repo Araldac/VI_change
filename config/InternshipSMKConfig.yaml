@@ -14,3 +14,6 @@ Native_Countries:
 
 Tribe_list:
   - LH: ["Leptomyrmecini", "Tapinomini", "Bothriomyrmecini", "Dolichoderini"]
+
+Repetitions:
+  - Opt_BRT: 1
