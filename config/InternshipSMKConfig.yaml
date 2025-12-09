@@ -1,7 +1,7 @@
 name: Internship
 
 species_name:
-  - "Linepithema humile"
+  - "Linepithema humile" ## eventually want to make it LH: "Linepithema humile"
 
 species_abv:
  - LH
@@ -13,7 +13,5 @@ Native_Countries:
   - LH : ["ARG", "BRA", "PRY", "URY"]
 
 Tribe_list:
-  - LH: ["Leptomyrmecini", "Tapinomini", "Bothriomyrmecini", "Dolichoderini"]
+  - LH : ["Leptomyrmecini", "Tapinomini", "Bothriomyrmecini", "Dolichoderini"]
 
-Repetitions:
-  - Opt_BRT: 1

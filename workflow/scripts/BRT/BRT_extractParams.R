@@ -1,0 +1,32 @@
+
+###############################################################################
+# Project: Intersnship UNIL 2025
+# Athor: Aitana
+# Description: Biotic Data:obtain the number of relted genus for each close tribe per bentity
+# Date: 03/12/2025
+###############################################################################
+
+## Load arguments ####
+
+args <- commandArgs(trailingOnly = TRUE)
+input <-args[1]
+table_top5 <-args[2]
+output <- args[3]
+
+#download/install packages
+pkg <- c("dplyr", "gbm", "dismo", "tidyr", "formattable")#, "", "", "")
+lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
+
+################################################################################
+#Code
+################################################################################
+
+paramS2<-read.csv(input)
+
+##do a mean x repetition and select 
+means_paramS2<-paramS2 %>%  group_by(nTrees,treeComplexity, learningRate, bagFraction) %>% summarise(avDev= mean(meanDev), avSe=mean(seDev)) #
+
+top5_param<-means_paramS2 %>%  ungroup() %>%  slice_min(avDev, n = 5, with_ties = FALSE)
+
+write.csv(top5_param, table)
+write.csv(top5_param[1,], output)
