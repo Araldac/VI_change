@@ -1,4 +1,4 @@
-onfigfile: 'config/InternshipSMKConfig.yaml'
+configfile: 'config/InternshipSMKConfig.yaml'
 
 rule RF_optimalParam:
     '''
