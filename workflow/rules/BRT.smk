@@ -6,7 +6,7 @@ rule BRT_optimalParam:
    WARNING !!! This rule takes a lot of time instead I used the cl_param_BRT2_v2.R code and used it in the cluster 
     '''
     input:
-        occurrences = rules.formatDataset.output.out ,
+        occurrences = rules.formatDataset.output.out 
 
     output:
         out='results/species/BRT/rep_optimalBRT.csv'
@@ -30,15 +30,13 @@ rule BRT_optimalParam:
         """
 
 
-
-
 rule BRT_extractParams:
     input:
-        paramOpt = "results/BRT/..."
+        paramOpt = "results/species/BRT/output_LH_parametrization_S2_v3.csv"
         
     output:
-        table = 'results/species/BRT/LH_top5_params.csv',
-        out = 'results/species/BRT/LH_params.csv'
+        table = 'results/species/BRT/BRT_LH_top5_params.csv',
+        out = 'results/species/BRT/BRT_LH_params.csv'
 
     log:
         err = "logs/BRT/BRT_extractParams.err",
@@ -49,6 +47,7 @@ rule BRT_extractParams:
     shell:
         r"""      
         Rscript workflow/scripts/BRT/BRT_extractParams.R \
+        {input.paramOpt} \
         {output.table} \
         {output.out} \
         >{log.out} 2> {log.err}
@@ -56,21 +55,27 @@ rule BRT_extractParams:
 
 rule BRT_apply:
     input:
-       # paramOpt = rule.BRT_extractParams.output.out,
-        
+       occurrences = rules.formatDataset.output.out,
+       paramOpt = rules.BRT_extractParams.output.out
+
     output:
-        out = 'results/species/BRT/LH_params.csv'
+        out = 'results/species/BRT/BRT_LH_relimpAUC.csv'
 
     log:
         err = "logs/BRT/BRT_apply.err",
         out = "logs/BRT/BRT_apply.out"
     conda:
 	    '../envs/BRT.yaml'
+    
+    params:
+        tribe_list = config['Tribe_list'][0]["LH"]
 
     shell:
         r"""      
         Rscript workflow/scripts/BRT/BRT_apply.R \
-        {output.table} \
+        {input.occurrences}\
+        "{params.tribe_list}"\        
+        {input.paramOpt}\
         {output.out} \
         >{log.out} 2> {log.err}
         """

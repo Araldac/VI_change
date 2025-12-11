@@ -2,7 +2,7 @@
 ###############################################################################
 # Project: Intersnship UNIL 2025
 # Athor: Aitana
-# Description: Biotic Data:obtain the number of relted genus for each close tribe per bentity
+# Description: Obtain optimla parameters for BRT
 # Date: 03/12/2025
 ###############################################################################
 
@@ -28,5 +28,5 @@ means_paramS2<-paramS2 %>%  group_by(nTrees,treeComplexity, learningRate, bagFra
 
 top5_param<-means_paramS2 %>%  ungroup() %>%  slice_min(avDev, n = 5, with_ties = FALSE)
 
-write.csv(top5_param, table)
+write.csv(top5_param, table_top5)
 write.csv(top5_param[1,], output)
