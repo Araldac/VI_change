@@ -87,7 +87,7 @@ RF_apply<-function(data, env_vars, S, seed, pa_n = NA){
           df_results$Model <- "RF"
           df_results$Seed <- seed
           df_results$S <- S
-          df_results$AUC <- auc_S2
+          df_results$AUC <- as.numeric(auc_S2)
           df_results$TP <- confusion.matrix.training[2,2]
           df_results$TN <- confusion.matrix.training[1,1]
           df_results$FP <- confusion.matrix.training[1,2]
@@ -98,6 +98,7 @@ RF_apply<-function(data, env_vars, S, seed, pa_n = NA){
             df_results[1, var]<-importance_S2_perc[var,]
           }
          
+         #print(df_results)
           
           return(df_results)
           
@@ -125,7 +126,7 @@ explicative_var<-c(biotic_var,
                    "trade",
                    "HM")
 
-cat("\n Explicative variables : ", explicative_var)
+cat("\n Explicative variables : ", explicative_var, "\n")
 n_reps=100
 
 cat("Starting RF for S1 \n")
@@ -146,7 +147,8 @@ pb <- txtProgressBar(min = 1, max = 100, style = 3)
     
   })
 cat("BRT for S1 finished \n")
-  results_S1 <- dplyr::bind_rows(results_S1_RF)
+
+results_S1 <- dplyr::bind_rows(results_S1_RF)
 
  
 #### #### RF for S2 (100 rep) #### #### 
