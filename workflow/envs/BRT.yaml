@@ -14,4 +14,5 @@ dependencies:
   - r-foreach
   - r-pbapply
   - r-doParallel
+  - r-pROC
 

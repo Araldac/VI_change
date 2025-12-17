@@ -32,7 +32,7 @@ rule BRT_optimalParam:
 
 rule BRT_extractParams:
     input:
-        paramOpt = "results/species/BRT/output_LH_parametrization_S2_v3.csv"
+        paramOpt = "results/species/BRT/output_LH_parametrization_S2_v4.csv"
         
     output:
         table = 'results/species/BRT/BRT_LH_top5_params.csv',
@@ -74,7 +74,7 @@ rule BRT_apply:
         r"""      
         Rscript workflow/scripts/BRT/BRT_apply.R \
         {input.occurrences}\
-        "{params.tribe_list}"\        
+        "{params.tribe_list}"\
         {input.paramOpt}\
         {output.out} \
         >{log.out} 2> {log.err}

@@ -97,7 +97,7 @@ BRT_apply<-function(data, env_vars, S, seed, pa_n = NA){
   df_results$Model <- "BRT"
   df_results$Seed <- seed
   df_results$S <- S
-  df_results$AUC <- auc_S2
+  df_results$AUC <- as.numeric(auc_S2)
   df_results$TP <- confusion.matrix.training[2,2]
   df_results$TN <- confusion.matrix.training[1,1]
   df_results$FP <- confusion.matrix.training[1,2]
@@ -119,7 +119,7 @@ BRT_apply<-function(data, env_vars, S, seed, pa_n = NA){
                   
 #### #### load data #### #### 
 data<-read.csv(occurrences)
-head(order_data_s2)
+head(data)
 
 #### #### extract optimal parameters for BRT #### #### 
 BRTp <- read.csv(BRT_params)
@@ -166,6 +166,7 @@ pb <- txtProgressBar(min = 1, max = 100, style = 3)
 
 pb <- txtProgressBar(min = 1, max = 100, style = 3)
 
+data_s2<- data[data$S == "S2",]
   results_S2_BRT <- lapply(1:n_reps, function(rep) {
 
     seed_s2<-rep*20
