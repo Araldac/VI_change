@@ -1,5 +1,14 @@
 configfile: 'config/InternshipSMKConfig.yaml'
 
+#sp = ["LH"]
+
+print("DEBUG Native_Countries type:", config.get("Native_Countries"))
+print("DEBUG First_Record_Date value:", config.get("First_Record_Date"))
+print("DEBUG species_name type:", config.get("species_name"))
+print("DEBUG species_name type:", config.get("Tribe_list"))
+
+
+
 rule Trade_HistoricalInterpolated:
     '''
    From the Tradhist dataset, assign the current country names ot the entries and divide the flow by the counrey size
@@ -37,20 +46,29 @@ rule Trade_SumImports:
     '''
     input:
         historicaltrade = rules.Trade_HistoricalInterpolated.output.out ,
-        firstRecord_Countries = 'data/variables/Trade/LH_first_records.csv' ,
+        firstRecord_Countries = 'data/variables/Trade/{sp}_first_records.csv' ,
 
     output:
-        out='results/variables/Trade_LH_SumImports.csv'
+        out='results/variables/Trade_{sp}_SumImports.csv'
         
     log:
-        err = "logs/VariablesPrep/Trade_LH_Sumimports.err",
-        out = "logs/VariablesPrep/Trade_LH_Sumimports.out"
+        err = "logs/VariablesPrep/Trade_{sp}_Sumimports.err",
+        out = "logs/VariablesPrep/Trade_{sp}_Sumimports.out"
     conda:
 	    '../envs/VariablesPrep.yaml'
     
     params:
-        nativeCountries = config["Native_Countries"][0]["LH"],
-        firstRecord = config["First_Record_Date"][0]["LH"]
+        firstRecord = lambda wildcards: config["First_Record_Date"][wildcards.sp],
+        nativeCountries = lambda wildcards: config["Native_Countries"][wildcards.sp]
+        #firstRecord = lambda wildcards: (
+        #    [d[wildcards.sp] for d in config["First_Record_Date"] if wildcards.sp in d]
+        #    ),
+        #nativeCountries = lambda wildcards: (
+        #    [d[wildcards.sp] for d in config["Native_Countries"] if wildcards.sp in d]
+        #    )
+
+        #nativeCountries = config["Native_Countries"][0]["LH"],
+        #firstRecord = config["First_Record_Date"][0]["LH"]
 
     shell:
         r"""

@@ -1,10 +1,9 @@
 configfile: 'config/InternshipSMKConfig.yaml'
 
-
-rule cleanThinSelectE:
-    '''
-    General rule to Clean, Thin and Select Exotic occurrences, the following rules decompose these three steps
-    '''
+#rule cleanThinSelectE:
+#    '''
+#    General rule to Clean, Thin and Select Exotic occurrences, the following rules decompose these three steps
+#    '''
 #    input:
 #        occurrencesGBIF = 'data/occurrences/LH_GBIF.csv' ,
 #        distributionData = 'data/distribution/LH_dis.RData' ,
@@ -124,9 +123,7 @@ rule selectE:
 
 
     params:
-        sp_name = lambda wildcards: (
-            [d[wildcards.sp] for d in config["species_name"] if wildcards.sp in d][0]
-        )
+        sp_name = lambda wildcards: config["species_name"][wildcards.sp]
 
     shell:
         r"""

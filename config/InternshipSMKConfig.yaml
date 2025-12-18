@@ -1,14 +1,13 @@
 name: Internship
 
 species_name:
-  - LH: "Linepithema humile"
+  LH: "Linepithema humile"
 
 First_Record_Date:
-  - LH : 1885
+  LH: 1885
 
 Native_Countries:  
-  - LH : ["ARG", "BRA", "PRY", "URY"]
+  LH: ["ARG", "BRA", "PRY", "URY"]
 
-Tribe_list:
-  - LH : ["Leptomyrmecini", "Tapinomini", "Bothriomyrmecini", "Dolichoderini"]
-
+Tribe_list:  
+  LH: ["Leptomyrmecini", "Tapinomini", "Bothriomyrmecini", "Dolichoderini"]

@@ -5,22 +5,22 @@ rule add_Climate_PA:
    Add climate and pseudo-absences 
     '''
     input:
-        occurrences = rules.selectE.output.out ,
+        occurrences = 'results/species/DatasetPrep/{sp}_selE.csv',
         climate = rules.Climate_DownloadPCA.output.out,
         antmaps_pol = 'data/distribution/AntmapsPolGeneral.RData',
         distributionData = 'data/distribution/LH_dis.RData'
 
     output:
-        out='results/species/AssignVariables/LH_PA.csv'
+        out='results/species/AssignVariables/{sp}_PA.csv'
         
     log:
-        err = "logs/AssignVariables/add_Climate_PA.err",
-        out = "logs/AssignVariables/add_Climate_PA.out"
+        err = "logs/AssignVariables/{sp}_add_Climate_PA.err",
+        out = "logs/AssignVariables/{sp}_add_Climate_PA.out"
     conda:
 	    '../envs/AssignVariables.yaml'
 
     params:
-        sp_name = config['species_name'][0] # Access first species name from list
+        sp_name = lambda wildcards: config["species_name"][wildcards.sp]
 
     shell:
         r"""
@@ -41,24 +41,24 @@ rule add_BioticRelatedness:
     General rule to Clean, Thin and Select Exotic occurrences, the following rules decompose these three steps
     '''
     input:
-        occurrences = rules.add_Climate_PA.output.out ,
+        occurrences = 'results/species/AssignVariables/{sp}_PA.csv',
         distributionData = 'data/distribution/LH_dis.RData' ,
-        relatedSpecies = 'data/variables/Biotic/LH_tribe_genus.csv',
+        relatedSpecies = 'data/variables/Biotic/{sp}_tribe_genus.csv',
         antmaps_pol = 'data/distribution/AntmapsPolGeneral.RData'
 
     output:
-        out='results/species/AssignVariables/LH_PA_B.csv'
+        out='results/species/AssignVariables/{sp}_PA_B.csv'
         
     log:
-        err = "logs/AssignVariables/add_BioticRelatedness.err",
-        out = "logs/AssignVariables/add_BioticRelatedness.out"
+        err = "logs/AssignVariables/{sp}_add_BioticRelatedness.err",
+        out = "logs/AssignVariables/{sp}_add_BioticRelatedness.out"
 
     conda:
 	    '../envs/AssignVariables.yaml'
 
     params:
-        sp_name = config['species_name'][0] ,# Access first species name from list
-        tribe_list = config['Tribe_list'][0]["LH"]
+        sp_name = lambda wildcards: config["species_name"][wildcards.sp],
+        tribe_list = lambda wildcards: config["Tribe_list"][wildcards.sp]
 
     shell:
         r"""
@@ -78,15 +78,15 @@ rule add_Trade:
     Adding cumulative trade values form Sum Import function
     '''
     input:
-        occurrences = rules.add_BioticRelatedness.output.out ,
-        sumimport = rules.Trade_SumImports.output.out
+        occurrences = 'results/species/AssignVariables/{sp}_PA_B.csv' ,
+        sumimport = 'results/variables/Trade_{sp}_SumImports.csv'
 
     output:
-        out='results/species/AssignVariables/LH_PA_B_T.csv'
+        out='results/species/AssignVariables/{sp}_PA_B_T.csv'
         
     log:
-        err = "logs/AssignVariables/add_Trade.err",
-        out = "logs/AssignVariables/add_Trade.out"
+        err = "logs/AssignVariables/{sp}_add_Trade.err",
+        out = "logs/AssignVariables/{sp}_add_Trade.out"
 
     conda:
 	    '../envs/AssignVariables.yaml'
@@ -105,16 +105,16 @@ rule add_HM:
     Add human modification values 
     '''
     input:
-        occurrences = rules.add_Trade.output.out ,
+        occurrences = 'results/species/AssignVariables/{sp}_PA_B_T.csv' ,
         hm1970 = 'results/variables/hm_1970.RData',
         hm2025 = 'results/variables/hm_2025.RData'
 
     output:
-        out='results/species/AssignVariables/LH_PA_B_T_HM.csv'
+        out='results/species/AssignVariables/{sp}_PA_B_T_HM.csv'
         
     log:
-        err = "logs/AssignVariables/add_HM.err",
-        out = "logs/AssignVariables/add_HM.out"
+        err = "logs/AssignVariables/{sp}_add_HM.err",
+        out = "logs/AssignVariables/{sp}_add_HM.out"
 
     conda:
 	    '../envs/AssignVariables.yaml'
@@ -134,13 +134,14 @@ rule formatDataset:
     Format dataset to have : longitude, latitude, occurences, S1 PA_N
     '''
     input:
-        occurrences = rules.add_HM.output.out ,
+        occurrences = 'results/species/AssignVariables/{sp}_PA_B_T_HM.csv'
+        
     output:
-        out='results/species/AssignVariables/LH_allv.csv'
+        out='results/species/AssignVariables/{sp}_allv.csv'
         
     log:
-        err = "logs/AssignVariables/formatDataset.err",
-        out = "logs/AssignVariables/formatDataset.out"
+        err = "logs/AssignVariables/{sp}_formatDataset.err",
+        out = "logs/AssignVariables/{sp}_formatDataset.out"
 
     conda:
 	    '../envs/AssignVariables.yaml'

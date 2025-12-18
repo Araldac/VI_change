@@ -5,19 +5,19 @@ rule RF_optimalParam:
    Find the optimla pàrameers for the BRT using the S2 data 
     '''
     input:
-        occurrences = rules.formatDataset.output.out 
+        occurrences = 'results/species/AssignVariables/{sp}_allv.csv'
 
     output:
-        out='results/species/RF/rep_optimalRF.csv'
+        out='results/species/RF/{sp}_rep_optimalRF.csv'
         
     log:
-        err = "logs/RF/RF_optimalParam.err",
-        out = "logs/RF/RF_optimalParam.out"
+        err = "logs/RF/{sp}_RF_optimalParam.err",
+        out = "logs/RF/{sp}_RF_optimalParam.out"
     conda:
 	    '../envs/RF.yaml'
 
     params:
-        tribe_list = config['Tribe_list'][0]["LH"]
+        tribe_list = lambda wildcards: config["Tribe_list"][wildcards.sp]
 
     shell:
         r"""      
@@ -30,15 +30,15 @@ rule RF_optimalParam:
 
 rule RF_extractParams:
     input:
-        paramOpt = rules.RF_optimalParam.output.out
+        paramOpt = "logs/RF/{sp}_RF_optimalParam.out"
         
     output:
-        table = 'results/species/RF/RF_LH_top5_params.csv',
-        out = 'results/species/RF/RF_LH_params.csv'
+        table = 'results/species/RF/RF_{sp}_top5_params.csv',
+        out = 'results/species/RF/RF_{sp}_params.csv'
 
     log:
-        err = "logs/RF/RF_extractParams.err",
-        out = "logs/RF/RF_extractParams.out"
+        err = "logs/RF/{sp}_RF_extractParams.err",
+        out = "logs/RF/{sp}_RF_extractParams.out"
     conda:
 	    '../envs/RF.yaml'
 
@@ -54,20 +54,20 @@ rule RF_extractParams:
 
 rule RF_apply:
     input:
-       occurrences = rules.formatDataset.output.out,
-       RFparamOpt = rules.RF_extractParams.output.out
+       occurrences = 'results/species/AssignVariables/{sp}_allv.csv',
+       RFparamOpt = 'results/species/RF/RF_{sp}_params.csv'
 
     output:
-        out = 'results/species/RF/RF_LH_relimpAUC.csv'
+        out = 'results/species/RF/RF_{sp}_relimpAUC1.csv'
 
     log:
-        err = "logs/RF/RF_apply.err",
-        out = "logs/RF/RF_apply.out"
+        err = "logs/RF/{sp}_RF_apply.err",
+        out = "logs/RF/{sp}_RF_apply.out"
     conda:
 	    '../envs/RF.yaml'
     
     params:
-        tribe_list = config['Tribe_list'][0]["LH"]
+        tribe_list = lambda wildcards: config["Tribe_list"][wildcards.sp]
 
     shell:
         r"""      

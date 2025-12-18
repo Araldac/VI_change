@@ -6,14 +6,14 @@ rule BRT_optimalParam:
    WARNING !!! This rule takes a lot of time instead I used the cl_param_BRT2_v2.R code and used it in the cluster 
     '''
     input:
-        occurrences = rules.formatDataset.output.out 
+        occurrences = 'results/species/AssignVariables/{sp}_allv.csv'
 
     output:
-        out='results/species/BRT/rep_optimalBRT.csv'
+        out='results/species/BRT/{sp}_rep_optimalBRT.csv'
         
     log:
-        err = "logs/BRT/BRT_optimalParam.err",
-        out = "logs/BRT/BRT_optimalParam.out"
+        err = "logs/BRT/{sp}_BRT_optimalParam.err",
+        out = "logs/BRT/{sp}_BRT_optimalParam.out"
     conda:
 	    '../envs/BRT.yaml'
 
@@ -32,15 +32,15 @@ rule BRT_optimalParam:
 
 rule BRT_extractParams:
     input:
-        paramOpt = "results/species/BRT/output_LH_parametrization_S2_v4.csv"
+        paramOpt = "results/species/BRT/output_{sp}_parametrization_S2_v4.csv"
         
     output:
-        table = 'results/species/BRT/BRT_LH_top5_params.csv',
-        out = 'results/species/BRT/BRT_LH_params.csv'
+        table = 'results/species/BRT/BRT_{sp}_top5_params.csv',
+        out = 'results/species/BRT/BRT_{sp}_params.csv'
 
     log:
-        err = "logs/BRT/BRT_extractParams.err",
-        out = "logs/BRT/BRT_extractParams.out"
+        err = "logs/BRT/{sp}_BRT_extractParams.err",
+        out = "logs/BRT/{sp}_BRT_extractParams.out"
     conda:
 	    '../envs/BRT.yaml'
 
@@ -55,20 +55,20 @@ rule BRT_extractParams:
 
 rule BRT_apply:
     input:
-       occurrences = rules.formatDataset.output.out,
-       paramOpt = rules.BRT_extractParams.output.out
+       occurrences = 'results/species/AssignVariables/{sp}_allv.csv',
+       paramOpt = 'results/species/BRT/BRT_{sp}_params.csv'
 
     output:
-        out = 'results/species/BRT/BRT_LH_relimpAUC.csv'
+        out = 'results/species/BRT/BRT_{sp}_relimpAUC1.csv'
 
     log:
-        err = "logs/BRT/BRT_apply.err",
-        out = "logs/BRT/BRT_apply.out"
+        err = "logs/BRT/{sp}_BRT_apply.err",
+        out = "logs/BRT/{sp}_BRT_apply.out"
     conda:
 	    '../envs/BRT.yaml'
     
     params:
-        tribe_list = config['Tribe_list'][0]["LH"]
+        tribe_list = lambda wildcards: config["Tribe_list"][wildcards.sp]
 
     shell:
         r"""      
