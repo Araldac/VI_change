@@ -1,10 +1,7 @@
 name: Internship
 
 species_name:
-  - "Linepithema humile" ## eventually want to make it LH: "Linepithema humile"
-
-species_abv:
- - LH
+  - LH: "Linepithema humile"
 
 First_Record_Date:
   - LH : 1885

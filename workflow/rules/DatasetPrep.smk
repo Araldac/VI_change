@@ -1,40 +1,41 @@
 configfile: 'config/InternshipSMKConfig.yaml'
 
+
 rule cleanThinSelectE:
     '''
     General rule to Clean, Thin and Select Exotic occurrences, the following rules decompose these three steps
     '''
-    input:
-        occurrencesGBIF = 'data/occurrences/LH_GBIF.csv' ,
-        distributionData = 'data/distribution/LH_dis.RData' ,
-        sf_lak = 'data/raster/sf/lak.RData' ,
-        sf_land = 'data/raster/sf/land.RData' ,
-        sf_sea = 'data/raster/sf/sea.RData' ,
-        sf_unland = 'data/raster/sf/unland.RData',
-        antmaps_pol = 'data/distribution/AntmapsPolGeneral.RData'
-
-    output:
-        out='results/species/DatasetPrep/LH_ctsE.csv'
-        
-    log:
-        err = "logs/DatasetPrep/cleanThinSelectE.err",
-        out = "logs/DatasetPrep/cleanThinSelectE.out"
-    conda:
-	    '../envs/DatasetPrep.yaml'
-
-    shell:
-        r"""
-        Rscript workflow/scripts/DatasetPrep/cleanThinSelectE.R \
-        {input.occurrencesGBIF} \
-        {input.distributionData} \
-        {input.sf_lak} \
-        {input.sf_land} \
-        {input.sf_sea} \
-        {input.sf_unland} \
-        {input.antmaps_pol} \
-        {output.out} \
-        >{log.out} 2> {log.err}
-        """
+#    input:
+#        occurrencesGBIF = 'data/occurrences/LH_GBIF.csv' ,
+#        distributionData = 'data/distribution/LH_dis.RData' ,
+#       sf_lak = 'data/raster/sf/lak.RData' ,
+#        sf_land = 'data/raster/sf/land.RData' ,
+#        sf_sea = 'data/raster/sf/sea.RData' ,
+#        sf_unland = 'data/raster/sf/unland.RData',
+#        antmaps_pol = 'data/distribution/AntmapsPolGeneral.RData'
+#
+#    output:
+#        out='results/species/DatasetPrep/LH_ctsE.csv'
+#        
+#    log:
+#        err = "logs/DatasetPrep/cleanThinSelectE.err",
+#        out = "logs/DatasetPrep/cleanThinSelectE.out"
+#    conda:
+#	    '../envs/DatasetPrep.yaml'
+#
+#    shell:
+#        r"""
+#        Rscript workflow/scripts/DatasetPrep/cleanThinSelectE.R \
+#        {input.occurrencesGBIF} \
+#        {input.distributionData} \
+#        {input.sf_lak} \
+#        {input.sf_land} \
+#        {input.sf_sea} \
+#        {input.sf_unland} \
+#        {input.antmaps_pol} \
+#        {output.out} \
+#        >{log.out} 2> {log.err}
+#        """
 
 rule cleaning:
     '''
@@ -42,20 +43,20 @@ rule cleaning:
     
     '''
     input:
-        occurrencesGBIF = 'data/occurrences/LH_GBIF.csv' ,
+        occurrencesGBIF = 'data/occurrences/{sp}_GBIF.csv' ,
         #distributionData = 'data/distribution/LH_dis.RData' ,
         sf_lak = 'data/raster/sf/lak.RData' ,
         sf_land = 'data/raster/sf/land.RData' ,
         sf_sea = 'data/raster/sf/sea.RData' ,
-        sf_unland = 'data/raster/sf/unland.RData',
+        sf_unland = 'data/raster/sf/unland.RData'
         #antmaps_pol = 'data/distribution/AntmapsPolGeneral.RData'
 
     output:
-        out='results/species/DatasetPrep/LH_cle.csv'
+        out='results/species/DatasetPrep/{sp}_cle2.csv'
         
     log:
-        err = "logs/DatasetPrep/cleaning.err",
-        out = "logs/DatasetPrep/cleaning.out"
+        err = "logs/DatasetPrep/{sp}_cleaning.err",
+        out = "logs/DatasetPrep/{sp}_cleaning.out"
     conda:
 	    '../envs/DatasetPrep.yaml'
 
@@ -77,7 +78,7 @@ rule thinning:
     
     '''
     input:
-        data_cleaned = rules.cleaning.output.out,
+        data_cleaned = 'results/species/DatasetPrep/{sp}_cle.csv'
         #distributionData = 'data/distribution/LH_dis.RData' ,
         #sf_lak = 'data/raster/sf/lak.RData' ,
         #sf_land = 'data/raster/sf/land.RData' ,
@@ -86,11 +87,11 @@ rule thinning:
         #antmaps_pol = 'data/distribution/AntmapsPolGeneral.RData'
 
     output:
-        out='results/species/DatasetPrep/LH_thin.csv'
+        out='results/species/DatasetPrep/{sp}_thin.csv'
         
     log:
-        err = "logs/DatasetPrep/thinning.err",
-        out = "logs/DatasetPrep/thinning.out"
+        err = "logs/DatasetPrep/{sp}_thinning.err",
+        out = "logs/DatasetPrep/{sp}_thinning.out"
     conda:
 	    '../envs/DatasetPrep.yaml'
 
@@ -104,24 +105,28 @@ rule thinning:
 
 rule selectE:
     '''
-    Sedlecting only the Exotic occurrences
-    !!!!!!Attention!!!!! Selecting E part is specific to Linepithme humile, need to chn¡¡ange for other species
+    Selecting only the Exotic occurrences
+
     '''
     input:
-        data_thinned = rules.thinning.output.out ,
+        data_thinned = 'results/species/DatasetPrep/{sp}_thin.csv',
         distributionData = 'data/distribution/LH_dis.RData' ,
         antmaps_pol = 'data/distribution/AntmapsPolGeneral.RData'
 
     output:
-        out='results/species/DatasetPrep/LH_selE.csv'
+        out='results/species/DatasetPrep/{sp}_selE.csv'
         
     log:
-        err = "logs/DatasetPrep/selectE.err",
-        out = "logs/DatasetPrep/selectE.out"
+        err = "logs/DatasetPrep/{sp}_selectE.err",
+        out = "logs/DatasetPrep/{sp}_selectE.out"
     conda:
 	    '../envs/DatasetPrep.yaml'
+
+
     params:
-        sp_name = config['species_name'][0] # Access first species name from list
+        sp_name = lambda wildcards: (
+            [d[wildcards.sp] for d in config["species_name"] if wildcards.sp in d][0]
+        )
 
     shell:
         r"""
