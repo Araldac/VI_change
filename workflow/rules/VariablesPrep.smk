@@ -195,5 +195,26 @@ rule HM_ComparisonHF2016:
         >{log.out} 2> {log.err}
         """
 
-
+rule Biotic_DistributionN:
+    '''
+    Keep only native distirbution of species 
+    '''
+    input:
+        distributionData = 'data/distribution/LH_dis.RData'
+        
+    output:
+        out='results/variables/N_dis.RData'
+    log:
+        err = "logs/VariablesPrep/Biotic_DistributionN.err",
+        out = "logs/VariablesPrep/Biotic_DistributionN.out"
+    conda:
+	    '../envs/VariablesPrep.yaml'
+    
+    shell:
+        r"""
+        Rscript --vanilla workflow/scripts/VariablesPrep/Biotic_DistributionN.R \
+        {input.distributionData} \
+        {output.out} \
+        >{log.out} 2> {log.err}
+        """
 

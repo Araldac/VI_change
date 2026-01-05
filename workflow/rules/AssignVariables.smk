@@ -42,7 +42,7 @@ rule add_BioticRelatedness:
     '''
     input:
         occurrences = 'results/species/AssignVariables/{sp}_PA.csv',
-        distributionData = 'data/distribution/LH_dis.RData' ,
+        distributionData = 'results/variables/N_dis.RData' ,
         relatedSpecies = 'data/variables/Biotic/{sp}_tribe_genus.csv',
         antmaps_pol = 'data/distribution/AntmapsPolGeneral.RData'
 

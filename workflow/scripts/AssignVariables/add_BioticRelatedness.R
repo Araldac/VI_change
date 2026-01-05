@@ -1,4 +1,3 @@
-
 ###############################################################################
 # Project: Intersnship UNIL 2025
 # Athor: Aitana
@@ -178,7 +177,7 @@ load(antmaps_pol)
 if (!exists("antmaps_pol")) stop("antmaps_pol not found")
 
 load(distributionData)
-if (!exists("antmaps_dis")) stop("antmaps_dis not found")
+if (!exists("N_antmaps_dis")) stop("N_antmaps_dis not found")
 
 realtedSp <- read.csv(relatedSpecies, sep= ";")
 head(realtedSp)
@@ -204,10 +203,9 @@ if (nrow(unassigned) > 0) {
 }
 
 #Extract the species of the family per bentity using the list of species per bentity
-antmaps_dis_woLH<-antmaps_dis[names(antmaps_dis) != our_sp_name]
+antmaps_dis_woLH<-N_antmaps_dis[names(N_antmaps_dis) != our_sp_name]
 ngen<-sametrib_extraction(antmaps_dis_woLH, realtedSp)
 cat(sprintf("\n✓ Genus counts extracted for %d bentities\n", nrow(ngen)))
-
 
 
 #Obtain the number of genus for each tribe in the Doloichootea family per Bentity
