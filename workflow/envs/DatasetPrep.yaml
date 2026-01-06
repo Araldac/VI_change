@@ -3,6 +3,39 @@ channels:
     - conda-forge
     - bioconda
     - r
+
+
+dependencies: #by chatbot
+  - r-base=4.3
+  - r-argparse
+  - r-dplyr = 1.1.*
+  - r-readr=2.1.*
+  - r-magrittr = 2.0.3
+  - r-colorspace = 2.1_1
+  #- r-farver = 2.1.2
+  - r-geosphere
+  - r-ade4
+  - r-countrycode = 1.6.1
+  - r-rnaturalearth
+  - r-spacesXYZ
+  - r-raster              # keep only if your script uses raster
+  - r-sf=1.0.*           # modern sf
+  - r-sfheaders
+  - r-CoordinateCleaner
+  - r-tidyr
+  - r-sp
+  - r-terra
+  - r-devtools
+  # spatial libs required by sf:
+ # - gdal
+  #- proj
+  #- geos
+  #- sqlite
+  #- libxml2
+  # optional; only if you truly need 3D plotting:
+  # - r-rgl
+
+
 #dependencies:
 #    - r-base=4.2.3
 #    - r-spacesXYZ=0.7.2
@@ -20,34 +53,3 @@ channels:
 #    - r-rnaturalearth=0.3.4
 #    - r-sf=0.6_3
 #    - r-sfheaders=0.4.5
-
-dependencies: #by chatbot
-
-  - r-base=4.3
-  - r-argparse
-  - r-dplyr=1.1.*
-  - r-readr=2.1.*
-  - r-magrittr = 2.0.3
-  - r-colorspace = 2.1_1
-  - r-farver = 2.1.2
-  - r-geosphere
-  - r-ade4
-  - r-countrycode = 1.6.1
-  - r-rnaturalearth
-  - r-spacesXYZ
-  - r-raster              # keep only if your script uses raster
-  - r-sf=1.0.*           # modern sf
-  - r-sfheaders
-  - r-CoordinateCleaner
-  - r-tidyr
-  - r-sp
-  # spatial libs required by sf:
-  - gdal
-  - proj
-  - geos
-  - sqlite
-  - libxml2
-  # optional; only if you truly need 3D plotting:
-  # - r-rgl
-
-

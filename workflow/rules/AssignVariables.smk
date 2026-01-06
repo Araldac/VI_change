@@ -5,7 +5,7 @@ rule add_Climate_PA:
    Add climate and pseudo-absences 
     '''
     input:
-        occurrences = 'results/species/DatasetPrep/{sp}_selE.csv',
+        occurrences = 'results/species/DatasetPrep/{sp}_thin.csv',
         climate = rules.Climate_DownloadPCA.output.out,
         antmaps_pol = 'data/distribution/AntmapsPolGeneral.RData',
         distributionData = 'data/distribution/LH_dis.RData'

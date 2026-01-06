@@ -8,18 +8,18 @@
 ## Load arguments ####
 
 args <- commandArgs(trailingOnly = TRUE)
-thin_data <- args[1]
+occurrencesGBIF <- args[1]
 distributionData <- args[2]
 antmaps_pol <-args[3]
 sp_name<-args[4]
 output <- args[5]
 
-pkg <- c("spacesXYZ", "geosphere", "parallel", "raster", "readr", "colorspace", "rgl", "ade4", "farver")
+pkg <- c("spacesXYZ", "geosphere", "raster", "readr", "colorspace", "ade4")
 lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
 
 pkg <- c("magrittr", "CoordinateCleaner", "countrycode", "rnaturalearth", "sf", "sp", "sfheaders", "dplyr", "tidyr")
 lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
-
+library(dplyr)
 
 ################################################################################
 #Functions
@@ -82,17 +82,28 @@ load(distributionData)
 #antmaps_dis <- (load(distributionData))
 
 ## Loading occurrences of sp from GBIF in 2025
-occ_thin20 <- read.csv(thin_data, sep = ",") #
+sp <- read.csv(occurrencesGBIF, sep = "\t") #
+
+# rename some columns
+sp <- sp %>%
+  rename(
+    decimallatitude = decimalLatitude,
+    decimallongitude = decimalLongitude,
+    countrycode = countryCode
+  )
+occ_cle <- sp %>% drop_na(year) # remove data without a year
 
 ### Filter only E ####----------------------------------------
 #Filter occurences that are Exotic (remove indoor and native)
 #load(antmaps_pol)
 #load(distributionData)
 
-occ_ben<-coords2admin2(occ_thin20)
+occ_ben<-coords2admin2(sp)
 
 occ_E<-select_E(occ_ben, sp_name)
 
-occ_E_cols<- occ_E %>% dplyr::select(decimallatitude, decimallongitude, year, S, BEN, countrycode)
+occ_E$S[occ_E$year <= 1970] <- "S1" # assign the dataset 1 or 2 depending on year
+occ_E$S[occ_E$year > 1970] <- "S2"
+occ_E$S <- as.factor(occ_E$S)
 
-write.csv(occ_E_cols, output)
+write.csv(occ_E, output)

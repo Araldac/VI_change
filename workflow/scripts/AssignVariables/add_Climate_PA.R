@@ -127,52 +127,63 @@ PA_byS <- function(data, climate_data, antmaps_pol, antmaps_dis, species_name){
                          crs = crs(rastclim))
   
   # Buffer points (200 km)
-  cat("Creating buffers (200 km)...\n")
-  buf_points_S1 <- terra::buffer(coord_biomodS1, width = 200000)
-  buf_points_S2 <- terra::buffer(coord_biomodS2, width = 200000)
+  #cat("Creating buffers (200 km)...\n")
+  #buf_points_S1 <- terra::buffer(coord_biomodS1, width = 200000)
+  #buf_points_S2 <- terra::buffer(coord_biomodS2, width = 200000)
   
   # Combine features
-  cat("Combining buffers with native zone...\n")
-  buf_1 <- rbind(buf_points_S1, native_pol_vect)
-  buf_2 <- rbind(buf_points_S2, native_pol_vect)
+  #cat("Combining buffers with native zone...\n")
+  #buf_1 <- rbind(buf_points_S1, native_pol_vect)
+  #buf_2 <- rbind(buf_points_S2, native_pol_vect)
   
   # CRITICAL: Simplify geometries if too complex
-  buf_1 <- terra::simplifyGeom(buf_1, tolerance = 1000)
-  buf_2 <- terra::simplifyGeom(buf_2, tolerance = 1000)
+  #buf_1 <- terra::simplifyGeom(buf_1, tolerance = 1000)
+  #buf_2 <- terra::simplifyGeom(buf_2, tolerance = 1000)
   
   # Crop first to reduce raster size
-  cat("Cropping rasters...\n")
-  buf_1_extent <- ext(buf_1)
-  buf_2_extent <- ext(buf_2)
+  #cat("Cropping rasters...\n")
+  #buf_1_extent <- ext(buf_1)
+  #buf_2_extent <- ext(buf_2)
   
-  rastclim_cropped1 <- terra::crop(rastclim, buf_1_extent, snap = "out")
-  rastclim_cropped2 <- terra::crop(rastclim, buf_2_extent, snap = "out")
+  rastclim_cropped1 <- terra::crop(rastclim, native_pol_vect, snap = "out")
+  rastclim_cropped2 <- terra::crop(rastclim, native_pol_vect, snap = "out")
   
   # Mask (on smaller rasters)
   cat("Masking regions...\n")
-  region_outbuf1 <- terra::mask(rastclim_cropped1, buf_1, inverse = TRUE)
-  region_outbuf2 <- terra::mask(rastclim_cropped2, buf_2, inverse = TRUE)
+  region_outbuf1 <- terra::mask(rastclim_cropped1, native_pol_vect, inverse = TRUE)
+  region_outbuf2 <- terra::mask(rastclim_cropped2, native_pol_vect, inverse = TRUE)
   
   # Clean up immediately
-  rm(rastclim, rastclim_cropped1, rastclim_cropped2, buf_1, buf_2)
-  rm(buf_points_S1, buf_points_S2, native_pol_vect)
+  rm(rastclim, rastclim_cropped1, rastclim_cropped2, native_pol_vect)
+  #rm(buf_points_S1, buf_points_S2, native_pol_vect)
   gc(verbose = FALSE)
   
   # Sample PA for S2 (1 round)
   cat("Sampling PA for S2 (1 round)...\n")
   n_s2 <- nrow(input_biomodS2)
   
-  bg_rand_outbuf2 <- terra::spatSample(region_outbuf2, n_s2, 
+  PA_2_list <- vector("list", 10)
+  
+  for (i in 1:10) {
+      bg_rand_outbuf2 <- terra::spatSample(region_outbuf2, n_s2, 
                                        method = "random", 
                                        na.rm = TRUE, 
                                        as.points = TRUE)
-  
-  pa2_df <- terra::as.data.frame(bg_rand_outbuf2, geom = "XY")
-  pa2_df$PA_N <- 1
-  pa2_df$S <- "S2"
-  
-  PA_2 <- pa2_df
-  rm(pa2_df, bg_rand_outbuf2)
+    
+    pa2_i <- terra::as.data.frame(bg_rand_outbuf1, geom = "XY")
+    pa2_i$PA_N <- i
+    pa2_i$S <- "S2"
+    
+    PA_2_list[[i]] <- pa2_i
+    
+    cat(sprintf("  For S2 Round %d/10 completed\n", i))
+    
+    # Clean up
+    rm(bg_rand_outbuf2, pa2_i)
+  }
+
+  PA_2 <- do.call(rbind, PA_2_list)
+  rm(PA_1_list)
   gc(verbose = FALSE)
   
   # Sample PA for S1 (10 rounds)
@@ -193,7 +204,7 @@ PA_byS <- function(data, climate_data, antmaps_pol, antmaps_dis, species_name){
     
     PA_1_list[[i]] <- pa1_i
     
-    cat(sprintf("  Round %d/10 completed\n", i))
+    cat(sprintf("  For S1 Round %d/10 completed\n", i))
     
     # Clean up
     rm(bg_rand_outbuf1, pa1_i)

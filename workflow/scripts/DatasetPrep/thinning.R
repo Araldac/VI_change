@@ -15,14 +15,18 @@ data_cleaned <- args[1]
 #sf_sea <- args[5]
 #sf_unland <- args[6]
 #antmaps_pol <-args[7]
-output <- args[2]
+raster <- args[2]
+output <- args[3]
 
- pkg <- c("spacesXYZ", "geosphere", "parallel", "raster", "readr", "colorspace", "rgl", "ade4", "farver")
+
+
+ pkg <- c("spacesXYZ", "geosphere", "parallel", "raster", "readr", "colorspace", "rgl", "ade4", "farver",  "devtools")
  lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
 
- pkg <- c("magrittr", "CoordinateCleaner", "countrycode", "rnaturalearth", "sf", "sp", "sfheaders", "dplyr", "tidyr")
+ pkg <- c("magrittr", "CoordinateCleaner", "countrycode", "rnaturalearth", "sf", "sp", "sfheaders", "dplyr", "tidyr", "terra")
 lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
-
+# install.packages("devtools")
+devtools::install_github("jmestret/GeoThinneR")
 ################################################################################
 #Functions
 ################################################################################
@@ -284,21 +288,59 @@ lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
   return(res)
 }
 
-"thin_breaks"<- function(data, timestep=20 ){
-  set.seed(1)
-  list_index<-c()
-  breaks<-seq(min(data$year), 2030, by=timestep)
-  for (i in 1:length(breaks)){
-    if (i < length(breaks)){
-      d<- data[between (data$year, breaks[i], breaks[i+1]), ]
-      system.time(
-        occ_t <- thin_split(d[,c("decimallongitude", "decimallatitude")], 500, fun = "distGeo", threshold_d = 10*1000, ncores = 12)
-      )
-      list_index<-c(list_index, rownames(occ_t))
+#"thin_breaks"<- function(data, timestep=20 ){
+#  set.seed(1)
+#  list_index<-c()
+#  breaks<-seq(min(data$year), 2030, by=timestep)
+#  for (i in 1:length(breaks)){
+#    if (i < length(breaks)){
+#      d<- data[between (data$year, breaks[i], breaks[i+1]), ]
+#      system.time(
+#        occ_t <- thin_split(d[,c("decimallongitude", "decimallatitude")], 500, fun = "distGeo", threshold_d = 10*1000, ncores = 12)
+#      )
+#      list_index<-c(list_index, rownames(occ_t))
       
-    }
-  }
+#    }
+#  }
+#  return(data[list_index,])}
+
+"thin_period"<- function(data, S_n){
+  set.seed(1)
+    print (S_n)
+     dataS <- data %>% filter(S == S_n)
+      system.time(
+        occ_t <- thin_split(dataS[,c("decimallongitude", "decimallatitude")], 500, fun = "distGeo", threshold_d = 10*1000, ncores = 12)
+      )
+      list_index<-rownames(occ_t)
+      
   return(data[list_index,])}
+
+
+  "thin_terra" <- function(data, S_n){
+    set.seed(1)
+    print (S_n)
+     dataS <- data %>% filter(S == S_n)
+      system.time(
+      grid_raster_thin <- GeoThinneR ::thin_points(
+        data = dataS,
+        lon_col = "decimallongitude",     # Longitude column name
+        lat_col = "decimallatitude",     # Latitude column name
+        method = "grid", 
+        raster_obj = r_a1,
+        trials = 10,
+        n = 1,
+        all_trials = FALSE,
+        seed = 123
+      ))
+
+      summary(grid_raster_thin)
+      print(grid_raster_thin$retained)
+      list_index <- unlist(grid_raster_thin$retained)
+      print(list_index)
+      print("retained)")
+      head(dataS[list_index,])
+      
+  return(dataS[list_index,])}
 
 ################################################################################
 #Code
@@ -306,15 +348,41 @@ lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
 
 ## Loading occurrences of sp from GBIF in 2025
 occ_cle <- read.csv(data_cleaned, sep = ",") #
+#laod raster 
+r_a1 <- terra::rast(raster)
 
+head(occ_cle)
 ### Thinning
 
-# Thinning of the data using code from Olivia bates and Sebatien Ollier. Using a
-# new function which applies thinning for data every 20 years. Which allows to
-# account for spatial autocorrelation of observation while keeping the temporal
-# dimension. More information in thnning.docx
+# Thinning of the data using code from Olivia bates and Sebatien Ollier. More information in thnning.docx
 
-occ_thin20 <- thin_breaks(occ_cle, 20)
+set.seed(1)
+cat("Thinning S1 \n")
+occ_thin1 <- thin_period(occ_cle, "S1")
+occ_thin1R <- thin_terra(occ_cle, "S1")
+cat("Thinning S2 \n")
+occ_thin2 <- thin_period(occ_cle, "S2")
+occ_thin2R <- thin_terra(occ_cle, "S2")
 
-write.csv(occ_thin20, output)
+occ_thin20 <- rbind(occ_thin1, occ_thin2)
+
+occ_thin20_cols <- occ_thin20 %>% dplyr::select(decimallatitude, decimallongitude, year, S, BEN, countrycode)
+
+occ_thin20R <- rbind(occ_thin1R, occ_thin2R)
+occ_thin20_colsR <- occ_thin20R %>% dplyr::select(decimallatitude, decimallongitude, year, S, BEN, countrycode)
+
+
+cat("Total rows before Thinning", nrow(occ_cle), "\n")
+cat("S1 Presences before Thinning: ", nrow(occ_cle[occ_cle$S == "S1", ]), "\n")
+cat("S2 Presences before Thinning: ", nrow(occ_cle[occ_cle$S == "S2", ]), "\n \n")
+
+cat("Total rows after Thinning", nrow(occ_thin20_cols), "\n")
+cat("S1 Presences after Thinning: ", nrow(occ_thin20_cols[occ_thin20_cols$S == "S1", ]), "\n")
+cat("S2 Presences after Thinning: ", nrow(occ_thin20_cols[occ_thin20_cols$S == "S2", ]), "\n")
+
+cat("Total rows after Thinning raster ", nrow(occ_thin1R)+nrow(occ_thin2R), "\n")
+cat("S1 Presences after Thinning raster: ", nrow(occ_thin1R[occ_thin1R$S == "S1", ]), "\n")
+cat("S2 Presences after Thinning raster: ", nrow(occ_thin2R[occ_thin2R$S == "S2", ]), "\n")
+
+write.csv(occ_thin20_colsR, output)
 

@@ -8,7 +8,7 @@
 ## Load arguments and packages####
 
 args <- commandArgs(trailingOnly = TRUE)
-occurrencesGBIF <- args[1]
+occurrencesE <- args[1]
 #distributionData <- args[2]
 sf_lak <- args[2]
 sf_land <- args[3]
@@ -313,17 +313,7 @@ load(sf_unland)	# object unland (in fact l_esri_100): used to draw lakes when ma
 ################################################################################
 
 ## Loading occurrences of sp from GBIF in 2025
-sp <- read.csv(occurrencesGBIF, sep = "\t") #
-
-# rename some columns
-sp <- sp %>%
-  rename(
-    decimallatitude = decimalLatitude,
-    decimallongitude = decimalLongitude,
-    countrycode = countryCode
-  )
-
-
+sp <- read.csv(occurrencesE, sep = ",") #
 
 ### Cleaning------------------------------------------------------------------
 
@@ -331,11 +321,10 @@ sp <- sp %>%
 # clean data removing Unvalid and duplicated, occurences, occurrences in lakes,
 # sea etc. Information in cleaning.docx
 
+head(sp)
+
 res <- occ_cleaning(sp, details = FALSE, lon = "decimallongitude", lat = "decimallatitude", sea = FALSE, lak = FALSE, map = FALSE)
 occ_cle <- sp[res, ]
-occ_cle <- occ_cle %>% drop_na(year) # remove data without a year
-occ_cle$S[occ_cle$year <= 1970] <- "S1" # assign the dataset 1 or 2 depending on year
-occ_cle$S[occ_cle$year > 1970] <- "S2"
-occ_cle$S <- as.factor(occ_cle$S)
+
 
 write.csv(occ_cle, output)
