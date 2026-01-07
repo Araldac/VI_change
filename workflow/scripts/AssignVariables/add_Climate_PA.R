@@ -15,6 +15,8 @@ antmaps_pol <- args[3]
 sp_name <-args[4]
 speciesDistribution <- args[5]
 output <- args[6]
+#imageS1 <- args[7]
+#imageS2 <- args[8]
 
 #download/install packages
 pkg <- c("terra", "dplyr", "tidyr", "raster", "tiff", "sf")
@@ -81,175 +83,100 @@ load_PCA<- function(data, climate_data){
 }
 
 #### #### load PA #### ####
-PA_byS <- function(data, climate_data, antmaps_pol, antmaps_dis, species_name){
+sample_PA <- function(data, S, n_rounds, region_outbuf){
   
-  set.seed(3)
+  # Sample all rounds at once
+  total_pts <- nrow(data) * n_rounds
+  bg_rand_all <- terra::spatSample(region_outbuf, total_pts, 
+                                   "random", na.rm=TRUE, as.points=TRUE)
+  pa_all <- terra::as.data.frame(bg_rand_all, geom="XY")
   
-  cat("Loading climatic data...\n")
-  rastclim <- rast(climate_data)  
+  # Add PA_N and S columns
+  pa_all$PA_N <- rep(1:n_rounds, each=nrow(data))
+  pa_all$S <- S
   
-  # Use base R instead of dplyr pipes to avoid node stack overflow
-  cat("Preparing S1 and S2 datasets...\n")
-  
-  # S1 data - using base R
-  s1_idx <- data$S == "S1"
-  input_biomodS1 <- data[s1_idx, c("decimallatitude", "decimallongitude", "PCA_1", "PCA_2")]
-  input_biomodS1$Occurrence <- 1
-  
-  # S2 data - using base R
-  s2_idx <- data$S == "S2"
-  input_biomodS2 <- data[s2_idx, c("decimallatitude", "decimallongitude", "PCA_1", "PCA_2")]
-  input_biomodS2$Occurrence <- 1
-  
-  # Get native zone info
-  cat("Processing native zone...\n")
-  info_sp <- antmaps_dis[[species_name]]
-  native_ben <- info_sp$gid[info_sp$category == "N"]
-  
-  # Convert native polygons
-  native_subset <- antmaps_pol[antmaps_pol$BEN %in% native_ben, ]
-  native_pol_vect <- vect(native_subset)
-  
-  # Project if needed
-  if (!terra::same.crs(native_pol_vect, rastclim)) {
-    cat("Reprojecting native polygons...\n")
-    native_pol_vect <- terra::project(native_pol_vect, rastclim)
-  }
-  
-  # Create coordinate vectors
-  cat("Creating coordinate vectors...\n")
-  coord_biomodS1 <- vect(input_biomodS1[, c("decimallongitude", "decimallatitude")],
-                         geom = c("decimallongitude", "decimallatitude"),
-                         crs = crs(rastclim))
-                         
-  coord_biomodS2 <- vect(input_biomodS2[, c("decimallongitude", "decimallatitude")],
-                         geom = c("decimallongitude", "decimallatitude"),
-                         crs = crs(rastclim))
-  
-  # Buffer points (200 km)
-  #cat("Creating buffers (200 km)...\n")
-  #buf_points_S1 <- terra::buffer(coord_biomodS1, width = 200000)
-  #buf_points_S2 <- terra::buffer(coord_biomodS2, width = 200000)
-  
-  # Combine features
-  #cat("Combining buffers with native zone...\n")
-  #buf_1 <- rbind(buf_points_S1, native_pol_vect)
-  #buf_2 <- rbind(buf_points_S2, native_pol_vect)
-  
-  # CRITICAL: Simplify geometries if too complex
-  #buf_1 <- terra::simplifyGeom(buf_1, tolerance = 1000)
-  #buf_2 <- terra::simplifyGeom(buf_2, tolerance = 1000)
-  
-  # Crop first to reduce raster size
-  #cat("Cropping rasters...\n")
-  #buf_1_extent <- ext(buf_1)
-  #buf_2_extent <- ext(buf_2)
-  
-  rastclim_cropped1 <- terra::crop(rastclim, native_pol_vect, snap = "out")
-  rastclim_cropped2 <- terra::crop(rastclim, native_pol_vect, snap = "out")
-  
-  # Mask (on smaller rasters)
-  cat("Masking regions...\n")
-  region_outbuf1 <- terra::mask(rastclim_cropped1, native_pol_vect, inverse = TRUE)
-  region_outbuf2 <- terra::mask(rastclim_cropped2, native_pol_vect, inverse = TRUE)
-  
-  # Clean up immediately
-  rm(rastclim, rastclim_cropped1, rastclim_cropped2, native_pol_vect)
-  #rm(buf_points_S1, buf_points_S2, native_pol_vect)
-  gc(verbose = FALSE)
-  
-  # Sample PA for S2 (1 round)
-  cat("Sampling PA for S2 (1 round)...\n")
-  n_s2 <- nrow(input_biomodS2)
-  
-  PA_2_list <- vector("list", 10)
-  
-  for (i in 1:10) {
-      bg_rand_outbuf2 <- terra::spatSample(region_outbuf2, n_s2, 
-                                       method = "random", 
-                                       na.rm = TRUE, 
-                                       as.points = TRUE)
-    
-    pa2_i <- terra::as.data.frame(bg_rand_outbuf1, geom = "XY")
-    pa2_i$PA_N <- i
-    pa2_i$S <- "S2"
-    
-    PA_2_list[[i]] <- pa2_i
-    
-    cat(sprintf("  For S2 Round %d/10 completed\n", i))
-    
-    # Clean up
-    rm(bg_rand_outbuf2, pa2_i)
-  }
-
-  PA_2 <- do.call(rbind, PA_2_list)
-  rm(PA_1_list)
-  gc(verbose = FALSE)
-  
-  # Sample PA for S1 (10 rounds)
-  cat("Sampling PA for S1 (10 rounds)...\n")
-  n_s1 <- nrow(input_biomodS1)
-  
-  PA_1_list <- vector("list", 10)
-  
-  for (i in 1:10) {
-    bg_rand_outbuf1 <- terra::spatSample(region_outbuf1, n_s1, 
-                                         method = "random",
-                                         na.rm = TRUE, 
-                                         as.points = TRUE)
-    
-    pa1_i <- terra::as.data.frame(bg_rand_outbuf1, geom = "XY")
-    pa1_i$PA_N <- i
-    pa1_i$S <- "S1"
-    
-    PA_1_list[[i]] <- pa1_i
-    
-    cat(sprintf("  For S1 Round %d/10 completed\n", i))
-    
-    # Clean up
-    rm(bg_rand_outbuf1, pa1_i)
-    if (i %% 3 == 0) gc(verbose = FALSE)
-  }
-  
-  # Combine list elements (more efficient than repeated rbind)
-  PA_1 <- do.call(rbind, PA_1_list)
-  rm(PA_1_list)
-  gc(verbose = FALSE)
-  
-  # Clean up large objects
-  rm(region_outbuf1, region_outbuf2)
-  gc(verbose = FALSE)
-  
-  # Combine PA datasets
-  cat("Combining PA datasets...\n")
-  PA_global <- rbind(PA_1, PA_2)
-  colnames(PA_global)[1:4] <- c("PCA_1", "PCA_2", "decimallongitude", "decimallatitude")
-  PA_global$Occurrence <- 0
-  
-  # Reorder columns using base R
-  PA_global <- PA_global[, c("Occurrence", "decimallatitude", "decimallongitude", 
-                             "PCA_1", "PCA_2", "S", "PA_N")]
-  
-  # Add S labels to presence data
-  input_biomodS1$S <- "S1"
-  input_biomodS2$S <- "S2"
-  
-  # Combine presence data
-  cat("Combining presence data...\n")
-  P_global <- rbind(input_biomodS1, input_biomodS2)
-  P_global$PA_N <- NA
-  
-  # Reorder columns
-  P_global <- P_global[, c("Occurrence", "decimallatitude", "decimallongitude", 
-                           "PCA_1", "PCA_2", "S", "PA_N")]
-  
-  # Final combination
-  cat("Creating final dataset...\n")
-  P_PA_global <- rbind(P_global, PA_global)
-  
-  cat("PA_byS completed successfully!\n")
-  return(P_PA_global)
+  return(pa_all)
 }
+
+# data<- occ_PCA
+# species_name <- "Linepithema humile"
+# climate_data <- climate_data2
+PA_byS <- function(data, climate_data, antmaps_pol, antmaps_dis, species_name){
+
+    set.seed(3)
+
+    cat("Loading climatic data...\n")
+    rastclim <- rast(climate_data)
+    
+  #separate two S datasets
+  input_biomodS1<-data  %>%filter (S=="S1") %>% dplyr::select(decimallatitude, decimallongitude, PCA_1, PCA_2) %>% mutate(Occurrence = 1)
+  input_biomodS2<-data  %>% filter (S=="S2") %>% dplyr::select(decimallatitude, decimallongitude, PCA_1, PCA_2)%>% mutate(Occurrence = 1) 
+
+  #obtain coordinates in same crs as raster clim
+  coord_biomodS1 <- vect(input_biomodS1[, c("decimallongitude", "decimallatitude")],
+                       geom = c("decimallongitude", "decimallatitude"),
+                       crs = crs(rastclim))  # WGS84
+  coord_biomodS2 <- vect(input_biomodS2[, c("decimallongitude", "decimallatitude")],
+                       geom = c("decimallongitude", "decimallatitude"),
+                       crs = crs(rastclim))  # WGS84
+  
+    # Get native zone info
+    cat("Processing native zone...\n")
+    info_sp <- antmaps_dis[[species_name]]
+    native_ben <- info_sp$gid[info_sp$category == "N"]
+
+    # Convert native polygons
+    native_subset <- antmaps_pol[antmaps_pol$BEN %in% native_ben, ]
+    native_pol_vect <- vect(native_subset)
+
+    # Project if needed
+    if (!terra::same.crs(native_pol_vect, rastclim)) {
+      cat("Reprojecting native polygons...\n")
+      native_pol_vect <- terra::project(native_pol_vect, rastclim)
+    }
+    
+    # Set all raster cells inside the buffer to NA using the argument inverse=T
+    region_outbuf <- terra::mask(rastclim, native_pol_vect, inverse=T)
+    
+    #sample PA for S1 with 10 rounds 
+     cat("Sampling PA for S1...\n")
+     system.time(
+       S1_PA<- sample_PA(input_biomodS1, "S1", 10, region_outbuf)
+     )
+     
+     cat("Sampling PA for S2...\n")
+     system.time(
+     S2_PA<- sample_PA(input_biomodS2, "S2", 10, region_outbuf))
+     PA_global<-dplyr::bind_rows(S1_PA, S2_PA)     
+    
+      colnames(PA_global)[1:4] <- c("PCA_1", "PCA_2", "decimallongitude", "decimallatitude")
+      PA_global$Occurrence <- 0
+
+      # Reorder columns using base R
+      PA_global <- PA_global[, c("Occurrence", "decimallatitude", "decimallongitude",
+                                 "PCA_1", "PCA_2", "S", "PA_N")]
+
+      # Add S labels to presence data
+      input_biomodS1$S <- "S1"
+      input_biomodS2$S <- "S2"
+
+      # Combine presence data
+      cat("Combining presence data...\n")
+      P_global <- rbind(input_biomodS1, input_biomodS2)
+      P_global$PA_N <- NA
+
+      # Reorder columns
+      P_global <- P_global[, c("Occurrence", "decimallatitude", "decimallongitude",
+                               "PCA_1", "PCA_2", "S", "PA_N")]
+
+      # Final combination
+      cat("Creating final dataset...\n")
+      P_PA_global <- rbind(P_global, PA_global)
+
+      cat("PA_byS completed successfully!\n")
+      return(P_PA_global)}
+
+
 
 
 ################################################################################
@@ -282,6 +209,18 @@ occ_PCA <- load_PCA(occ_E_cols, climate_data2)
 occ_PA <- PA_byS(occ_PCA, climate_data2, antmaps_pol, antmaps_dis, sp_name)
 #plot PA and P
 class(occ_PA)
+
+cat("Final datasets nrows:", nrow(occ_PA), "\n")
+cat("S1 \n")
+cat("   -Presences:", nrow(occ_PA[occ_PA$S == "S1" & occ_PA$Occurrence == 1,]), "\n")
+cat("   -Absences:",  nrow(occ_PA[occ_PA$S == "S1" & occ_PA$Occurrence == 0,]), "\n \n")
+cat("S2 \n")
+cat("   -Presences:", nrow(occ_PA[occ_PA$S == "S2" & occ_PA$Occurrence == 1,]), "\n")
+cat("   -Absences:",  nrow(occ_PA[occ_PA$S == "S2" & occ_PA$Occurrence == 0,]), "\n")
+
+ cat("Levels of PA_N for S2", levels(as.factor(occ_PA$PA_N[occ_PA$S == "S2"])), "\n")
+  
+
 
 write.csv(occ_PA, file= output)
 
