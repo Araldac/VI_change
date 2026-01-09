@@ -2,7 +2,7 @@ configfile: 'config/InternshipSMKConfig.yaml'
 
 rule add_Climate_PA:
     '''
-   Add climate and pseudo-absences 
+   Add climate and pseudo-absences , 10 PA sets for each (s1 and S2)
     '''
     input:
         occurrences = 'results/species/DatasetPrep/{sp}_thin.csv',

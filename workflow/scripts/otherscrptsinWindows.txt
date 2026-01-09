@@ -10,3 +10,7 @@ predict_worldBRT
 
 next_sp.R 
     - compare data from other species to choose next one
+
+results_SMK_P1:
+- reuslts AUC, kappa etc (boxplots)
+- boxplots variable importance

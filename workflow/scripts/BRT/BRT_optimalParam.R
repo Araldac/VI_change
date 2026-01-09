@@ -46,20 +46,25 @@ ApplyingAllCombGBMStep <- function(all_comb, data, rep_id = NULL) {
         silent = TRUE,
         plot.main = FALSE
       )
-      return(
-        data.frame(
-          nTrees = resultOneComb$n.trees,
-          treeComplexity = all_comb[i, 3],
-          learningRate = all_comb[i, 1],
-          bagFraction = all_comb[i, 2],
-          meanDev = resultOneComb$cv.statistics$deviance.mean,
-          seDev = resultOneComb$cv.statistics$deviance.se,
-          PA_N = na.omit(data$PA_N)[1],
-          S = na.omit(data$S)[1],
-          rep = ifelse(is.null(rep_id), NA, rep_id),
-          stringsAsFactors = FALSE
-        )
+          return(
+      data.frame(
+        nTrees = resultOneComb$n.trees,
+        treeComplexity = all_comb[i, 3],
+        learningRate = all_comb[i, 1],
+        bagFraction = all_comb[i, 2],
+        meanDev = resultOneComb$cv.statistics$deviance.mean,
+        seDev = resultOneComb$cv.statistics$deviance.se,
+        meanAUC =  resultOneComb$cv.statistics$discrimination.mean,
+        seAUC =  resultOneComb$cv.statistics$discrimination.se,
+        meanCor =  resultOneComb$cv.statistics$correlation.mean,
+        seCor = resultOneComb$cv.statistics$correlation.se,
+        PA_N = na.omit(data$PA_N)[1],
+        S = na.omit(data$S)[1],
+        rep = ifelse(is.null(rep_id), NA, rep_id),
+        stringsAsFactors = FALSE
       )
+    )
+
 
   }}
 
@@ -96,13 +101,24 @@ results_S2 <- list()
 
 pb <- txtProgressBar(min = 1, max = 100, style = 3)
    
-results_S2 <- lapply(1:n_reps, function(rep) {
-  #data_current <- order_data_s2   # Assuming you have a list
-   set.seed(rep)
-   result <- ApplyingAllCombGBMStep(df_BRTparamCombi, order_data_s2, rep_id = rep)
-   setTxtProgressBar(pb, rep)
-   return(result)
- })
+for(pa_set in 1:10) {
+  
+  # Extract data for this PA set
+  data_current <- order_data_s2 %>% dplyr::filter(PA_N %in% c(NA, pa_set))  # Assuming you have a list
+     
+     # Run 20 reps for this PA set
+  results_pa <- lapply(1:10, function(rep) {
+    set.seed(pa_set * 1000 + rep)
+    result <- ApplyingAllCombGBMStep(df_BRTparamCombi, data_current, rep_id = rep)
+    setTxtProgressBar(pb, (pa_set-1)*10+rep)
+    #result$PA_set <- pa_set
+    return(result)
+  })
+  #print(results_pa)
+  #   
+  results_S2[[pa_set]] <- dplyr::bind_rows(results_pa)
+}
+
 
 # Combine results
 results_S2_combined <- dplyr::bind_rows(results_S2)

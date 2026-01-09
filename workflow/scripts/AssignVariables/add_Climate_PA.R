@@ -29,34 +29,6 @@ lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
 
 
 #### #### load PCA #### ####
-# Extract the PCA scores for each occurrence with terra (optimized approach):
-#load_PCA <- function(data, climate_data){
-#  cat("Loading PCA data...\n")
-  
-  # Convert to SpatRaster
-#  climate_data_terra <- terra::rast(climate_data)
-  
-#    cat("Loaextract PCA data...\n")
-  
-  # Extract values all at once
-#  coords <- data[, c("decimallongitude", "decimallatitude")]
-#  values <- terra::extract(climate_data_terra, coords, cells = TRUE)
-  
-#     cat("join PCA data...\n")
-  
-  # Join results using base R (avoid dplyr)
-#  data_pca <- cbind(data, values[, -1])  # drop ID column
-  
-#       cat("remove NA...\n")
-  
-  # Remove NAs using base R
-#  complete_rows <- complete.cases(data_pca[, c("PCA_1", "PCA_2")])
-#  data_pca <- data_pca[complete_rows, ]
-  
-#  cat(sprintf("Kept %d rows with complete PCA data\n", nrow(data_pca)))
-  
-#  return(data_pca)
-#}
 load_PCA<- function(data, climate_data){
   # Convert to SpatRaster
   cat("Loading PCA data...\n")
@@ -175,7 +147,6 @@ PA_byS <- function(data, climate_data, antmaps_pol, antmaps_dis, species_name){
 
       cat("PA_byS completed successfully!\n")
       return(P_PA_global)}
-
 
 
 

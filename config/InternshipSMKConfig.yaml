@@ -6,8 +6,13 @@ species_name:
 First_Record_Date:
   LH: 1885
 
+Path_Bioclim : "data/raster/Worldclim/"
+
 Native_Countries:  
   LH: ["ARG", "BRA", "PRY", "URY"]
 
 Tribe_list:  
   LH: ["Leptomyrmecini", "Tapinomini", "Bothriomyrmecini", "Dolichoderini"]
+
+Variables_CSI:
+  LH: ["bio_2",  "bio_9",  "bio_3" , "bio_1" , "bio_8" , "bio_12", "bio_15"]

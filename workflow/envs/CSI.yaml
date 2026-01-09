@@ -1,0 +1,16 @@
+name: CSI
+channels:
+    - conda-forge
+    - bioconda
+    - r
+
+dependencies: #by chatbot
+  - r-base=4.3
+  - r-argparse
+  - r-dplyr=1.1.*
+  - r-sf= 1.0         # modern sf
+  - r-tidyr = 1.3.1
+  - r-terra = 1.8_42
+  - r-tidyverse
+  - r-dismo
+  - r-tiff

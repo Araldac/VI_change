@@ -38,9 +38,9 @@ p<-plot_P_PA(occ_PA[occ_PA$S == "S1", ], "1885-1970", PA_N = TRUE)
 for (i in 1:10) {
   
   plot_P_PA(occ_PA[occ_PA$S == "S1" & occ_PA$PA_N %in% c(NA, i), ], paste0("1885-1970; PA_N=", i))
+  plot_P_PA(occ_PA[occ_PA$S == "S2" & occ_PA$PA_N %in% c(NA, i), ], paste0("1970-2025; PA_N=", i))
   
 }
 
-plot_P_PA(occ_PA[occ_PA$S == "S2", ], "1970-2025")
 
 

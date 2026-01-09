@@ -107,7 +107,7 @@ rule cleaning:
 
 rule thinning:
     '''
-    Thinning data using methods from Sebastien Ollier.
+    Thinning data using grid with geothinner package and the climate raster as grid cell
     
     '''
     input:
