@@ -21,9 +21,11 @@ lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
 ################################################################################
 
 ApplyingAllCombRF <- function(data, env_vars, rep_id = NULL) {
+  #cat("cluster \n")
   cl <- parallel::makeCluster(10)
   doParallel::registerDoParallel(cl)
   
+  #cat("clean data \n")
   # Identifier les lignes avec des NA
   data_clean <- data[complete.cases(data[, env_vars]), ]
   
@@ -31,6 +33,7 @@ ApplyingAllCombRF <- function(data, env_vars, rep_id = NULL) {
   Y <- as.factor(data_clean$Occurrence)
   
   # Grid searh
+  #cat("grid \n")
   n_estimators_grid <- c(100, 300, 500, 700, 1000)
   max_features_grid <- c(2, 3, 4, length(env_vars))
   
@@ -39,8 +42,9 @@ ApplyingAllCombRF <- function(data, env_vars, rep_id = NULL) {
     max_feat = max_features_grid)
   
   ##Apply RF to each parameter
-  
+  #cat("Apply RF to each parameter \n")
   resultAllComb <- foreach(i=1:nrow(all_comb_RF), .packages = c('randomForest')) %dopar% {
+    cat(" RF  \n")
     resultOneComb <- randomForest(
       x = X, 
       y = Y, 
@@ -52,7 +56,7 @@ ApplyingAllCombRF <- function(data, env_vars, rep_id = NULL) {
       nodesize = 1
       
     )
-    
+    #cat(" OOB  \n")
     oob_error <- resultOneComb$err.rate[all_comb_RF[i, 1],"OOB"]
     
     return(
@@ -60,14 +64,17 @@ ApplyingAllCombRF <- function(data, env_vars, rep_id = NULL) {
         ntree = all_comb_RF[i, 1],     # ✓ CORRIGÉ
         mtry = all_comb_RF[i, 2],
         oob_error = oob_error,
-        oob_accuracy = 1 - oob_error
+        oob_accuracy = 1 - oob_error,
+        PA_N = na.omit(data_clean$PA_N)[1],
+        S = na.omit(data_clean$S)[1],
+        rep = ifelse(is.null(rep_id), NA, rep_id)
       )
     )
-    }  
+  }  
   parallel::stopCluster(cl)
   return(resultAllComb)
-  }
-  
+}
+
 
 
 
@@ -76,8 +83,13 @@ ApplyingAllCombRF <- function(data, env_vars, rep_id = NULL) {
 #Code
 ################################################################################
 repl_P_PCA_B_T_HM<-read.csv(occurrences)
+#repl_P_PCA_B_T_HM<-read.csv("//wsl.localhost/Ubuntu/home/admin_ait/internship-snakemake-2025/results/species/AssignVariables/LH_PA_B_T_HM.csv")
 
 order_data_s2 <- repl_P_PCA_B_T_HM %>% filter(S=="S2")
+
+### Process tribe list ####
+#biotic <- c("Leptomyrmecini", "Tapinomini", "Bothriomyrmecini", "Dolichoderini")
+
 
 head(order_data_s2)
 #### Process tribe list ####
@@ -90,33 +102,39 @@ explicative_var<-c(biotic_var,
                    "PCA_2",
                    "trade",
                    "HM")
-#explicative_var<-c("PCA_1",
-#                   "PCA_2",
-#                   "Leptomyrmecini",
-#                   "Tapinomini",
-#                   "Bothriomyrmecini",
-#                   "Dolichoderini",
-#                   "trade",
-#                   "HM")
 
 cat("\n Explicative variables : ", explicative_var)
 
-n_reps=100
-
+n_reps=10
+results_S2 <- list()
 pb <- txtProgressBar(min = 1, max = 100, style = 3)
 
 cat("\n Initializing OOB method to find optimal parameters \n ")
-results_S2_RF <- lapply(1:n_reps, function(rep) {
-  #data_current <- order_data_s2   # Assuming you have a list
-  set.seed(rep)
-  result <- ApplyingAllCombRF(order_data_s2, explicative_var, rep_id = rep)
-  setTxtProgressBar(pb, rep)
-  return(result)
-})
 
-head(results_S2_RF)
+for(pa_set in 1:10) {
+  
+  # Extract data for this PA set
+  data_current <- order_data_s2 %>% dplyr::filter(PA_N %in% c(NA, pa_set))  # Assuming you have a list
+  
+  # Run 20 reps for this PA set
+  results_pa <- lapply(1:n_reps, function(rep) {
+    set.seed(pa_set * 1000 + rep)
+    result <- ApplyingAllCombRF(data_current, explicative_var, rep_id = rep)
+    setTxtProgressBar(pb, (pa_set-1)*10+rep)
+    #result$PA_set <- pa_set   never activate or it crashes !!!
+    
+    class(result)
+    head(result)
+    return(result)
+  })
+  head(results_pa)
+  #   
+  results_S2[[pa_set]] <- dplyr::bind_rows(results_pa)
+}
+
+head(results_S2)
 # Combine results
-results_S2_RF_combined <- dplyr::bind_rows(results_S2_RF)
+results_S2_RF_combined <- dplyr::bind_rows(results_S2)
 
 head(results_S2_RF_combined)
 

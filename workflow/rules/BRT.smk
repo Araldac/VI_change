@@ -1,38 +1,38 @@
 configfile: 'config/InternshipSMKConfig.yaml'
 
-rule BRT_optimalParam:
-    '''
-   Find the optimla pàrameers for the BRT using the S2 data 
-   WARNING !!! This rule takes a lot of time instead I used the cl_param_BRT2_v2.R code and used it in the cluster 
-    '''
-    input:
-        occurrences = 'results/species/AssignVariables/{sp}_allv.csv'
+#rule BRT_optimalParam:
+#    '''
+#   Find the optimla pàrameers for the BRT using the S2 data 
+#   WARNING !!! This rule takes a lot of time instead I used the cl_param_BRT2_v2.R code and used it in the cluster 
+#    '''
+#    input:
+#        occurrences = 'results/species/AssignVariables/{sp}_allv.csv'
 
-    output:
-        out='results/species/BRT/{sp}_rep_optimalBRT.csv'
+#    output:
+#        out='results/species/BRT/{sp}_rep_optimalBRT.csv'
         
-    log:
-        err = "logs/BRT/{sp}_BRT_optimalParam.err",
-        out = "logs/BRT/{sp}_BRT_optimalParam.out"
-    conda:
-	    '../envs/BRT.yaml'
+#    log:
+#        err = "logs/BRT/{sp}_BRT_optimalParam.err",
+#        out = "logs/BRT/{sp}_BRT_optimalParam.out"
+#    conda:
+#	    '../envs/BRT.yaml'
 
-    params:
+#    params:
         #n_reps = config['Repetitions'][0]["Opt_BRT"] # Access first species name from list
 
-    shell:
-        r"""      
-        Rscript workflow/scripts/BRT/BRT_optimalParam.R \
-        {input.occurrences} \
-        "{params.n_reps}" \
-        {output.out} \
-        >{log.out} 2> {log.err}
-        """
+#    shell:
+#        r"""      
+#        Rscript workflow/scripts/BRT/BRT_optimalParam.R \
+#        {input.occurrences} \
+#        "{params.n_reps}" \
+#        {output.out} \
+#        >{log.out} 2> {log.err}
+#        """
 
 
 rule BRT_extractParams:
     input:
-        paramOpt = "results/species/BRT/output_{sp}_parametrization_S2_v4.csv"
+        paramOpt = "results/species/BRT/{sp}_paramS2_10PA.csv"
         
     output:
         table = 'results/species/BRT/BRT_{sp}_top5_params.csv',

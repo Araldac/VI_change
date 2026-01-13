@@ -8,7 +8,7 @@ rule RF_optimalParam:
         occurrences = 'results/species/AssignVariables/{sp}_allv.csv'
 
     output:
-        out='results/species/RF/{sp}_rep_optimalRF.csv'
+        out='results/species/RF/{sp}_RF_optimalParam.csv'
         
     log:
         err = "logs/RF/{sp}_RF_optimalParam.err",
@@ -30,7 +30,7 @@ rule RF_optimalParam:
 
 rule RF_extractParams:
     input:
-        paramOpt = "logs/RF/{sp}_RF_optimalParam.out"
+        paramOpt = "results/species/RF/{sp}_RF_optimalParam.csv"
         
     output:
         table = 'results/species/RF/RF_{sp}_top5_params.csv',

@@ -13,14 +13,14 @@ table_top5 <-args[2]
 output <- args[3]
 
 #download/install packages
-pkg <- c("dplyr", "gbm", "dismo", "tidyr", "formattable")#, "", "", "")
+pkg <- c("dplyr", "tidyr")#, "", "", "")
 lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
 
 ################################################################################
 #Code
 ################################################################################
 
-paramS2<-read.csv(input)
+paramS2<-read.csv(input, sep =",")
 
 ##do a mean x repetition and select 
 means_paramS2<-paramS2 %>%  group_by(ntree, mtry) %>% 

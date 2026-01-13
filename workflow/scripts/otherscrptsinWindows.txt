@@ -1,7 +1,6 @@
 rasterize_clima.R --> tranform biotic and trade in raster
 
-
-predict_worldBRT
+predict_worldBRT ( needs rasterize_clima before)
     - put all the rasters together in a sptraster
     - compute MESS of S1 and S2
     - creat amodel training S1 data to predict to current data
@@ -14,3 +13,6 @@ next_sp.R
 results_SMK_P1:
 - reuslts AUC, kappa etc (boxplots)
 - boxplots variable importance
+
+plot_datasetprepsteps:
+- plot S1 and S2 with color for each step (sele, clena and thin)

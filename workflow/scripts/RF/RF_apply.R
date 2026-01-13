@@ -134,11 +134,12 @@ cat("Starting RF for S1 \n")
 pb <- txtProgressBar(min = 1, max = 100, style = 3)
 
   results_S1_RF <- lapply(1:n_reps, function(rep) {
-   
+    
     results_s1<-c()
     for (i in 1:10){
+      seed_s1<-rep*10*i
       data_s1_i <- data[data$S == "S1" & data$PA_N %in% c(NA, i) ,]
-      RF_S1_i <- RF_apply(data_s1_i, explicative_var, "S1",rep, i)
+      RF_S1_i <- RF_apply(data_s1_i, explicative_var, "S1",seed_s1, i)
       results_s1<- rbind(results_s1, RF_S1_i)
       #cat("PA_N ", i, "done!")
     }
@@ -146,27 +147,40 @@ pb <- txtProgressBar(min = 1, max = 100, style = 3)
     return(results_s1)
     
   })
-cat("BRT for S1 finished \n")
+cat("RF for S1 finished \n")
 
 results_S1 <- dplyr::bind_rows(results_S1_RF)
 
  
 #### #### RF for S2 (100 rep) #### #### 
-data_s2<- data[data$S=="S2",]
-cat("Starting BRT for S2 \n")
+#data_s2<- data[data$S=="S2",]
+cat("Starting RF for S2 \n")
 pb <- txtProgressBar(min = 1, max = 100, style = 3)
 
-results_S2_RF <- lapply(1:n_reps, function(rep) {
 
-      seed_s2<-rep*20
-      result <- RF_apply(data_s2, explicative_var, "S2", seed_s2)
-      
-      setTxtProgressBar(pb, rep)
-      return(result)
+n_reps=100
+
+#### #### RF for S2 (100repx10 sets) #### #### 
+pb <- txtProgressBar(min = 1, max = 100, style = 3)
+
+  results_S2_RF <- lapply(1:n_reps, function(rep) {
+   
+    results_s2<-c()
+    for (i in 1:10){
+      seed_s2<-rep*20*i 
+      data_s2_i <- data[data$S == "S2" & data$PA_N %in% c(NA, i) ,]
+      RF_S2_i <- RF_apply(data_s2_i, explicative_var, "S2",seed_s2, i)
+      results_s2<- rbind(results_s2, RF_S2_i)
+      #cat("PA_N ", i, "done!")
+    }
+    setTxtProgressBar(pb, rep)
+    return(results_s2)
+    
   })
-cat("BRT for S2 finished \n ")  
-  results_S2 <- dplyr::bind_rows(results_S2_RF)
-  
+cat("RF for S1 finished \n")
+
+results_S2 <- dplyr::bind_rows(results_S2_RF)
+
   
 cat("Aggregating results for S1 and S2")  
 results_RF <- rbind(results_S2, results_S1)
