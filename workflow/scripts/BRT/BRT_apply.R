@@ -64,7 +64,6 @@ BRT_apply<-function(data, env_vars, S, seed, pa_n = NA){
   threshold <- 0.5
   predictions_class <- ifelse(predictions >= threshold, 1, 0)
   confusion.matrix.training <- table(actuals,predictions_class)
-  
 
   #cat("Results for S: " , S, " PA_n : ", pa_n,"\n ")
   #cat(sprintf("AUC S2: %.4f\n", auc_S2))
