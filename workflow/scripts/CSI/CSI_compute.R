@@ -17,7 +17,7 @@ output_s2 <- args[6]
 
 
 #download/install packages
-pkg <- c("dplyr", "magrittr","gbm", "dismo", "pROC","foreach" , "doParallel","parallel", "terra")#, "", "", "")
+pkg <- c("dplyr", "magrittr","gbm", "dismo", "pROC","foreach" , "doParallel", "terra")#,,"parallel") "", "", "")
 lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
 
 

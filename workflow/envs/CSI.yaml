@@ -14,11 +14,12 @@ dependencies: #by chatbot
   - r-tidyverse
   - r-dismo
   - r-tiff
-  - r-parallel
+#  - r-parallel
   - r-gbm
   - r-pROC
   - r-magrittr
   - r-foreach
   - r-doParallel
-
+  - r-randomForest
+  - r-pbapply
 

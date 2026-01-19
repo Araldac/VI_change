@@ -24,12 +24,15 @@ lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
 ################################################################################
 
 extract_CSI <-function (data, raster){
- 
+
+data_CSI <- data
+
 cat("Extracting variables for each coord ...\n")
 envtcel<-terra::extract(raster, data)
 cat("Variables extracted! \n")
 
-data_CSI<-cbind(data, envtcel)
+data_CSI$CSI <- envtcel
+
 return(st_drop_geometry(data_CSI))
 }
 ################################################################################

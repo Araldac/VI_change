@@ -36,6 +36,9 @@ rule add_Bioclim_V:
         """
     
 rule CSI_extractParams:
+    '''
+   Extract the best parameters from the BRT parameter optimization
+    '''
     input:
         paramOpt = "results/species/CSI/{sp}_CSI_paramS2_10PA.csv"
         
@@ -99,7 +102,7 @@ rule add_CSI:
    Add CSI to the dataframe  
     '''
     input:
-        occurrences = 'results/species/AssignVariables/{sp}_allV.csv',
+        occurrences = 'results/species/AssignVariables/{sp}_allv.csv',
         raster_s1 = 'results/species/CSI/CSI_{sp}_df_combined_S1.RData',
         raster_s2 = 'results/species/CSI/CSI_{sp}_df_combined_S2.RData'
         
@@ -125,3 +128,87 @@ rule add_CSI:
         >{log.out} 2> {log.err}
         """
 
+rule CSI_RF_optimalParam:
+    '''
+   Find the optimla paramters for the BRT using the CSI with S2 data w
+    '''
+    input:
+        occurrences = 'results/species/CSI/{sp}_allV_CSI.csv'
+
+    output:
+        out = 'results/species/CSI/{sp}_CSI_RF_optimalParam.csv'
+        
+    log:
+        err = "logs/CSI/{sp}_CSI_RF_optimalParam.err",
+        out = "logs/CSI/{sp}_CSI_RF_optimalParam.out"
+    conda:
+	    '../envs/CSI.yaml'
+
+    params:
+        tribe_list = lambda wildcards: config["Tribe_list"][wildcards.sp]
+
+    shell:
+        r"""      
+        Rscript workflow/scripts/CSI/CSI_RF_optimalParam.R \
+        {input.occurrences} \
+        "{params.tribe_list}" \
+        {output.out} \
+        >{log.out} 2> {log.err}
+        """
+
+rule CSI_RF_extractParams:
+    '''
+   extract the best parameters from the RF
+    '''
+    input:
+        paramOpt = 'results/species/CSI/{sp}_CSI_RF_optimalParam.csv'
+        
+    output:
+        table = 'results/species/CSI/{sp}_CSI_RF_top5_params.csv',
+        out = 'results/species/CSI/{sp}_CSI_RF_params.csv'
+
+    log:
+        err = "logs/CSI/{sp}_CSI_RF_extractParams.err",
+        out = "logs/CSI/{sp}CSI_RF_extractParams.out"
+    conda:
+	    '../envs/CSI.yaml'
+
+    shell:
+        r"""      
+        Rscript workflow/scripts/RF/RF_extractParams.R \
+        {input.paramOpt} \
+        {output.table} \
+        {output.out} \
+        >{log.out} 2> {log.err}
+        """
+
+
+rule CSI_RF_apply:
+    '''
+   apply RF with the bets parameters
+    '''
+    input:
+       occurrences = 'results/species/CSI/{sp}_allV_CSI.csv',
+       RFparamOpt = 'results/species/CSI/{sp}_CSI_RF_params.csv'
+
+    output:
+        out = 'results/species/CSI/CSI_RF_{sp}_relimpAUC1.csv'
+
+    log:
+        err = "logs/CSI/{sp}_CSI_RF_apply.err",
+        out = "logs/CSI/{sp}_CSI_RF_apply.out"
+    conda:
+	    '../envs/CSI.yaml'
+    
+    params:
+        tribe_list = lambda wildcards: config["Tribe_list"][wildcards.sp]
+
+    shell:
+        r"""      
+        Rscript workflow/scripts/CSI/CSI_RF_apply.R \
+        {input.occurrences} \
+        "{params.tribe_list}"\
+        {input.RFparamOpt}\
+        {output.out} \
+        >{log.out} 2> {log.err}
+        """
