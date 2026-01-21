@@ -64,14 +64,16 @@ rule CSI_extractParams:
 rule CSI_compute:
     '''
    Applies 1 CSI for each PA set, it takes aprox 8 hours to run
+
     '''
     input:
-        all_v = "results/species/AssignVariables/{sp}_allV.csv",
+        all_v = "results/species/AssignVariables/{sp}_allv.csv",
         bioV = "results/species/CSI/{sp}_BioV.csv"
         
     output:
-        output_s1 = 'results/species/CSI/CSI_{sp}_df_combined_S1.RData',
-        output_s2 = 'results/species/CSI/CSI_{sp}_df_combined_S2.RData'
+        output_s1 = 'results/species/CSI/CSI_{sp}_raster_S1.tif',
+        output_s2 = 'results/species/CSI/CSI_{sp}_raster_S2.tif',
+        df_eval_out = 'results/species/CSI/{sp}_eval_CSI.csv'
 
     log:
         err = "logs/CSI/{sp}_CSI_compute.err",
@@ -93,9 +95,10 @@ rule CSI_compute:
         "{params.v_name}" \
         {output.output_s1} \
         {output.output_s2} \
+        {output.df_eval_out} \
         >{log.out} 2> {log.err}
         """
-
+               
 
 rule add_CSI:
     '''
@@ -103,11 +106,10 @@ rule add_CSI:
     '''
     input:
         occurrences = 'results/species/AssignVariables/{sp}_allv.csv',
-        raster_s1 = 'results/species/CSI/CSI_{sp}_df_combined_S1.RData',
-        raster_s2 = 'results/species/CSI/CSI_{sp}_df_combined_S2.RData'
+        raster_s1 = 'results/species/CSI/CSI_{sp}_raster_S1.tif',
+        raster_s2 = 'results/species/CSI/CSI_{sp}_raster_S2.tif'
         
     output:
-        df_eval_out = 'results/species/CSI/{sp}_eval_CSI.csv',
         dataset_out = 'results/species/CSI/{sp}_allV_CSI.csv'
         
     log:
@@ -123,7 +125,6 @@ rule add_CSI:
         {input.occurrences} \
         {input.raster_s1} \
         {input.raster_s2} \
-        {output.df_eval_out} \
         {output.dataset_out} \
         >{log.out} 2> {log.err}
         """

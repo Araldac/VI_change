@@ -86,6 +86,8 @@ data<-read.csv(occurrences)
 
 order_data_s2 <- data %>% filter(S=="S2")
 
+head(order_data_s2)
+
 ### Process tribe list ####
 #biotic <- c("Leptomyrmecini", "Tapinomini", "Bothriomyrmecini", "Dolichoderini")
 

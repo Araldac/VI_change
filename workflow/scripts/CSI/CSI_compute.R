@@ -12,8 +12,10 @@ data_all_v <-args[1]
 data_bioV <-args[2]
 path_WorldClim <- args[3]
 v_names <- args[4]
+#output_df_eval <- args[5]
 output_s1 <- args[5]
 output_s2 <- args[6]
+output_df_eval <- args[7]
 
 
 #download/install packages
@@ -59,12 +61,13 @@ lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
   message("\n Starting PARALLEL model training...\n")
   
   start_time <- Sys.time()
+
+  models_and_Eval <- foreach(i = 1:10,  ##change if just want to do PAn=1
+                             .packages = c("dplyr","magrittr","dismo","gbm","pROC")) %dopar% {
+
   seed <- 12*i*s_n
   set.seed(seed)
-  
-  models_and_Eval <- foreach(i=1:10,  ##change if just want to do PAn=1
-                             .packages = c("dplyr","magrittr","dismo","gbm","pROC")) %dopar% {
-      
+    
     #in case it's not clean
     data_clean <- data %>%
          dplyr::filter(
@@ -136,8 +139,8 @@ message(sprintf("  ✓ Training completed in %.1f seconds", training_time))
 models  <- lapply(models_and_Eval, `[[`, "model")
 eval_df <- dplyr::bind_rows(lapply(models_and_Eval, `[[`, "eval"))
 
-cat("Head of the eval \n" )
-head(eval_df)
+#cat("Head of the eval \n" )
+#head(eval_df)
 
 # -------------------------------------------------
 # SEQUENTIAL RASTER PREDICTION (SAFE FOR TERRA)
@@ -146,6 +149,8 @@ message("\n Starting SEQUENTIAL raster predictions...\n")
 
 suit_list <- vector("list", length(models))
 
+
+#if (1 == 0){
 for (i in seq_along(models)){
 #for (i in 1){
 
@@ -189,6 +194,12 @@ return(list(
 ))
 }
 
+#return(df_eval  = eval_df)
+
+#}
+
+
+
 
 ################################################################################
 #Code
@@ -201,7 +212,7 @@ all_v <- all_v %>% dplyr::select(-PCA_1, -PCA_2)
 
 #load names of climtic variables
 V_csi <- strsplit(v_names, ",")[[1]]
-cat("Varables selected: ", vars, "\n")
+cat("Varables selected: ", V_csi, "\n")
 #V_csi <- c("bio_2",  "bio_9",  "bio_3" , "bio_1" , "bio_8" , "bio_12", "bio_15")
 
 C_v <- read.csv(data_bioV)
@@ -225,10 +236,29 @@ bio_sel <- bio[[V_csi]]
 
 system.time({
 result_S1<- CSI_df_map_A(join_d, bio_sel, "S1", V_csi, n_cores = 10)
-save(result_S1, file= output_s1)
+terra::writeRaster(result_S1[[1]], output_s1, filetype = "GTiff", overwrite = TRUE)
+#raster_s1 <- terra::wrap(result_S1[[1]])
+#save(raster_s1, file= output_s1)
 })
 
 system.time({
   result_S2<- CSI_df_map_A(join_d, bio_sel, "S2", V_csi, n_cores = 10, s_n=2)
-  save(result_S2, file= output_s2)
+  terra::writeRaster(result_S2[[1]], output_s2, filetype = "GTiff", overwrite = TRUE)
+  #raster_s2 <- terra::wrap(result_S2[[1]])  
+  #save(raster_s2, file= output_s2)
 })
+
+
+#### #### Group evaluation CSIs  #### ####
+df_eval_s1 <- result_S1[[2]]
+df_eval_s2 <- result_S2[[2]]
+
+#df_eval_s1 <- result_S1
+#df_eval_s2 <- result_S2
+
+df_eval <- rbind(df_eval_s1,df_eval_s2)
+
+head(df_eval)
+
+cat("Output file should go here ", output_df_eval, "\n")
+write.csv(df_eval, file= output_df_eval)
