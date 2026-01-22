@@ -213,3 +213,101 @@ rule CSI_RF_apply:
         {output.out} \
         >{log.out} 2> {log.err}
         """
+
+
+rule Raw_RF_optimalParam:
+    '''
+   Find the optimla paramters for the RF using the CSI with S2 data w
+    '''
+    input:
+        all_v = "results/species/AssignVariables/{sp}_allv.csv",
+        bioV = "results/species/CSI/{sp}_BioV.csv"
+
+    output:
+        out = 'results/species/CSI/{sp}_Raw_RF_optimalParam.csv',
+        out_allV = 'results/species/CSI/{sp}_Raw_allV.csv'
+        
+    log:
+        err = "logs/CSI/{sp}_Raw_RF_optimalParam.err",
+        out = "logs/CSI/{sp}_Raw_RF_optimalParam.out"
+    conda:
+	    '../envs/CSI.yaml'
+
+    params:
+        tribe_list = lambda wildcards: config["Tribe_list"][wildcards.sp],
+        v_name = lambda wildcards: ",".join(config["Variables_CSI"][wildcards.sp]),
+        path_bioclim = config["Path_Bioclim"]
+
+    shell:
+        r"""      
+        Rscript workflow/scripts/CSI/Raw_RF_optimalParam.R \
+        {input.all_v} \
+        {input.bioV} \
+        "{params.path_bioclim}" \
+        "{params.v_name}" \
+        "{params.tribe_list}" \
+        {output.out} \
+        {output.out_allV} \
+        >{log.out} 2> {log.err}
+        """
+
+rule Raw_RF_extractParams:
+    '''
+   extract the best parameters from the RF
+    '''
+    input:
+        paramOpt = 'results/species/CSI/{sp}_Raw_RF_optimalParam.csv'
+        
+    output:
+        table = 'results/species/CSI/{sp}_Raw_RF_top5_params.csv',
+        out = 'results/species/CSI/{sp}_Raw_RF_params.csv'
+
+    log:
+        err = "logs/CSI/{sp}_Raw_RF_extractParams.err",
+        out = "logs/CSI/{sp}_Raw_RF_extractParams.out"
+
+    conda:
+	    '../envs/CSI.yaml'
+
+    shell:
+        r"""      
+        Rscript workflow/scripts/RF/RF_extractParams.R \
+        {input.paramOpt} \
+        {output.table} \
+        {output.out} \
+        >{log.out} 2> {log.err}
+        """
+
+
+rule Raw_RF_apply:
+    '''
+   apply RF with the bets parameters
+    '''
+    input:
+       occurrences = 'results/species/CSI/{sp}_Raw_allV.csv',
+       RawparamOpt = 'results/species/CSI/{sp}_Raw_RF_params.csv'
+
+    output:
+        out = 'results/species/CSI/Raw_RF_{sp}_relimpAUC1.csv'
+
+    log:
+        err = "logs/CSI/{sp}_Raw_RF_apply.err",
+        out = "logs/CSI/{sp}_Raw_RF_apply.out"
+
+    conda:
+	    '../envs/CSI.yaml'
+    
+    params:
+        v_name = lambda wildcards: ",".join(config["Variables_CSI"][wildcards.sp]),
+        tribe_list = lambda wildcards: config["Tribe_list"][wildcards.sp]
+
+    shell:
+        r"""      
+        Rscript workflow/scripts/CSI/Raw_RF_apply.R \
+        {input.occurrences} \
+        "{params.tribe_list}"\
+        "{params.v_name}" \
+        {input.RawparamOpt}\
+        {output.out} \
+        >{log.out} 2> {log.err}
+        """
