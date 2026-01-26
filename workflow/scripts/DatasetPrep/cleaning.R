@@ -321,10 +321,18 @@ sp <- read.csv(occurrencesE, sep = ",") #
 # clean data removing Unvalid and duplicated, occurences, occurrences in lakes,
 # sea etc. Information in cleaning.docx
 
-head(sp)
 
-res <- occ_cleaning(sp, details = FALSE, lon = "decimallongitude", lat = "decimallatitude", sea = FALSE, lak = FALSE, map = FALSE)
+res <- occ_cleaning(sp, details = TRUE, lon = "decimallongitude", lat = "decimallatitude", sea = FALSE, lak = FALSE, map = FALSE)
 occ_cle <- sp[res, ]
+
+cat("Total rows before Cleaning", nrow(sp), "\n")
+cat("S1 Presences before Cleaning: ", nrow(sp[sp$S == "S1", ]), "\n")
+cat("S2 Presences before Cleaning: ", nrow(sp[sp$S == "S2", ]), "\n \n")
+
+cat("Total rows after Cleaning ", nrow(occ_cle), "\n")
+cat("S1 Presences after Cleanign: ", nrow(occ_cle[occ_cle$S == "S1", ]), "\n")
+cat("S2 Presences after Cleaning ", nrow(occ_cle[occ_cle$S == "S2", ]), "\n")
+
 
 
 write.csv(occ_cle, output)

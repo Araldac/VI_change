@@ -2,10 +2,10 @@ configfile: 'config/InternshipSMKConfig.yaml'
 
 #sp = ["LH"]
 
-print("DEBUG Native_Countries type:", config.get("Native_Countries"))
-print("DEBUG First_Record_Date value:", config.get("First_Record_Date"))
-print("DEBUG species_name type:", config.get("species_name"))
-print("DEBUG species_name type:", config.get("Tribe_list"))
+#print("DEBUG Native_Countries type:", config.get("Native_Countries"))
+#print("DEBUG First_Record_Date value:", config.get("First_Record_Date"))
+#print("DEBUG species_name type:", config.get("species_name"))
+#print("DEBUG species_name type:", config.get("Tribe_list"))
 
 
 
@@ -87,10 +87,10 @@ rule Climate_DownloadPCA:
     Load the 2PCA Axes from the NAS - Error: ca't be loaded from the wsl, needs to be runned on Windows
     '''
     input:
-        ax1 = 'data/variables/Climate/pca_Worldclim_25p_2.tif',
+        ax1 = 'data/variables/Climate/pca_Worldclim_25p_1.tif',
         ax2 = 'data/variables/Climate/pca_Worldclim_25p_2.tif'
     output:
-        out='results/variables/Climate_PCA.RData'
+        out='results/variables/Climate_PCA.tif'
         
     log:
         err = "logs/VariablesPrep/Climate_DownloadPCA.err",

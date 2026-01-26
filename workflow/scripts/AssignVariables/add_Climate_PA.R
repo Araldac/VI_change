@@ -33,12 +33,12 @@ load_PCA<- function(data, climate_data){
   # Convert to SpatRaster
   cat("Loading PCA data...\n")
   #climate_data_terra <- terra::rast(climate_data)
-  climate_data_terra<-terra::unwrap(climate_data)
+  #climate_data_terra<-terra::unwrap(climate_data)
   # Extract values all at once
   coords <- data[, c("decimallongitude", "decimallatitude")]
 
   cat("Extract PCA data...\n")
-  values <- terra::extract(climate_data_terra, coords, cells = TRUE)
+  values <- terra::extract(climate_data, coords, cells = TRUE)
   
   cat("join PCA data...\n")
   # Join results
@@ -78,7 +78,7 @@ PA_byS <- function(data, climate_data, antmaps_pol, antmaps_dis, species_name){
     set.seed(3)
 
     cat("Loading climatic data...\n")
-    rastclim <- rast(climate_data)
+    rastclim <- climate_data
     
   #separate two S datasets
   input_biomodS1<-data  %>%filter (S=="S1") %>% dplyr::select(decimallatitude, decimallongitude, PCA_1, PCA_2) %>% mutate(Occurrence = 1)
@@ -162,7 +162,7 @@ occ_E_cols <- read.csv(occurrences, sep = ",")
 
 #print(climate_data2)
 #climate_data2 <- readRDS(PCA_climate)
-load(PCA_climate)      # should define climate_data2
+climate_data2 <- terra::rast(PCA_climate)      # should define climate_data2
 
 if (!exists("climate_data2")) stop("Object 'climate_data2' not found in PCA_climate RData")
 

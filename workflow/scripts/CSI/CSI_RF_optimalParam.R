@@ -10,7 +10,8 @@
 args <- commandArgs(trailingOnly = TRUE)
 occurrences <-args[1]
 biotic <- args[2]
-output <- args[3]
+climaitc_vars <- args[3]
+output <- args[4]
 
 pkg <- c( "randomForest", "pROC", "dplyr", "tidyr", "foreach", "pbapply", "doParallel")
 lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
@@ -98,8 +99,13 @@ biotic_var <- strsplit(biotic, " +")
 biotic_var<-unlist(biotic_var)
 cat(sprintf("  Tribes to analyze: %s\n", paste(biotic_var, collapse = ", ")))
 
+#### Process climalist ####
+climaitc_vars <- strsplit(climaitc_vars, " +")
+climaitc_vars<-unlist(climaitc_vars)
+cat(sprintf("  TClimatic variables are : %s\n", paste(climaitc_vars, collapse = ", ")))
+
 explicative_var<-c(biotic_var, 
-                   "CSI",
+                   climaitc_vars,
                    "trade",
                    "HM")
 

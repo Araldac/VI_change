@@ -14,7 +14,7 @@ output <- args[3]
 
 #download/install packages
 #pkg <- c("ijtiff", "terra", "ijtiff", "raster", "dplyr", "tidyr", "ade4", "sp")
-pkg<-c("raster", "terra" )
+pkg<-c( "terra" )
 lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
 
 
@@ -42,11 +42,12 @@ lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
 r_a1 <- terra::rast(ax1)
 r_a2 <- terra::rast(ax2)
 
-pca_world_2.5 <- c(r_a1, r_a2)
-names(pca_world_2.5) <- c("PCA_1", "PCA_2")
+climate_data2 <- c(r_a1, r_a2)
+names(climate_data2) <- c("PCA_1", "PCA_2")
 
 # Wrap directly (this handles memory internally)
-climate_data2 <- terra::wrap(pca_world_2.5)
+#climate_data2 <- terra::wrap(pca_world_2.5)
 
 # Save
-save(climate_data2, file = output)
+#save(climate_data2, file = output)
+terra::writeRaster(climate_data2, filename = output, filetype = "GTiff", overwrite = TRUE)

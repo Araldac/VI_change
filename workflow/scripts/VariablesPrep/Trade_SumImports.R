@@ -28,7 +28,7 @@ lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
 
 #### #### Sum imports from countries where the species is present  #### ####
 
-sum_import<-function(data, iso3_first_records, ISOcountry, min_year=1885, max_year=2014){
+sum_import<-function(data, iso3_first_records, ISOcountry, min_year=max(firstRecord_date,1827), max_year=2014){
   year_sumimport<-data.frame(ISO3= character(), year=numeric(), Sum=numeric(),stringsAsFactors = FALSE )
 
   c_w_lh<-c() 
@@ -135,4 +135,6 @@ all_c_year_sumimport <- pbapply::pblapply(1:length(u_o), function(i) {
 #merge the lists
 all_c_year_sumimport <- dplyr::bind_rows(all_c_year_sumimport)
 
-write.csv(all_c_year_sumimport, output)
+head(all_c_year_sumimport)
+
+write.csv(all_c_year_sumimport, file= output)

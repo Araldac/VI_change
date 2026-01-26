@@ -336,9 +336,9 @@ devtools::install_github("jmestret/GeoThinneR")
       summary(grid_raster_thin)
       print(grid_raster_thin$retained)
       list_index <- unlist(grid_raster_thin$retained)
-      print(list_index)
-      print("retained)")
-      head(dataS[list_index,])
+      #print(list_index)
+      #print("retained")
+      #head(dataS[list_index,])
       
   return(dataS[list_index,])}
 
@@ -351,7 +351,7 @@ occ_cle <- read.csv(data_cleaned, sep = ",") #
 #laod raster 
 r_a1 <- terra::rast(raster)
 
-head(occ_cle)
+#head(occ_cle)
 ### Thinning
 
 # Thinning of the data using code from Olivia bates and Sebatien Ollier. More information in thnning.docx

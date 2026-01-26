@@ -2,17 +2,35 @@ name: Internship
 
 species_name:
   LH: "Linepithema humile"
+#  TS: "Tetramorium simillimum"
+  TM: "Tapinoma melanocephalum"
+  WA: "Wasmannia auropunctata"
 
 First_Record_Date:
   LH: 1885
+#  TS: 1851
+  TM: 1793
+  WA: 1863
 
 Path_Bioclim : "data/raster/Worldclim/"
 
 Native_Countries:  
-  LH: ["ARG", "BRA", "PRY", "URY"]
+  LH: ["ARG", "BRA", "PRY", "URY", "BOL"]
+#  TS: [ "EGY", "SDN", "ERI", "ETH","UGA",  "KEN", "TZA", "MOZ",    "ZAF",    "ZMB",    "MWI",    "RWA",    "COD",  "COG",    "GAB",    "CMR",    "STP",    "NGA",    "TGO",    "GHA",    "CIV",    "GIN",    "SEN","CPV"]
+  TM: ["CHN", "HKG", "TWN" ,"MAC" ,"MYS", "IDN", "KHM", "THA" ,"VNM" ,"MMR" ,"PHL" ,"LAO" ,"IND" ,"BGD", "NPL" ,"LKA"]
+  WA: ["TTO", "HND" ,"BLZ" ,"CRI", "SLV", "NIC", "PAN" ,"GTM", "BRA", "COL" ,"ARG", "VEN","BOL" ,"GUY", "SUR" ,"GUF", "ECU", "PER", "PRY", "URY"]
 
 Tribe_list:  
   LH: ["Leptomyrmecini", "Tapinomini", "Bothriomyrmecini", "Dolichoderini"]
+#  TS: ["Myrmicini","Pogonomyrmecini", "Stenammini", "Crematogastrini", "Attini", "Solenopsidini"]
+  TM: ["Leptomyrmecini", "Tapinomini", "Bothriomyrmecini", "Dolichoderini"]
+  WA: ["Myrmicini","Pogonomyrmecini", "Stenammini", "Crematogastrini", "Attini", "Solenopsidini"]
 
 Variables_CSI:
-  LH: ["bio_2",  "bio_9",  "bio_3" , "bio_1" , "bio_8" , "bio_12", "bio_15"]
+  LH: [ "bio_2",  "bio_8" , "bio_9", "bio_12", "bio_15"]
+  TM: ["bio_2" ,"bio_3"  ,"bio_8" ,  "bio_15", "bio_18" ,"bio_19"]
+  WA: ["bio_2" ,  "bio_3", "bio_5" , "bio_12" ,"bio_15" ,"bio_19"]
+
+Climatic_variables:
+  CSI: ["CSI"]
+  Raw: "Variables_CSI"
