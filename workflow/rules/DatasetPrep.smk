@@ -1,40 +1,5 @@
 configfile: 'config/InternshipSMKConfig.yaml'
 
-#rule cleanThinSelectE:
-#    '''
-#    General rule to Clean, Thin and Select Exotic occurrences, the following rules decompose these three steps
-#    '''
-#    input:
-#        occurrencesGBIF = 'data/occurrences/LH_GBIF.csv' ,
-#        distributionData = 'data/distribution/LH_dis.RData' ,
-#       sf_lak = 'data/raster/sf/lak.RData' ,
-#        sf_land = 'data/raster/sf/land.RData' ,
-#        sf_sea = 'data/raster/sf/sea.RData' ,
-#        sf_unland = 'data/raster/sf/unland.RData',
-#        antmaps_pol = 'data/distribution/AntmapsPolGeneral.RData'
-#
-#    output:
-#        out='results/species/DatasetPrep/LH_ctsE.csv'
-#        
-#    log:
-#        err = "logs/DatasetPrep/cleanThinSelectE.err",
-#        out = "logs/DatasetPrep/cleanThinSelectE.out"
-#    conda:
-#	    '../envs/DatasetPrep.yaml'
-#
-#    shell:
-#        r"""
-#        Rscript workflow/scripts/DatasetPrep/cleanThinSelectE.R \
-#        {input.occurrencesGBIF} \
-#        {input.distributionData} \
-#        {input.sf_lak} \
-#        {input.sf_land} \
-#        {input.sf_sea} \
-#        {input.sf_unland} \
-#        {input.antmaps_pol} \
-#        {output.out} \
-#        >{log.out} 2> {log.err}
-#        """
 rule selectE:
     '''
     Selecting only the Exotic occurrences
@@ -77,12 +42,10 @@ rule cleaning:
     '''
     input:
         selE = 'results/species/DatasetPrep/{sp}_selE.csv' ,
-        #distributionData = 'data/distribution/LH_dis.RData' ,
         sf_lak = 'data/raster/sf/lak.RData' ,
         sf_land = 'data/raster/sf/land.RData' ,
         sf_sea = 'data/raster/sf/sea.RData' ,
         sf_unland = 'data/raster/sf/unland.RData'
-        #antmaps_pol = 'data/distribution/AntmapsPolGeneral.RData'
 
     output:
         out='results/species/DatasetPrep/{sp}_cle.csv'
@@ -113,12 +76,6 @@ rule thinning:
     input:
         data_cleaned = 'results/species/DatasetPrep/{sp}_cle.csv',
         raster = 'data/variables/Climate/pca_Worldclim_25p_2.tif'
-        #distributionData = 'data/distribution/LH_dis.RData' ,
-        #sf_lak = 'data/raster/sf/lak.RData' ,
-        #sf_land = 'data/raster/sf/land.RData' ,
-        #sf_sea = 'data/raster/sf/sea.RData' ,
-        #sf_unland = 'data/raster/sf/unland.RData',
-        #antmaps_pol = 'data/distribution/AntmapsPolGeneral.RData'
 
     output:
         out='results/species/DatasetPrep/{sp}_thin.csv'

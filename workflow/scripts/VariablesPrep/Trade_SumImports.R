@@ -91,14 +91,20 @@ sum_import<-function(data, iso3_first_records, ISOcountry, min_year=max(firstRec
 
 
 #### #### load dataset #### ####
-first_records <- read.csv(firstRecord_Countries)
+cat("loading datasets \n")
+first_records <- read.csv(firstRecord_Countries, sep=",")
+head(first_records)
 HistTrade <- read.csv(historicalTrade)
 
+if( !is.null(first_records$Region) == TRUE  ){
+first_records$ISO2 <- first_records$Region
+}
 #### #### prepare first occurrences document #### ####
 
 #If Namibia is present count it as NA not <NA> 
 first_records$ISO2[is.na(first_records$ISO2)] <- "NA"
 
+cat("select only firsts records in mainland not in islands \n ")
 #select only firsts records in mainland not in islands
 iso2_first_records<-first_records[nchar(first_records$ISO2) == 2,]
 iso2_first_records$iso3<-iso2ToIso3(iso2_first_records$ISO2) # add iso 2 columns
@@ -107,6 +113,7 @@ iso3_first_records<-iso2_first_records[3:4]#just select year and country code
 nativeCountries <- strsplit(nativeCountries, " +")
 nativeCountries<-unlist(nativeCountries)
 
+cat("Native countries : ", nativeCountries, " first date : ", firstRecord_date, "\n")
 #Set Native area as frist record as the first record date  
 for (i in 1:length(nativeCountries)){
   print(c(firstRecord_date, nativeCountries[i]))
@@ -115,6 +122,8 @@ for (i in 1:length(nativeCountries)){
 }
 
 
+
+cat(" Sum over each year when the species is present in that country \n")
 #### #### Sum over each year when the species is present in that country #### ####
 
 #get unique names

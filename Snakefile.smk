@@ -1,4 +1,9 @@
 
+list_files = ["results/species/RF/RF_TM_relimpAUC1.csv", "results/species/CSI/Raw_RF_TM_relimpAUC1.csv"]
+
+rule all:
+    input: list_files
+
 #Snakefile at repo root
 include: "workflow/rules/DatasetPrep.smk"   # adjust filename to yours
 include: "workflow/rules/VariablesPrep.smk"   # adjust filename to yours
