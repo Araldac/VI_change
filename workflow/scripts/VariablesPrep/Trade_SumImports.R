@@ -108,7 +108,10 @@ cat("select only firsts records in mainland not in islands \n ")
 #select only firsts records in mainland not in islands
 iso2_first_records<-first_records[nchar(first_records$ISO2) == 2,]
 iso2_first_records$iso3<-iso2ToIso3(iso2_first_records$ISO2) # add iso 2 columns
-iso3_first_records<-iso2_first_records[3:4]#just select year and country code
+#iso3_first_records<-iso2_first_records[3:4]#just select year and country code
+iso3_first_records<-iso2_first_records %>% select(iso3, FirstRecord)
+
+head(iso3_first_records)
 
 nativeCountries <- strsplit(nativeCountries, " +")
 nativeCountries<-unlist(nativeCountries)
