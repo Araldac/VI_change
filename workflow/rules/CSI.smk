@@ -5,12 +5,13 @@ def get_climatic_vars(wildcards):
     if wildcards.var_type == "CSI":
         return config["Climatic_variables"]["CSI"]
     elif wildcards.var_type == "Raw":
-        return config["Variables_CSI"][wildcards.sp]
+  #      return config["Variables_CSI"][wildcards.sp]
+        return ",".join(config["Climatic_variables"]["CSI"])
     else:
         raise ValueError(f"Unknown var_type: {wildcards.var_type}")
 
 
-rule add_Bioclim_V:
+rule add_Bioclim_selected:
     '''
    Add biolcimatic variables selected 
     '''
@@ -18,29 +19,30 @@ rule add_Bioclim_V:
         occurrences = 'results/species/AssignVariables/{sp}_allv.csv'
         
     output:
-        out= 'results/species/CSI/{sp}_allV_Raw.csv'
+        out= 'results/species/CSI/{sp}_allV_VBio.csv'
         
     log:
-        err = "logs/CSI/{sp}_add_Bioclim_V.err",
-        out = "logs/CSI/{sp}_add_Bioclim_V.out"
+        err = "logs/CSI/{sp}_add_Bioclim_selected.err",
+        out = "logs/CSI/{sp}_add_Bioclim_selected.out"
 
     conda:
 	    '../envs/CSI.yaml'
 
     params:
-        v_name = lambda wildcards: ",".join(config["Variables_CSI"][wildcards.sp]),
-        path_bioclim = config["Path_Bioclim"]
+        path_bioclim = config["Path_Bioclim"],
+        v_name = ",".join(config["Climatic_variables"]["CSI"])
 
     shell:
         r"""
-        Rscript workflow/scripts/CSI/add_Bioclim_V.R \
+        Rscript workflow/scripts/CSI/add_Bioclim_selected.R \
         {input.occurrences} \
         "{params.path_bioclim}" \
-        "{params.v_name}" \
+        "{params.v_name}"\
         {output.out} \
         >{log.out} 2> {log.err}
         """
-    
+
+
 rule CSI_compute:
     '''
    Applies 1 CSI for each PA set, it takes aprox 8 hours to run
@@ -63,7 +65,8 @@ rule CSI_compute:
 	    '../envs/CSI.yaml'
     
     params:
-        v_name = lambda wildcards: ",".join(config["Variables_CSI"][wildcards.sp]),
+        #v_name = lambda wildcards: ",".join(config["Variables_CSI"][wildcards.sp]),
+        v_name = ",".join(config["Climatic_variables"]["CSI"]),
         path_bioclim = config["Path_Bioclim"]
 
     shell:

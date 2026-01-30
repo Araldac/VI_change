@@ -22,8 +22,10 @@ lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
 
 ApplyingAllCombRF <- function(data, env_vars, rep_id = NULL) {
   #cat("cluster \n")
-  cl <- parallel::makeCluster(10)
-  doParallel::registerDoParallel(cl)
+  #ncores <- 1
+  #message(paste("Number of cores to use:", ncores))
+  #cl <- parallel::makeCluster(ncores)
+  #doParallel::registerDoParallel(cl)
   
   #cat("clean data \n")
   # Identifier les lignes avec des NA
@@ -43,8 +45,8 @@ ApplyingAllCombRF <- function(data, env_vars, rep_id = NULL) {
   
   ##Apply RF to each parameter
   #cat("Apply RF to each parameter \n")
-  resultAllComb <- foreach(i=1:nrow(all_comb_RF), .packages = c('randomForest')) %dopar% {
-    cat(" RF  \n")
+  resultAllComb <- foreach(i=1:nrow(all_comb_RF), .packages = c('randomForest')) %do% {#%dopar% {
+    #cat(" RF  \n")
     resultOneComb <- randomForest(
       x = X, 
       y = Y, 
@@ -71,7 +73,7 @@ ApplyingAllCombRF <- function(data, env_vars, rep_id = NULL) {
       )
     )
   }  
-  parallel::stopCluster(cl)
+  #parallel::stopCluster(cl)
   return(resultAllComb)
 }
 

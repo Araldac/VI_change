@@ -111,6 +111,8 @@ RF_apply<-function(data, env_vars, S, seed, pa_n = NA){
                   
 #### #### load data #### #### 
 data<-read.csv(occurrences)
+sp_name <- unique(data$Taxa)
+cat("the species is : ", sp_name)
 
 #### #### extract optimal parameters for RF #### #### 
 RFp <- read.csv(RF_params)
@@ -189,5 +191,8 @@ results_S2 <- dplyr::bind_rows(results_S2_RF)
   
 cat("Aggregating results for S1 and S2")  
 results_RF <- rbind(results_S2, results_S1)
+
+results_RF$Taxa <- sp_name
+
 write.csv(results_RF, output)
 

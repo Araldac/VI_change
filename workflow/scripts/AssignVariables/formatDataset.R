@@ -8,16 +8,26 @@
 ## Load arguments ####
 args <- commandArgs(trailingOnly = TRUE)
 occurrences <-args[1]
-output <- args[2]
+sp_name <- args[2]
+biotic <- args[3]
+output <- args[4]
 
 library(dplyr)
 ################################################################################
 #Code
 ################################################################################
 
+###extracte biotic variables
+biotic_var <- strsplit(biotic, " +")
+biotic_var<-unlist(biotic_var)
+cat(sprintf("  Tribes to analyze: %s\n", paste(biotic_var, collapse = ", ")))
+
 data <- read.csv(occurrences)
 
-data_ref <- data %>% dplyr::select(Occurrence, 
+data$Taxa <- sp_name
+
+data_ref <- data %>% dplyr::select(Taxa,
+                                    Occurrence, 
                                     decimallatitude,
                                     decimallongitude,
                                     S,
@@ -26,11 +36,8 @@ data_ref <- data %>% dplyr::select(Occurrence,
                                     ISO,
                                     PCA_1,
                                     PCA_2,
-                                    Leptomyrmecini,
-                                    Tapinomini,
-                                    Bothriomyrmecini,
-                                    Dolichoderini,
                                     trade,
-                                    HM)
+                                    HM,
+                                    biotic_var)
 
 write.csv(data_ref, output)

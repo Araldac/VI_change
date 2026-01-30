@@ -321,9 +321,35 @@ sp <- read.csv(occurrencesE, sep = ",") #
 # clean data removing Unvalid and duplicated, occurences, occurrences in lakes,
 # sea etc. Information in cleaning.docx
 
+#if (sp %in% c("Technomyrmex albipes", "Anochetus graeffei", "Hypoponera eduardi", "Iridomyrmex suchieri")){
+#    res <- occ_cleaning(occ_E, details = FALSE, lon = "decimallongitude", lat = "decimallatitude", occ_precision = NULL, sea = FALSE, lak = FALSE, map = FALSE)
+#    occ_cle <- occ_E[res, ]  
+#    
+#  }
+#  else {
+#  res <- occ_cleaning(occ_E, details = FALSE, lon = "decimallongitude", lat = "decimallatitude", sea = FALSE, lak = FALSE, map = FALSE)
+#  occ_cle <- occ_E[res, ]}
+  
 
-res <- occ_cleaning(sp, details = TRUE, lon = "decimallongitude", lat = "decimallatitude", sea = FALSE, lak = FALSE, map = FALSE)
-occ_cle <- sp[res, ]
+cat("Cleaning S1 \n")
+sp_s1 <- sp %>% filter(S =="S1")
+res1 <- occ_cleaning(sp_s1, details = FALSE, lon = "decimallongitude", lat = "decimallatitude", sea = FALSE, lak = FALSE, map = FALSE)
+
+#occ_cleS1 <- sp_s1[as.vector(res1), ]
+occ_cleS1 <- sp_s1[res1, , drop = FALSE]
+
+cat("Cleaning S1 Ended ! \n Startign Cleaning S2 \n")
+sp_s2 <- sp %>% filter(S =="S2")
+res2 <- occ_cleaning(sp_s2, details = FALSE, lon = "decimallongitude", lat = "decimallatitude", sea = FALSE, lak = FALSE, map = FALSE)
+#occ_cleS2 <- sp_s2[as.vector(res2), ]
+occ_cleS2 <- sp_s2[res2, , drop = FALSE]
+
+
+
+cat("Clenaing ended, join rows \n")
+
+occ_cle <- rbind(occ_cleS1, occ_cleS2)
+
 
 cat("Total rows before Cleaning", nrow(sp), "\n")
 cat("S1 Presences before Cleaning: ", nrow(sp[sp$S == "S1", ]), "\n")

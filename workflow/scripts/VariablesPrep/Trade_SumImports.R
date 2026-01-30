@@ -18,7 +18,7 @@ output <- args[5]
 library(devtools)
 #install.packages("MazamaSpatialUtils", repos = "http://cran.us.r-project.org")
 devtools::install_github('mazamascience/MazamaSpatialUtils', build_vignettes=TRUE)
-pkg <- c("MazamaSpatialUtils", "dplyr", "stringr", "pbapply")#, "sf", "dplyr", "tidyr", "purrr", "pbapply", "zoo")#, "", "", "")
+pkg <- c("MazamaSpatialUtils", "dplyr", "stringr", "pbapply", "tidyr")#, "sf", "dplyr", "tidyr", "purrr", "pbapply", "zoo")#, "", "", "")
 lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
 
 
@@ -102,7 +102,8 @@ first_records$ISO2 <- first_records$Region
 #### #### prepare first occurrences document #### ####
 
 #If Namibia is present count it as NA not <NA> 
-first_records$ISO2[is.na(first_records$ISO2)] <- "NA"
+#first_records$ISO2[is.na(first_records$ISO2)] <- "NA"
+first_records <- first_records %>% drop_na(ISO2)
 
 cat("select only firsts records in mainland not in islands \n ")
 #select only firsts records in mainland not in islands

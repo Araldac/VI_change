@@ -146,10 +146,16 @@ rule formatDataset:
     conda:
 	    '../envs/AssignVariables.yaml'
 
+    params:
+        sp_name = lambda wildcards: config["species_name"][wildcards.sp],
+        tribe_list = lambda wildcards: config["Tribe_list"][wildcards.sp]
+
     shell:
         r"""
         Rscript workflow/scripts/AssignVariables/formatDataset.R \
         {input.occurrences} \
+        "{params.sp_name}" \
+        "{params.tribe_list}" \
         {output.out} \
         >{log.out} 2> {log.err}
         """

@@ -4,7 +4,6 @@ Path_Bioclim : "data/raster/Worldclim/"
 
 species_name:
   LH: "Linepithema humile"
-#  TS: "Tetramorium simillimum"
   TM: "Tapinoma melanocephalum"
   WA: "Wasmannia auropunctata"
   PL: "Paratrechina longicornis"
@@ -13,10 +12,13 @@ species_name:
   MF: "Monomorium floricola"
   HP: "Hypoponera punctatissima"
   HO: "Hypoponera opaciceps"
+  AG: "Anoplolepis gracilipes"
+  HE: "Hypoponera eduardi"
+  TB: "Tetramorium bicarinatum"
+  TA: "Technomyrmex albipes"
 
 First_Record_Date:
   LH: 1885
-#  TS: 1851
   TM: 1793
   WA: 1863
   PL: 1802
@@ -25,11 +27,14 @@ First_Record_Date:
   MF: 1863
   HP: 1873
   HO: 1896
+  AG: 1859
+  HE: 1911
+  TB: 1840
+  TA: 1887
 
 
 Native_Countries:  
   LH: ["ARG", "BRA", "PRY", "URY", "BOL"]
-#  TS: [ "EGY", "SDN", "ERI", "ETH","UGA",  "KEN", "TZA", "MOZ",    "ZAF",    "ZMB",    "MWI",    "RWA",    "COD",  "COG",    "GAB",    "CMR",    "STP",    "NGA",    "TGO",    "GHA",    "CIV",    "GIN",    "SEN","CPV"]
   TM: ["CHN", "HKG", "TWN" ,"MAC" ,"MYS", "IDN", "KHM", "THA" ,"VNM" ,"MMR" ,"PHL" ,"LAO" ,"IND" ,"BGD", "NPL" ,"LKA"]
   WA: ["TTO", "HND" ,"BLZ" ,"CRI", "SLV", "NIC", "PAN" ,"GTM", "BRA", "COL" ,"ARG", "VEN","BOL" ,"GUY", "SUR" ,"GUF", "ECU", "PER", "PRY", "URY"]
   PL: ["IND", "BGD"]
@@ -38,20 +43,25 @@ Native_Countries:
   MF: ["CHN", "HKG", "TWN", "MAC", "MYS", "IDN", "THA", "VNM", "MMR", "PHL", "LAO", "NA", "IND", "BTN", "LKA"]
   HP: ["ZMB", "ZWE", "ETH", "UGA", "KEN", "RWA", "TZA", "COD", "CMR", "AGO", "CAF", "GAB", "SDN", "EGY", "BWA", "ZAF", "GHA", "GIN", "CIV", "SEN", "TGO", "BEN", "NGA", "CPV"]
   HO: ["CUB", "JAM", "PRI", "BHS", "DOM", "NA", "TTO", "HND", "CRI", "NIC", "PAN", "GTM", "BRA", "COL", "ARG", "VEN", "BOL", "GUY", "SUR", "GUF", "ECU", "PER", "PRY", "URY"]
-
-
+  AG: ["CHN", "HKG", "MAC", "MYS", "IDN", "KHM", "THA", "VNM", "MMR", "PHL", "LAO", "NA", "IND", "BGD", "PAK", "LKA"]
+  HE: ["DZA", "MAR", "IRN", "PSE", "CYP", "LBN", "GEO", "SYR", "TUR", "UKR", "BGR", "RUS", "MKD", "SRB", "HRV", "GRC", "ITA", "ESP", "BIH", "PRT", "SVN", "AND", "MNE", "NA", "MLT", "FRA", "CHE"]
+  TB: ["CHN", "HKG", "TWN", "MAC", "MYS", "IDN", "THA", "VNM", "MMR", "PHL", "NA"]
+  TA: ["CHN", "HKG", "TWN", "MYS", "IDN", "KHM", "THA", "VNM", "MMR", "PHL", "LAO", "NA", "IND", "BGD", "LKA"]
 
 Tribe_list:  
   LH: ["Leptomyrmecini", "Tapinomini", "Bothriomyrmecini", "Dolichoderini"]
-#  TS: ["Myrmicini","Pogonomyrmecini", "Stenammini", "Crematogastrini", "Attini", "Solenopsidini"]
   TM: ["Leptomyrmecini", "Tapinomini", "Bothriomyrmecini", "Dolichoderini"]
   WA: ["Myrmicini","Pogonomyrmecini", "Stenammini", "Crematogastrini", "Attini", "Solenopsidini"]
-  PL: [Myrmelachistini, Lasiini, Melophorini, Formicini, Gesomyrmecini, Oecophyllini, Plagiolepidini, Gigantiopini, Santschiellini, Myrmoteratini, Camponotini]
+  PL: ["Myrmelachistini", "Lasiini", "Melophorini", "Formicini", "Gesomyrmecini", "Oecophyllini", "Plagiolepidini", "Gigantiopini", "Santschiellini", "Myrmoteratini", "Camponotini"]
   MP: ["Myrmicini","Pogonomyrmecini", "Stenammini", "Crematogastrini", "Attini", "Solenopsidini"]
   PM: ["Myrmicini","Pogonomyrmecini", "Stenammini", "Crematogastrini", "Attini", "Solenopsidini"]
   MF: ["Myrmicini","Pogonomyrmecini", "Stenammini", "Crematogastrini", "Attini", "Solenopsidini"]
   HP: ["Platythyreini", "Ponerini"]
   HO: ["Platythyreini", "Ponerini"]
+  AG: ["Myrmelachistini", "Lasiini", "Melophorini", "Formicini", "Gesomyrmecini", "Oecophyllini", "Plagiolepidini", "Gigantiopini", "Santschiellini", "Myrmoteratini", "Camponotini"]
+  HE: ["Platythyreini", "Ponerini"]
+  TB: ["Myrmicini","Pogonomyrmecini", "Stenammini", "Crematogastrini", "Attini", "Solenopsidini"]
+  TA: ["Leptomyrmecini", "Tapinomini", "Bothriomyrmecini", "Dolichoderini"]
 
 
 
@@ -63,4 +73,5 @@ Variables_CSI:
 
 Climatic_variables:
   CSI: ["CSI"]
-  Raw: "Variables_CSI"
+  #Raw: "Variables_CSI"
+  Raw: ["bio_5","bio_9","bio_12","bio_15"] # V selected after variable selection
