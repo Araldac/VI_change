@@ -6,7 +6,7 @@ def get_climatic_vars(wildcards):
         return config["Climatic_variables"]["CSI"]
     elif wildcards.var_type == "Raw":
   #      return config["Variables_CSI"][wildcards.sp]
-        return ",".join(config["Climatic_variables"]["CSI"])
+        return config["Climatic_variables"]["Raw"]
     else:
         raise ValueError(f"Unknown var_type: {wildcards.var_type}")
 
@@ -19,7 +19,7 @@ rule add_Bioclim_selected:
         occurrences = 'results/species/AssignVariables/{sp}_allv.csv'
         
     output:
-        out= 'results/species/CSI/{sp}_allV_VBio.csv'
+        out= 'results/species/CSI/{sp}_allV_Raw.csv'
         
     log:
         err = "logs/CSI/{sp}_add_Bioclim_selected.err",
@@ -30,7 +30,7 @@ rule add_Bioclim_selected:
 
     params:
         path_bioclim = config["Path_Bioclim"],
-        v_name = ",".join(config["Climatic_variables"]["CSI"])
+        v_name = ",".join(config["Climatic_variables"]["Raw"])
 
     shell:
         r"""
@@ -49,7 +49,7 @@ rule CSI_compute:
 
     '''
     input:
-        all_v = "results/species/CSI/{sp}_allV_Raw.csv"
+        all_v = "results/species/CSI/{sp}_allV_VBio.csv"
 #        bioV = "results/species/CSI/{sp}_BioV.csv"
         
     output:
@@ -87,7 +87,7 @@ rule add_CSI:
    Add CSI to the dataframe  
     '''
     input:
-        occurrences = "results/species/CSI/{sp}_allV_Raw.csv",
+        occurrences = "results/species/CSI/{sp}_allV_VBio.csv",
         raster_s1 = 'results/species/CSI/CSI_{sp}_raster_S1.tif',
         raster_s2 = 'results/species/CSI/CSI_{sp}_raster_S2.tif'
         

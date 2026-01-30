@@ -150,7 +150,7 @@ pb <- txtProgressBar(min = 1, max = 100, style = 3)
     
     results_s1<-c()
     for (i in 1:10){
-      seed_s1<-rep*10*i
+      seed_s1<-rep*10*i+2
       data_s1_i <- data[data$S == "S1" & data$PA_N %in% c(NA, i) ,]
       RF_S1_i <- RF_apply(data_s1_i, explicative_var, "S1",seed_s1, i)
       results_s1<- rbind(results_s1, RF_S1_i)
@@ -180,7 +180,7 @@ pb <- txtProgressBar(min = 1, max = 100, style = 3)
    
     results_s2<-c()
     for (i in 1:10){
-      seed_s2<-rep*20*i 
+      seed_s2<-rep*20*i +2
       data_s2_i <- data[data$S == "S2" & data$PA_N %in% c(NA, i) ,]
       RF_S2_i <- RF_apply(data_s2_i, explicative_var, "S2",seed_s2, i)
       results_s2<- rbind(results_s2, RF_S2_i)
