@@ -1,12 +1,12 @@
 
 #list_files = ["results/species/RF/RF_TM_relimpAUC1.csv", "results/species/CSI/Raw_RF_TM_relimpAUC1.csv"]
 #list_files = expand("results/species/RF/RF_{species}_relimpAUC1.csv", species=sp)
-sp = ["LH",  "TM",  "PL",  "MP",  "PM",  "MF",  "HP",  "HO"]  #, "WA", "AG", "TB", "TA", "HE"]
+sp = ["LH",  "TM",  "PL",  "MP",  "PM",  "MF",  "HP" ,  "HO", "WA", "AG", "TB", "TA", "HE"]
 #sp = ["MP", "TA", "HE"]
 
 var_type = ["CSI", "Raw"]
 
-#list_AV =  expand("results/species/AssignVariables/{species}_allv.csv", species=sp)
+list_AV =  expand("results/species/AssignVariables/{species}_allv.csv", species=sp)
 #subset_sp = ["LH",  "TM",  "PL"]
 #list_RF =  expand("results/species/RF/RF_{species}_params.csv", species=sp)
 
@@ -17,7 +17,7 @@ list_RF3 =  expand("results/species/CSI/Raw_RF_{species}_relimpAUC1.csv", specie
 
 
 rule all:
-    input: list_RF3
+    input: list_AV
 
 #Snakefile at repo root
 include: "workflow/rules/DatasetPrep.smk"   # adjust filename to yours

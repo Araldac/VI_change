@@ -42,4 +42,5 @@ dependencies: #by chatbot
   - r-sp = 2.2_0
   - r-scales = 1.4.0
   - r-RColorBrewer = 1.1_3
-  #- r-MazamaSpatialUtils                 ##not present in conda, need to install it in the scrript with devtoolsbas
+  - r-ape
+  #- r-MazamaSpatialUtils                ##not present in conda, need to install it in the scrript with devtoolsbas

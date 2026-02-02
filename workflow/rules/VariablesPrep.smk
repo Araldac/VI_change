@@ -218,3 +218,39 @@ rule Biotic_DistributionN:
         >{log.out} 2> {log.err}
         """
 
+rule Biotic_MPD:
+    '''
+    create and mpd matrix for all the species studied and each bentity
+    '''
+    '''
+    Keep only native distirbution of species 
+    '''
+    input:
+        distributionData = 'results/variables/N_dis.RData',
+        tree = 'data/variables/Biotic/clean_genus_tree.tre',
+        antmaps_pol = 'data/distribution/AntmapsPolGeneral.RData'
+        
+    output:
+        output_MPD ='results/variables/Biotic_MPD_{sp}.csv'
+
+    log:
+        err = "logs/VariablesPrep/Biotic_MPD_{sp}.err",
+        out = "logs/VariablesPrep/Biotic_MPD_{sp}.out"
+    conda:
+	    '../envs/VariablesPrep.yaml'
+    
+    params:
+        sp_name = lambda wildcards: config["species_name"][wildcards.sp]
+    
+    shell:
+        r"""
+        Rscript --vanilla workflow/scripts/VariablesPrep/Biotic_MPD.R \
+        {input.distributionData} \
+        {input.antmaps_pol}\
+        {input.tree}\
+        "{params.sp_name}" \
+        {output.output_MPD} \
+        >{log.out} 2> {log.err}
+        """
+
+

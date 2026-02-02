@@ -38,6 +38,7 @@ data_ref <- data %>% dplyr::select(Taxa,
                                     PCA_2,
                                     trade,
                                     HM,
+                                    MPD,
                                     biotic_var)
 
 write.csv(data_ref, output)

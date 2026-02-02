@@ -48,8 +48,27 @@ RF_apply<-function(data, env_vars, S, seed, pa_n = NA){
           
           data.test$Occurrence <- factor(data.test$Occurrence, levels = c(0, 1))
 
+          
           predictions <- predict(rf_S2, data.test[, env_vars], type = "prob")[, 2]
-          auc_S2 <- auc(roc(as.factor(data.test$Occurrence), predictions))
+
+            classes <- unique(data.test$Occurrence)
+
+            if (length(classes) == 2) {
+
+            # calculate ROC + AUC
+            roc_obj <- roc(as.factor(data.test$Occurrence), predictions)
+            auc_S2 <- auc(roc_obj)
+            auc_S2 <- as.numeric(auc_S2)
+
+            } else {
+            # no presences or no absences
+            auc_S2 <- NA
+            warning("Test set contains only one class (all presences or all absences). Skipping ROC/AUC.")
+            }
+
+
+          #predictions <- predict(rf_S2, data.test[, env_vars], type = "prob")[, 2]
+          #auc_S2 <- auc(roc(as.factor(data.test$Occurrence), predictions))
           
           # Valores reales
           actuals <- data.test$Occurrence
@@ -60,10 +79,10 @@ RF_apply<-function(data, env_vars, S, seed, pa_n = NA){
           #confusion.matrix.training <- table(actuals,predictions_class)
           #cat(confusion.matrix.training)
 
-        actuals <- factor(actuals, levels = c(0,1))
-        predictions_class <- factor(predictions_class, levels = c(0,1))
+          actuals <- factor(actuals, levels = c(0,1))
+          predictions_class <- factor(predictions_class, levels = c(0,1))
 
-        confusion.matrix.training <- table(actuals, predictions_class)
+          confusion.matrix.training <- table(actuals, predictions_class)
 
         
           
@@ -98,7 +117,7 @@ RF_apply<-function(data, env_vars, S, seed, pa_n = NA){
           df_results$Model <- "RF"
           df_results$Seed <- seed
           df_results$S <- S
-          df_results$AUC <- as.numeric(auc_S2)
+          df_results$AUC <- auc_S2
           df_results$TP <- confusion.matrix.training[2,2]
           df_results$TN <- confusion.matrix.training[1,1]
           df_results$FP <- confusion.matrix.training[1,2]

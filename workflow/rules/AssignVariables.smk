@@ -47,7 +47,7 @@ rule add_BioticRelatedness:
         antmaps_pol = 'data/distribution/AntmapsPolGeneral.RData'
 
     output:
-        out='results/species/AssignVariables/{sp}_PA_B.csv'
+        out='results/species/AssignVariables/{sp}_PA_B1.csv'
         
     log:
         err = "logs/AssignVariables/{sp}_add_BioticRelatedness.err",
@@ -69,6 +69,40 @@ rule add_BioticRelatedness:
         {input.antmaps_pol} \
         "{params.sp_name}" \
         "{params.tribe_list}" \
+        {output.out} \
+        >{log.out} 2> {log.err}
+        """
+
+
+rule add_BioticMPD:
+    '''
+    Add biotic MPD
+    '''
+    input:
+        occurrences = 'results/species/AssignVariables/{sp}_PA_B1.csv',
+        antmaps_pol = 'data/distribution/AntmapsPolGeneral.RData',
+        sp_MPD = 'results/variables/Biotic_MPD_{sp}.csv'
+
+    output:
+        out='results/species/AssignVariables/{sp}_PA_B.csv'
+        
+    log:
+        err = "logs/AssignVariables/{sp}_add_BioticMPD.err",
+        out = "logs/AssignVariables/{sp}_add_BioticMPD.out"
+
+    conda:
+	    '../envs/AssignVariables.yaml'
+
+    params:
+        sp_name = lambda wildcards: config["species_name"][wildcards.sp]
+
+    shell:
+        r"""
+        Rscript workflow/scripts/AssignVariables/add_BioticMPD.R \
+        {input.occurrences} \
+        {input.sp_MPD} \
+        {input.antmaps_pol} \
+        "{params.sp_name}" \
         {output.out} \
         >{log.out} 2> {log.err}
         """

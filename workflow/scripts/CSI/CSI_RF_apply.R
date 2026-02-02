@@ -55,7 +55,11 @@ RF_apply<-function(data, env_vars, S, seed, pa_n = NA){
           # Convertir probabilidades a clases (0 o 1) usando umbral 0.5
           threshold <- 0.5
           predictions_class <- ifelse(predictions >= threshold, 1, 0)
-          confusion.matrix.training <- table(actuals,predictions_class)
+          #confusion.matrix.training <- table(actuals,predictions_class)
+
+        actuals <- factor(actuals, levels = c(0,1))
+        predictions_class <- factor(predictions_class, levels = c(0,1))
+        confusion.matrix.training <- table(actuals, predictions_class)
           
           #cat("Results for S: " , S, " PA_n : ", pa_n,"\n ")
           #cat(sprintf("AUC S2: %.4f\n", auc_S2))
