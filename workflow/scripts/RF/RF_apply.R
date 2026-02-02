@@ -152,7 +152,8 @@ biotic_var <- strsplit(biotic, " +")
 biotic_var<-unlist(biotic_var)
 cat(sprintf("  Tribes to analyze: %s\n", paste(biotic_var, collapse = ", ")))
 
-explicative_var<-c(biotic_var, 
+explicative_var<-c("MPD", 
+  #biotic_var, 
                    "PCA_1",
                    "PCA_2",
                    "trade",

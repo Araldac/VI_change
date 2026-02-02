@@ -106,7 +106,8 @@ climaitc_vars <- strsplit(climaitc_vars, " +")
 climaitc_vars<-unlist(climaitc_vars)
 cat(sprintf("  TClimatic variables are : %s\n", paste(climaitc_vars, collapse = ", ")))
 
-explicative_var<-c(biotic_var, 
+explicative_var<-c(#biotic_var, 
+                    "MPD",
                    climaitc_vars,
                    "trade",
                    "HM")

@@ -74,4 +74,4 @@ Variables_CSI:
 Climatic_variables:
   CSI: ["CSI"]
   #Raw: "Variables_CSI"
-  Raw: ["bio_5","bio_9","bio_12","bio_15"] # V selected after variable selection
+  Raw: ["bio_2", "bio_5","bio_9","bio_12","bio_15"] # V selected after variable selection

@@ -17,7 +17,7 @@ list_RF3 =  expand("results/species/CSI/Raw_RF_{species}_relimpAUC1.csv", specie
 
 
 rule all:
-    input: list_AV
+    input: list_RF2
 
 #Snakefile at repo root
 include: "workflow/rules/DatasetPrep.smk"   # adjust filename to yours
