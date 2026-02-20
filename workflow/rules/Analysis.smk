@@ -26,8 +26,3 @@ rule forecast:
         {output.out} \
         >{log.out} 2> {log.err}
         """
-
-#list_RF3 =  expand("results/species/Anlaysis/{sp}_forecast.csv", species=sp)
-
-#rule all:
-#    input: list_RF3

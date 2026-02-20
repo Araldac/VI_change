@@ -52,8 +52,12 @@ RF_apply<-function(data, env_vars, params, S_train, S_test, PA_train, PA_test, r
   # Convertir probabilidades a clases (0 o 1) usando umbral 0.5
   threshold <- 0.5
   predictions_class <- ifelse(predictions >= threshold, 1, 0)
+
+  actuals <- factor(actuals, levels = c(0,1))
+  predictions_class <- factor(predictions_class, levels = c(0,1))
   confusion.matrix.training <- table(actuals,predictions_class)
-  
+
+
   #Prepare where to store the results
   colnames_results<-c("AUC", "TP", "TN", "FP", "FN", "S_train", "S_test", "PA_test", "PA_train", "Seed", "Rep", "Model")
   df_results<-data.frame(matrix(ncol= length(colnames_results), nrow=1))
@@ -109,6 +113,8 @@ all_comb_RF <- expand.grid(
 all_comb_RF <- all_comb_RF %>%
   filter(!(S_train == S_test & PA_train == PA_test))
 
+  head(all_comb_RF)
+
 cl <- parallel::makeCluster(2)
 doParallel::registerDoParallel(cl)
 
@@ -124,12 +130,19 @@ PCA_r <- list()
 
 PCA_vars <- c("PCA_1","PCA_2","MPD","trade","HM")
 
+#checkas 
+str(all_comb_RF)
+all(PCA_vars %in% colnames(data_PCA))
+
+cat("startig foreach \n")
 
 resultAllComb <- foreach(
   i = 1:nrow(all_comb_RF), .combine = rbind, .options.snow = opts,
   .packages = c('randomForest', 'dplyr', 'pROC')
 ) %dopar% {
   
+  #print(all_comb_RF[i, ])
+
   #--- PCA ---
   PCA_r <- lapply(1:10, function(rep){
     RF_apply(
@@ -145,17 +158,17 @@ resultAllComb <- foreach(
     )
   })
   
-  
-  
   # Return list for this combination
-  list(PCA = PCA_r)
+  return(PCA_r)
 }
 
 close(pb)
 parallel::stopCluster(cl)
 
-resultAllComb<-bind_rows(resultAllComb)
+cat("Finished forecast \n Combining resuts \n ")
+resultAllComb <- bind_rows(resultAllComb)
 
+cat("results combined, adding taxa column \n ")
 resultAllComb$Taxa <- taxa
 head(resultAllComb)
 write.csv(resultAllComb, file = output)
