@@ -1,0 +1,17 @@
+name: RF
+
+channels:
+    - conda-forge
+    - bioconda
+    - r
+
+dependencies: 
+  - r-base=4.3
+  - r-randomForest
+  - r-pROC
+  - r-dplyr
+  - r-tidyr
+  - r-foreach
+  - r-pbapply
+  - r-doParallel
+  - r-doSNOW

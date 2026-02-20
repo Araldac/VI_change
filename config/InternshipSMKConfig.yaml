@@ -64,7 +64,6 @@ Tribe_list:
   TA: ["Leptomyrmecini", "Tapinomini", "Bothriomyrmecini", "Dolichoderini"]
 
 
-
 Variables_CSI:
   LH: ["bio_2",  "bio_8" , "bio_9", "bio_12", "bio_15"]
   TM: ["bio_2" , "bio_8" ,  "bio_15", "bio_18" ,"bio_19"]

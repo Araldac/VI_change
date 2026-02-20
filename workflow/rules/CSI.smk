@@ -1,5 +1,7 @@
 configfile: 'config/InternshipSMKConfig.yaml'
 
+## Raw --> 8h-9h to run everything at night for 13 species
+
 def get_climatic_vars(wildcards):
     """Get appropriate climatic variables based on var_type and species"""
     if wildcards.var_type == "CSI":
