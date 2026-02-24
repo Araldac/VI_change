@@ -10,6 +10,9 @@ library(dplyr)
 library(grid)
 library(sf)
 library(ggpubr)
+library(rpart)
+library(plotly)
+library(ggfortify)
 
 ############################
 # ##  1) Paramètres utilisateur    ####
@@ -157,6 +160,7 @@ data <- raw
   #---------------------------------------------------------------
   D <- dist(delta_plr_df[, -1], method = "euclidean")
   hc <- hclust(D, method = "ward.D2")
+  hc <- hclust(D, method = "single")
   
   hc$labels <- delta_plr_df$species
   
@@ -193,6 +197,7 @@ data <- raw
   delta_long$p.values <- per_species_pvals_df$p_value
   delta_long$stars <- cut(delta_long$p.values, breaks=c(-Inf, 0.001, 0.01, 0.05, Inf), label=c("***", "**", "*", ""))  # Create column of significance labels
   
+  delta_long$delta[delta_long$stars == ""]<- 0
   # Extract the order of the tips in the dendrogram
   hc_order <- order.dendrogram(hc_dendro)
   # Order the levels according to their position in the cluster
@@ -200,21 +205,28 @@ data <- raw
                                levels = delta_plr_df$species[hc_order], 
                                ordered = TRUE)
   
+  order_plr <- c("PCA_2.PCA_1", "PCA_1.MPD", "PCA_2.MPD",  "trade.MPD"   , "HM.MPD" , "HM.trade" ,
+                 "trade.PCA_1",   "trade.PCA_2",  "HM.PCA_1",    "HM.PCA_2" )
+  
+  delta_long$plr <- factor(x = delta_long$plr,
+                               levels = order_plr, 
+                               ordered = TRUE)
+  
   
   heatmap_plot  <- ggplot(delta_long, aes(plr, species, fill = delta)) +
     geom_tile(color = "grey80") +
     scale_fill_gradient2(
-      low = "#2166AC", mid = "white", high = "#B2182B",
+      low = "#740580", mid = "white", high = "#F2C447",
       midpoint = 0
     ) +
     labs(
       title = "ΔILR heatmap (S2 – S1)",
-      x = "ILR coordinate",
+      x = "PWLR coordinate",
       y = "Species",
       fill = "ΔILR"
     ) +
     scale_y_discrete(limits = delta_plr_df$species[hc_order])+
-    geom_text(aes(label=stars), color="black", size=5) + 
+    #geom_text(aes(label=stars), color="black", size=5) + 
     theme_minimal(base_size = 14) +
     theme(legend.position= "left", axis.text.x = element_text(angle = 45, hjust = 1))
   
@@ -233,7 +245,7 @@ data <- raw
   print(heatmap_plot,
         vp = viewport(x = 0.4, y = 0.5, width = 0.8, height = 1.0))
   print(dendro_plot,
-        vp = viewport(x = 0.89, y = 0.58, width = 0.2, height = 0.70))
+        vp = viewport(x = 0.89, y = 0.54, width = 0.2, height = 0.82))
 
   
   
@@ -241,12 +253,21 @@ data <- raw
   ## 6. PCA   ####
   #---------------------------------------------------------------
   
+  human_clima <- c("trade.PCA_1", "HM.PCA_1", "trade.PCA_2", "HM.PCA_2" )
+  delta_plr_df <- as.data.frame(delta_plr_df)
+  row.names(delta_plr_df) <- delta_plr_df$species
+  pca <- prcomp(delta_plr_df[, human_clima], scale. = TRUE)
+  
   #on ΔPLR
   pca <- prcomp(delta_plr_df[, -1], scale. = TRUE)
   
   var_exp <- (pca$sdev^2) / sum(pca$sdev^2)
   pc1_lab <- paste0("PC1 (", sprintf("%.1f", 100 * var_exp[1]), "%)")
   pc2_lab <- paste0("PC2 (", sprintf("%.1f", 100 * var_exp[2]), "%)")
+  
+  p <- autoplot(pca, data = delta_plr_df, colour = 'species', loadings = TRUE, loadings.colour = 'blue',
+                loadings.label = TRUE, loadings.label.size = 3, label=TRUE, shape=FALSE)
+  ggplotly(p)
   
   pca_df <- data.frame(
     species = delta_plr_df$species,
@@ -262,12 +283,13 @@ data <- raw
   
   #on s1 and 2
   library(easyCODA)
-  lras.raw <- easyCODA::LR(as.data.frame(raw[,comp_cols]),  weight=FALSE)
+  lras.raw <- easyCODA::LRA(as.data.frame(raw[,comp_cols]),  weight=FALSE)
   lras <- bind_cols(
     raw %>% select(all_of(c(species_col, S_col, pa_col))),
     lras.raw$LR
   )
-  PLOT.LRA(lras)
+  PLOT.LRA(lras.raw)
+  PLOT.PCA(lras.raw)
   
   pca_s <- prcomp(s_plr_df[, plr_names], scale. = TRUE)
   
@@ -324,10 +346,56 @@ data <- raw
   ############################
   # ## 3) Mantel test  ####
   ############################ 
+  first_records <- read.csv("Internship UNIL/Data/alien_ant_first_records.tsv", sep = "\t")
+  sp <- c("LH",  "TM",  "PL",  "MP",  "PM",  "MF",  "HP" ,  "HO", "WA", "AG", "TB", "TA", "HE")
+ 
+  a <- as.data.frame(unlist(list( "LH"= "Linepithema humile",
+  "TM"= "Tapinoma melanocephalum",
+  "WA"= "Wasmannia auropunctata",
+  "PL"= "Paratrechina longicornis",
+  "MP"= "Monomorium pharaonis",
+  "PM"= "Pheidole megacephala",
+  "MF"= "Monomorium floricola",
+  "HP"= "Hypoponera punctatissima",
+  "HO"= "Hypoponera opaciceps",
+  "AG"= "Anoplolepis gracilipes",
+  "HE"= "Hypoponera eduardi",
+  "TB"= "Tetramorium bicarinatum",
+  "TA"= "Technomyrmex albipes"), use.names = TRUE), ncol=13)
+  colnames(a) <- "species"
+  a <- tibble::rownames_to_column(a, "sp")
   
+  sp_info <- data.frame(matrix(ncol=0, nrow=13))
+  row.names(sp_info) <- unique(all_occ$Taxa)
+  
+  for (species in row.names(sp_info)){
+    N_sp <- antmaps_dis[[species]] %>% dplyr::filter(category == "N") %>% nrow()
+    T_sp <- antmaps_dis[[species]] %>% dplyr::filter(category %in% c("E","N")) %>% nrow()
+    sp_info[species, "Nben"] <- N_sp
+    sp_info[species, "Tben"]<- T_sp
+
+    
+    name <- species
+    species <- a$sp[a$species== name]
+    cat("Start sp", species, "\n")
+    thin <- read.csv(paste0("//wsl.localhost/Ubuntu/home/admin_ait/internship-snakemake-2025/results/species/DatasetPrep/",species,"_thin.csv"))
+    
+    sp_info[name, "S1"] <- nrow(thin[thin$S == "S1", ])
+    sp_info[name, "S2"]<- nrow(thin[thin$S == "S2", ])
+    
+    FR_SP <- first_records[first_records$Taxon == name, ]
+    sp_info[name, "Date"]<- min(FR_SP$FirstRecord)
+  }
+  
+  print(sp_info)
+  sp_info <- tibble::rownames_to_column(sp_info, "species")
 
 D_ilr <- dist(delta_plr_df[, -1], method = "euclidean")
-sp_info <- sp_info %>% arrange(factor(species, delta_ilr$species))
+delta_order <- delta_plr_df$species
+
+sp_info <- sp_info %>% 
+  arrange(factor(species, levels = delta_order))
+
 D_env <- dist(scale(sp_info[, c("Nben","Tben","S1","S2","Date")]))
 
 library(vegan)
@@ -445,4 +513,211 @@ plot_species_map <- function(species) {
   plot
   return(plot)
 }
+
+
+
+
+
+
+################################################################################
+# ## 5) Recast by species 
+###############################################################################
+
+pathallV <- "//wsl.localhost/Ubuntu/home/admin_ait/internship-snakemake-2025/results/species/Anlaysis/"
+allV_files <- list.files(pathallV,  pattern = "_forecast\\.csv$", full.names = T)
+r_forecast_df <- lapply(allV_files, function(f) {
+  df <- read.csv(f, sep = ",", stringsAsFactors = FALSE)
+  return(df)
+}) %>% bind_rows()  %>% mutate(Accuracy = (TP+TN)/(TP+TN+FP+FN), Sensitivity = TP/(FN+TP), Specificity = TN/(TN+FP))
+
+
+order <- sp_info %>% arrange(Tben) %>% select(species) %>% as.vector()
+
+
+r_forecast_df$Taxa <- factor(x = r_forecast_df$Taxa,
+                             levels = order$species, 
+                             ordered = TRUE)
+class(r_forecast_df$Taxa)
+###Get Accuracy 
+head(r_forecast_df)
+#get Kappa
+
+r_forecast_df <- r_forecast_df %>%
+  mutate(
+    # Total observations
+    N = TP + TN + FP + FN,
+    # Expected agreement (correct formula)
+    Pe = ((TP + FP) * (TP + FN) + (TN + FP) * (TN + FN)) / (N^2),
+    # Observed agreement (if you don't have it already)
+    Po = (TP + TN) / N,
+    # Cohen's Kappa
+    Kappa = (Po - Pe) / (1 - Pe)
+  )
+
+#### #### Plot Evaluations #### #### 
+#AUC
+AUC_train <- ggplot(r_forecast_df, aes(Taxa, AUC, fill = Taxa))+
+  geom_boxplot()+
+  theme_minimal()+
+  labs(title = "AUC of ROC of the forecast for each species")+
+  theme(axis.text.x = element_blank())
+
+
+# Accuracy
+ACC_train <- ggplot(r_forecast_df, aes(Taxa, Accuracy, fill = Taxa))+
+  geom_boxplot()+
+  theme_minimal()+
+  labs(title = "Accuracy of the forecast for each species")+
+  theme(axis.text.x = element_blank())
+
+
+#Kappa
+Kapp_train <- ggplot(r_forecast_df, aes(Taxa, Kappa, fill = Taxa))+
+  geom_boxplot()+
+  theme_minimal()+
+  labs(title = "Kappa of the forecast for each species")+theme(axis.text.x = element_blank())
+
+
+Figures_trainCSI <- ggarrange(AUC_train, ACC_train,Kapp_train, common.legend = TRUE, ncol=1, nrow=3, labels= c("A", "B", "C"), legend ="right")
+Figures_trainCSI
+#ggexport(Figures_trainCSI, ncol=1, nrow=3,  filename = "~/Internship UNIL/Figures_SMK/figure_TrainCSI.pdf")
+
+
+sp_info_recast <-  r_forecast_df %>% group_by(Taxa) %>% 
+summarise(across(c("AUC", "Accuracy", "Kappa"), mean), .groups="drop") %>% left_join(sp_info,by= c("Taxa" = "species") ) %>% arrange(Kappa)
+
+p1 <- ggplot(sp_info_recast, aes(S1, Accuracy))+
+  geom_point()+
+  geom_smooth(method="loess")
+p2<- ggplot(sp_info_recast, aes(S2, Accuracy))+
+  geom_point()+
+  geom_smooth(method="loess")
+p3<- ggplot(sp_info_recast, aes(Date, Accuracy))+
+  geom_point()+
+  geom_smooth(method="loess")
+p4<- ggplot(sp_info_recast, aes(Tben, Accuracy))+
+  geom_point()+
+  geom_smooth(method="loess")
+
+p9<- ggplot(sp_info_recast, aes(Tben, Kappa))+
+  geom_point()+
+  geom_smooth(method="loess")
+p5<- ggplot(sp_info_recast, aes(Nben, Accuracy))+
+  geom_point()+
+  geom_smooth(method="loess")
+p6<-ggplot(sp_info_recast, aes(Tben-Nben, Accuracy))+
+  geom_point()+
+  geom_smooth(method="loess")
+
+p7<-ggplot(sp_info_recast, aes(Date, Tben))+
+  geom_point()+
+  geom_smooth(method="loess")
+
+p8<-ggplot(sp_info_recast, aes(Date, Nben))+
+  geom_point()+
+  geom_smooth(method="loess")
+
+p10<-ggplot(sp_info_recast, aes(Kappa, Accuracy))+
+  geom_point()+
+  geom_smooth(method="loess")
+
+p11<-ggplot(sp_info_recast, aes(Accuracy, AUC))+
+  geom_point()+
+  geom_smooth(method="loess")
+
+p12<-ggplot(sp_info_recast, aes(Tben, S2))+
+  geom_point()+
+  geom_smooth(method="loess")
+
+
+gridExtra::grid.arrange(p1,p2,p3,p4,p5,p6,p7,p8,p9,p10, p11,p12, ncol=4, nrow=3)
+
+
+#########################################
+# ## 6) Plots for the lab meeting ####
+#########################################
+##Example of classification tree
+data_LH <- read.csv("//wsl.localhost/Ubuntu/home/admin_ait/internship-snakemake-2025/results/species/AssignVariables/LH_allv.csv")
+
+tree <- rpart::rpart(Occurrence ~ PCA_1+PCA_2+MPD+trade+HM, data = data_LH, method = "class")
+rpart.plot::rpart.plot(tree)
+
+#heatmap for LH
+ggplot(delta_long[delta_long$species == "Linepithema humile",], aes(plr, species, fill = delta)) +
+  geom_tile(color = "grey80") +
+  scale_fill_gradient2(
+    low = "#740580", mid = "white", high = "#F2C447",
+    midpoint = 0
+  ) +
+  labs(
+    title = "ΔILR heatmap (S2 – S1)",
+    x = "ILR coordinate",
+      fill = "ΔILR"
+  ) +
+  #geom_text(aes(label=stars), color="black", size=5) + 
+  theme_minimal(base_size = 14 ) +
+  theme(legend.position= "left", axis.text.x = element_text(angle = 45, hjust = 1), 
+        axis.text.y = element_blank())
+
+# pwlr_meta_long <- pwlr_meta %>% pivot_longer(all_of(plr_names), names_to = "Variables", values_to = "PLR")
+# 
+# ggplot(pwlr_meta_long, aes(Variables, PLR, fill=S)) +
+#   geom_boxplot()+
+#   geom_point(aes(color = Taxa))
+#   #geom_point(aes(color=Taxa))
+
+#boxplot deltas by pair
+ggplot(delta_long, aes(delta, plr)) +
+  geom_boxplot()+
+  geom_point(aes(colour = species), position=position_jitter(height = 0.1))+
+  geom_vline(xintercept = 0)
+#geom_point(aes(color=Taxa))
+
+#map of LH
+rastclim<-terra::rast("Internship UNIL/pca_Worldclim_25p_1.tif") 
+terra::plot(rastclim, col="grey", main= "Presences and Pseudoabsences S1: 1885-1970")
+data <- data_LH[data_LH$S == "S1", ]
+points(data$decimallongitude[data$Occurrence==1 ],
+       data$decimallatitude[data$Occurrence==1 ],pch='+',col='red')
+points(data$decimallongitude[data$Occurrence==0 ],
+       data$decimallatitude[data$Occurrence==0 ],col="black",pch=19, cex=0.3)
+
+legend("left",bty= "n", cex=0.7, legend=c("Presences (P)", "Pseudoabsences (PA)"), 
+       col=c("red", "black"), pch = c("+",19))
+
+
+#########################################
+# ## 7) Comparison S1 and S2 % among species ####
+#########################################
+
+
+library(ggplot2)
+library(ggrepel)
+
+for (species in row.names(sp_info)){
+  
+  df_sp <- raw %>% filter(Taxa == species )
+  
+  
+
+#cluister 
+# Data must look like:
+# species | percent_S1 | percent_S2
+
+dist_S1 <- dist(sp_info$percent_S1)
+dist_S2 <- dist(sp_info$percent_S2)
+
+hc_S1 <- hclust(dist_S1)
+hc_S2 <- hclust(dist_S2)
+
+plot(hc_S1, main = "Species similarity in S1")
+plot(hc_S2, main = "Species similarity in S2")
+
+#scatterplot
+ggplot(sp_info, aes(percent_S1, percent_S2, label = species)) +
+  geom_point() +
+  geom_label_repel() +
+  labs(title="Species percentages in S1 vs S2",
+       x="Percentage in S1", y="Percentage in S2") +
+  theme_minimal()
 
