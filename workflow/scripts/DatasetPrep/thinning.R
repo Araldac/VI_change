@@ -9,12 +9,6 @@
 
 args <- commandArgs(trailingOnly = TRUE)
 data_cleaned <- args[1]
-#distributionData <- args[2]
-#sf_lak <- args[3]
-#sf_land <- args[4]
-#sf_sea <- args[5]
-#sf_unland <- args[6]
-#antmaps_pol <-args[7]
 raster <- args[2]
 output <- args[3]
 

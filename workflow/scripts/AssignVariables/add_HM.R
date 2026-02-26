@@ -28,8 +28,8 @@ load_HM<- function(data){
   d_s2<-data %>% filter(S=="S2") %>% dplyr::select(decimallongitude, decimallatitude)
   
   
-  hm_1970 <- terra::rast(hm_1970)
-  hm_2025 <- terra::rast(hm_2025)
+  #hm_1970 <- terra::rast(hm_1970)
+  #hm_2025 <- terra::rast(hm_2025)
 
   cat(sprintf("  HM 1970: %s\n", paste(dim(hm_1970), collapse=" x ")))
   cat(sprintf("  HM 2025: %s\n", paste(dim(hm_2025), collapse=" x ")))
@@ -63,8 +63,11 @@ load_HM<- function(data){
 
 #### #### load data #### ####
 cat("Loading data \n")
-load(hm1970)
-load(hm2025)
+#load(hm1970)
+#load(hm2025)
+hm_1970 <- terra::rast(hm1970)      # should define climate_data2
+hm_2025 <- terra::rast(hm2025)      # should define climate_data2
+
 
 LH_C_B_PP <- read.csv(occurrences)
 

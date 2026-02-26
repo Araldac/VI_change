@@ -145,8 +145,8 @@ rule HM_RasterCreation:
         anth_2025 = 'data/variables/HM/anthromes2025AD.asc',
 
     output:
-        out_1970='results/variables/hm_1970.RData',
-        out_2025='results/variables/hm_2025.RData'
+        out_1970='results/variables/hm_1970.tif',
+        out_2025='results/variables/hm_2025.tif'
     log:
         err = "logs/VariablesPrep/HM_RasterCreation.err",
         out = "logs/VariablesPrep/HM_RasterCreation.out"

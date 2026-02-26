@@ -36,8 +36,8 @@ dependencies: #by chatbot
   - r-stringr = 1.5.2 
   - r-devtools = 2.4.5
   - r-pbapply =1.7_4
-  - r-raster = 3.6_32
-  - r-terra = 1.8_42
+  - r-raster #= 3.6_32
+  - r-terra #= 1.8_42
   #- r-popgrids                            ##not present in conda, need to install it in the scrript with devtools
   - r-sp = 2.2_0
   - r-scales = 1.4.0

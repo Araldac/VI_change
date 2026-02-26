@@ -95,3 +95,29 @@ rule thinning:
         >{log.out} 2> {log.err}
         """
 
+rule selectValidO:
+    '''
+    Thinning data using grid with geothinner package and the climate raster as grid cell
+    '''
+    input:
+        data_thinned = 'results/species/DatasetPrep/{sp}_thin.csv',
+        first_r = 'data/variables/Trade/{sp}_first_records.csv'
+
+    output:
+        out='results/species/DatasetPrep/{sp}_thinV.csv'
+        
+    log:
+        err = "logs/DatasetPrep/{sp}_selectValidO.err",
+        out = "logs/DatasetPrep/{sp}_selectValidO.out"
+    conda:
+	    '../envs/DatasetPrep.yaml'
+
+    shell:
+        r"""
+        Rscript workflow/scripts/DatasetPrep/selectValidO.R \
+        {input.data_thinned} \
+        {input.first_r} \
+        {output.out} \
+        >{log.out} 2> {log.err}
+        """
+

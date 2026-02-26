@@ -5,7 +5,7 @@ rule add_Climate_PA:
    Add climate and pseudo-absences , 10 PA sets for each (s1 and S2)
     '''
     input:
-        occurrences = 'results/species/DatasetPrep/{sp}_thin.csv',
+        occurrences = 'results/species/DatasetPrep/{sp}_thinV.csv',
         climate = rules.Climate_DownloadPCA.output.out,
         antmaps_pol = 'data/distribution/AntmapsPolGeneral.RData',
         distributionData = 'data/distribution/LH_dis.RData'
@@ -140,8 +140,8 @@ rule add_HM:
     '''
     input:
         occurrences = 'results/species/AssignVariables/{sp}_PA_B_T.csv' ,
-        hm1970 = 'results/variables/hm_1970.RData',
-        hm2025 = 'results/variables/hm_2025.RData'
+        hm1970 = 'results/variables/hm_1970.tif',
+        hm2025 = 'results/variables/hm_2025.tif'
 
     output:
         out='results/species/AssignVariables/{sp}_PA_B_T_HM.csv'
