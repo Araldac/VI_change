@@ -25,11 +25,11 @@ dependencies: #by chatbot
 
   - r-base=4.3.3
   - r-readxl = 1.4.5
-  - r-dplyr=1.1.*
+  - r-dplyr #=1.1.*
   - r-readr=2.1.*
   - r-countrycode = 1.6.1
   - r-sf = 1.0_20
-  - r-tidyr = 1.3.1
+  - r-tidyr #= 1.3.1
   - r-purrr = 1.1.0
   - r-pbapply = 1.7_4
   - r-zoo = 1.8_14

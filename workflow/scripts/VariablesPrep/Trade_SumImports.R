@@ -17,8 +17,8 @@ output <- args[5]
 
 library(devtools)
 #install.packages("MazamaSpatialUtils", repos = "http://cran.us.r-project.org")
-devtools::install_github('mazamascience/MazamaSpatialUtils', build_vignettes=TRUE)
-pkg <- c("MazamaSpatialUtils", "dplyr", "stringr", "pbapply", "tidyr")#, "sf", "dplyr", "tidyr", "purrr", "pbapply", "zoo")#, "", "", "")
+#devtools::install_github('mazamascience/MazamaSpatialUtils') #, build_vignettes=TRUE)
+pkg <- c("countrycode", "dplyr", "stringr", "pbapply", "tidyr")#, "tidyverse")#, "sf", "dplyr", "tidyr", "purrr", "pbapply", "zoo")#, "", "", "")
 lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
 
 
@@ -103,12 +103,13 @@ first_records$ISO2 <- first_records$Region
 
 #If Namibia is present count it as NA not <NA> 
 #first_records$ISO2[is.na(first_records$ISO2)] <- "NA"
-first_records <- first_records %>% drop_na(ISO2)
+first_records <- first_records %>% tidyr::drop_na(ISO2)
 
 cat("select only firsts records in mainland not in islands \n ")
 #select only firsts records in mainland not in islands
 iso2_first_records<-first_records[nchar(first_records$ISO2) == 2,]
-iso2_first_records$iso3<-iso2ToIso3(iso2_first_records$ISO2) # add iso 2 columns
+iso2_first_records$iso3 <- countrycode::countrycode(iso2_first_records$ISO2, origin="iso2c", destination="iso3c")
+#iso2_first_records$iso3<-iso2ToIso3(iso2_first_records$ISO2) # add iso 2 columns
 #iso3_first_records<-iso2_first_records[3:4]#just select year and country code
 iso3_first_records<-iso2_first_records %>% select(iso3, FirstRecord)
 

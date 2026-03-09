@@ -16,7 +16,7 @@ list_AV =  expand("results/species/AssignVariables/{species}_allv.csv", species=
 #list_RF3 =  expand("results/species/CSI/Raw_RF_{species}_relimpAUC1.csv", species=sp)
 
 
-list_RF3 =  expand("results/species/RF/RF_{species}_relimpAUC1.csv", species=sp)
+list_RF3 =  expand("results/species/Anlaysis/{species}_forecast.csv", species=sp)
 
 rule all:
     input: list_RF3

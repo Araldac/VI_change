@@ -144,7 +144,7 @@ resultAllComb <- foreach(
   #print(all_comb_RF[i, ])
 
   #--- PCA ---
-  PCA_r <- lapply(1:10, function(rep){
+  PCA_r <- lapply(1:100, function(rep){
     RF_apply(
       data      = data_PCA,
       env_vars  = PCA_vars,
