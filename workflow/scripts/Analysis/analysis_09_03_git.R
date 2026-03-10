@@ -218,7 +218,7 @@ per_species_pvals_mean_df <- list()
 #mean_s1 <- list()
 #mean_s2 <- list()
 plot_list <- list()
-per_species_wilcox_df <- list()
+#per_species_wilcox_df <- list()
 
 for (sp in species_list) {
   
@@ -249,64 +249,12 @@ for (sp in species_list) {
   plot_list[[sp]] <- ggplot(sub_rank_long, aes(Values, fill=S))+ labs(title = sp)+
       geom_bar(stat = "count", position="dodge") + facet_wrap(~Variable)
   
-  wil_rank <- lapply(comp_cols, function(coord) {
-    
-    x <- as.numeric(sub_rank[[coord]][sub_rank$S == "S1"])
-    y <- as.numeric(sub_rank[[coord]][sub_rank$S == "S2"])
-    
-    x <- x[!is.na(x)]
-    y <- y[!is.na(y)]
-    
-     # w <- wilcox.test(x, y,conf.int = TRUE)
-     
-     w <- cor.test(x, y, method = "kendall")#,  use = "pairwise")
-     
-     return(w)
-    })
-  names(wil_rank) <- comp_cols
-  
-  
-  per_species_wilcox_df[[sp]] <- tibble(
-    species = sp,
-    variable = comp_cols,
-   # T = sapply(wil_rank, function(m) m$W),
-    estimate =  sapply(wil_rank, function(m) m$estimate),
-    p_value = sapply(wil_rank, function(m) m$p.value), 
-  )
-  
-  
-  
-  
   cat("finished ", sp, "\n" )
-  # 
-  # s1 <- sapply(fits, function(m) {
-  #   emm <- emmeans(m, specs = S_col)
-  #   summary(emm)$emmean[1]
-  # })
-  # 
-  # s2 <- sapply(fits, function(m) {
-  #   emm <- emmeans(m, specs = S_col)
-  #   summary(emm)$emmean[2]
-  # })
-  # 
-  # mean_s1[[sp]] <- tibble(
-  #   S= "S1",
-  #   species = sp,
-  #   !!!setNames(as.list(s1), comp_cols)
-  # )
-  # 
-  # mean_s2[[sp]] <- tibble(
-  #   S= "S2",
-  #   species = sp,
-  #   !!!setNames(as.list(s2), comp_cols)
-  # )
-  # 
   
 }
 
 
 per_species_pvals_mean_df <- bind_rows(per_species_pvals_mean_df)
-per_species_wilcox_df <- bind_rows(per_species_wilcox_df)
 
 ggarrange(plotlist = plot_list, ncol = 4, nrow = 4, common.legend = TRUE)
 
@@ -316,29 +264,7 @@ per_species_pvals_mean_df_sig$estimate[per_species_pvals_mean_df_sig$p_value > 0
 
 per_species_pvals_mean_df_long <- per_species_pvals_mean_df_sig %>% select(-p_value) %>% pivot_wider(names_from= variable, values_from = estimate)
 
-cluster_heatmap_plot(per_species_pvals_mean_df_long, as.factor(comp_cols_f), "Heatmap of s2-s1", method = "complete")
 
-#meanssp_lmm <- bind_rows(mean_s1)
-#meanssp_lmm <- rbind(meanssp_lmm, bind_rows(mean_s2))
-
-
-##### compare averages in lmmm and average mean 
-# meansp <- raw %>% group_by(Taxa, S) %>%
-#   summarise(across(all_of(comp_cols), mean), .groups="drop")
-# 
-# mlm <- meanssp_lmm %>% arrange(species, S) %>% select(all_of(comp_cols))
-# mav <- meansp %>% arrange(Taxa, S) %>% select(all_of(comp_cols))
-# 
-# comp <- bind_cols(meansp[, 1:2], mlm-mav)
-# comp_long <- comp %>% group_by(S, Taxa) %>% pivot_longer(all_of(comp_cols), names_to = "Variables", values_to = "Values")
-# 
-# ggplot(comp_long, aes(Variables, Values))+
-#   geom_violin()+ geom_hline(yintercept = 0)+
-#   geom_point(aes(col=Taxa))+facet_wrap(~S)
-
-
-
-##### use lmm means for cluster and heatmap of % ####
 
 "cluster_heatmap_plot" <- function(data, col_w_val, title_c, method_clust = "ward.D2"){
   # data: in wide format with species and one column for each variable
@@ -400,54 +326,41 @@ cluster_heatmap_plot(per_species_pvals_mean_df_long, as.factor(comp_cols_f), "He
   return(final_p)
   
 }
+
 comp_cols_f <- factor(comp_cols, levels= comp_cols, ordered=TRUE)
 
-datas1 <- meanssp_lmm %>% filter(S == "S1") %>% select(species, comp_cols)
-datas2 <- meanssp_lmm %>% filter(S == "S2") %>% select(species, comp_cols)
-
-#add a delta of S2-S1
-data_long <- meanssp_lmm %>%
-  pivot_longer(-c(species, S), names_to = "Variables", values_to = "Values")
-
-data_delta <- data_long %>% pivot_wider(names_from= S, values_from = Values) %>%
-  mutate("ΔS" = S2-S1) %>%  select(species, Variables, ΔS) %>%
-  pivot_wider(names_from= Variables, values_from = ΔS) 
-
-
-
-
 set.seed(123)
-hp_s1 <- cluster_heatmap_plot(datas1, as.factor(comp_cols_f), "Heatmap of % in S1")
-hp_s2 <- cluster_heatmap_plot(datas2, as.factor(comp_cols_f), "Heatmap of % in S2")
-hp_s3 <- cluster_heatmap_plot(data_delta, as.factor(comp_cols_f), "Heatmap of s2-s1")
-
-ggarrange(hp_s1, hp_s2, hp_s3)
-
-list_ranks <- list()
-df_kendall <- data.frame(matrix(nrow=13, ncol=2), row.names = sp_list)
-colnames(df_kendall)<- c("tau", "p-value")
-
-for (sp in sp_list){
-  comp_long_spS1 <- data_long %>% filter(species == sp & S =="S1")  %>% mutate(rank1 = dense_rank(desc(Values))) 
-  comp_long_spS2 <- data_long %>% filter(species == sp & S =="S2") %>% mutate(rank2 = dense_rank(desc(Values)))
-  
-  p <- cbind(comp_long_spS1, comp_long_spS2)
-  
-  k <- cor.test(comp_long_spS1$Values, comp_long_spS2$Values, method = "kendall", )
-  df_kendall[sp, "tau"] <- k$estimate[1]
-  df_kendall[sp, "p-value"] <- k$p.value
-  
-  comp_ord_S1 <- data_long %>% filter(species == sp & S =="S1")  %>%  arrange(desc(Values))
-  comp_ord_S2 <- data_long %>% filter(species == sp & S =="S2") %>% arrange(desc(Values))
-  
-  list_ranks[[sp]] <- cbind(comp_ord_S1, comp_ord_S2)
-  
-}
-
-list_ranks
-df_kendall %>% arrange(desc(tau))
+cluster_heatmap_plot(per_species_pvals_mean_df_long, as.factor(comp_cols_f), "Heatmap of s2-s1", method = "complete")
 
 
+###Calcualte Wilcoxon rank test for each variable rank   
+
+sub_rank <- raw %>% select(all_of(comp_cols), S, Taxa)
+sub_rank <- lapply(1:nrow(sub_rank), function(i) rank(-sub_rank[i, comp_cols])) %>% bind_rows() %>% mutate(S = sub_rank$S, Taxa = sub_rank$Taxa)
+mean_sub_rank <- sub_rank %>% group_by(Taxa, S) %>% summarise(across(all_of(comp_cols), mean), .groups = "drop")
+
+sub_rank_long <- 
+
+
+wilcox_by_species <- sub_rank %>%
+  pivot_longer(cols= comp_cols, names_to = "variable", values_to = "rank") %>%
+  group_by(Taxa, variable) %>%
+  summarise(
+    n_S1 = sum(S == "S1"),
+    n_S2 = sum(S == "S2"),
+    mean_rank_S1 = mean(rank[S == "S1"]),
+    mean_rank_S2 = mean(rank[S == "S2"]),
+    # Wilcoxon rank-sum (unpaired) on the ranks
+    p_wilcox = wilcox.test(rank ~ S, exact = FALSE)$p.value,
+    # Effect size: normalized mean-rank difference in [-1,1] (divide by (k-1)=4 for k=5)
+    effect_norm = (mean_rank_S2 - mean_rank_S1) / 4,
+    .groups = "drop"
+  ) %>%
+  group_by(Taxa) %>%
+  mutate(p_adj_BH = p.adjust(p_wilcox, method = "BH")) %>%
+  ungroup()
+
+wilcox_by_species %>% filter (p_wilcox < 0.05)
 
 ###tau for each repetition and then mean tau per species
 # raw_data_long <- raw %>% select(Taxa, S, all_of(comp_cols), PA_N_new) %>%
