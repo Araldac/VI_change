@@ -131,26 +131,26 @@ raw <- raw %>% mutate(
 
 #AUC
 auc_p<-ggplot(raw, aes(Taxa, AUC, fill =S))+
-  geom_boxplot()+   theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank()) +
+  geom_violin()+   theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank()) +
   
   theme_minimal()
 #+labs(title = "AUC of ROC for CSI and PCA RF models")
 
 # Accuracy
 acc_p <- ggplot(raw, aes(Taxa, Accuracy, fill =S))+
-  geom_boxplot()+   theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank()) +
+  geom_violin()+   theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank()) +
   
   theme_minimal()
 #+labs(title = "Model Accuracy of CSI and PCA RF models")
 
 #Kappa
 Kapp_p <- ggplot(raw, aes(Taxa, Kappa, fill =S))+
-  geom_boxplot()+   theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank()) +
+  geom_violin()+   theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank()) +
   
   theme_minimal()
 
 sens_p <-  ggplot(raw, aes(Taxa, Sensitivity, fill =S))+
-  geom_boxplot()+   theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank()) +
+  geom_violin()+   theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank()) +
   
   theme_minimal()
 #+labs(title = "Model Cohens Kappa of CSI and PCA RF models")
@@ -651,7 +651,7 @@ p <- ggplot(data = raw_long_S, aes(x=S, y=meanI, group=Variable, color=Variable)
   geom_point(show.legend = TRUE, size = 2)+
   geom_text(data=out, aes(x= 2.4, y= meanI_S2, label=star, colour= Variable),show.legend = FALSE,   inherit.aes = FALSE,  size=6) +
   labs(y = "Variable Importance (0-1)", x="")+
-
+  #xlim(0.5, 2.5)+
   scale_fill_manual(values = palette8)+
   scale_color_manual(values = palette8, drop = FALSE) +
   theme_minimal()+
@@ -661,7 +661,7 @@ p <- ggplot(data = raw_long_S, aes(x=S, y=meanI, group=Variable, color=Variable)
   theme(legend.direction = "horizontal")+
   facet_wrap(~Taxa)
 
-# Source - https://stackoverflow.com/a/58734961
+# theme_classic()# Source - https://stackoverflow.com/a/58734961
 # Posted by Artem Sokolov
 # Retrieved 2026-03-11, License - CC BY-SA 4.0
 
@@ -721,3 +721,40 @@ ggplot(allv_pca_long, aes(Occurrence, Value, fill=Occurrence))+
    scale_x_discrete(labels= c("Background points", "Presences"))+
   stat_pvalue_manual(p_val, label = "p.signif", y.position = ".y.",tip.length = 0.01)
 
+
+
+################################################################################
+## (new) Table 1 - Evaluation metrics of RF  ####
+################################################################################
+
+# raw for the data on the evaluations
+
+eval_means <- raw %>% group_by(Taxa) %>% 
+summarise(across(
+  .cols = c(AUC, Kappa, Accuracy, Sensitivity), 
+  .fns = list(Mean = mean, SD = sd), na.rm = TRUE, 
+  .names = "{col}_{fn}"
+))
+
+library(tidyverse)
+
+# Suponiendo que tu dataframe se llama 'df'
+df_formateado <- eval_means %>%
+  # 1. Seleccionamos solo las columnas necesarias (Taxa, S y las métricas)
+
+  # 2. Unimos Mean y SD con el símbolo ±
+  # Usamos sprintf para formatear los decimales si es necesario (ej. 3 decimales)
+  mutate(
+    AUC = paste0(sprintf("%.3f", AUC_Mean ), " ± ", sprintf("%.3f", AUC_SD)),
+    Kappa = paste0(sprintf("%.3f",Kappa_Mean), " ± ", sprintf("%.3f", Kappa_SD)),
+    Accuracy = paste0(sprintf("%.3f", Accuracy_Mean), " ± ", sprintf("%.3f", Accuracy_SD)),
+    Sensitivity = paste0(sprintf("%.3f", Sensitivity_Mean), " ± ", sprintf("%.3f", Sensitivity_SD))
+  ) %>%
+  
+  # 5. Seleccionamos las columnas finales
+  select(Taxa, AUC, Kappa, Accuracy, Sensitivity)
+
+# Ver el resultado
+print(df_formateado)
+
+formattable::formattable(df_formateado)
