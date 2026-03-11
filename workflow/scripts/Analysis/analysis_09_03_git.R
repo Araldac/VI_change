@@ -19,6 +19,9 @@ library(Kendall)
 library(tidyverse)
 library(rstatix)
 library(ggpubr)
+library(gtable)
+library(cowplot)
+library(grid)
 
 ############################
 # ##  1) Paramètres utilisateur    ####
@@ -574,17 +577,23 @@ ggplot(sub_rank_long,aes(x=S, y=Values,color=Variable, group=Variable))+
 
 
 
+################################################################################
+## (new) Plot 1 - Changes in the variable importance and their rank ####
+################################################################################
 
-##Plot 1 - Changes in the variable importance and their rank
+#needs the per_species_pvals_mean_df in the heatmap section for the significance levels
+
+#set palette
 palette8 <- c(
-  "#1b9e77",   # Group1 S1 / S2
-  "#d95f02",
-  "#d9025330",   # Group2 S1 / S2
-  "#7570b3", 
-  "#780"   # Group3 S1 / S2
+  "#A8D46B",   # Group1 S1 / S2
+  "#A50026",
+  "#FDB366",   # Group2 S1 / S2
+  "#98CAE1", 
+  "#364B9A"   # Group3 S1 / S2
   #  "#e7298a", "#e7298a80"    # Group4 S1 / S2
 )
 
+#variables as factor 
 raw_long_S$Variable <- forcats::fct_relevel(
   raw_long_S$Variable,
   "MPD",
@@ -597,7 +606,39 @@ raw_long$Variable <- forcats::fct_relevel(
   "HM","trade","PCA_1","PCA_2"
 )
 
-ggplot(data = raw_long_S, aes(x=S, y=meanI, group=Variable, color=Variable))+
+
+#add signficiance star and their placve in the plot
+pvals_sig <- per_species_pvals_mean_df_sig
+
+pvals_sig$star <- ""
+pvals_sig$star[pvals_sig$p_value<= .05]  <- "*"
+pvals_sig$star[pvals_sig$p_value <= .01]  <- "**"
+pvals_sig$star[pvals_sig$p_value <= .001] <- "***"
+
+pvals_sig2 <- pvals_sig %>%
+  mutate(Taxa = species, Variable = variable) %>%
+  select(Taxa, Variable, everything())
+
+# Make a small table with S2 meanI per Taxa × Variable
+meanI_S2 <- raw_long_S %>%
+  filter(S == "S2") %>%
+  select(Taxa, Variable, meanI) %>%
+  distinct() %>%                 # keep one row per Taxa×Variable (adjust if needed)
+  rename(meanI_S2 = meanI)
+
+# Now you can join safely
+out <- pvals_sig2 %>%
+  inner_join(meanI_S2, by = c("Taxa", "Variable"))
+
+out$Variable <- forcats::fct_relevel(
+  out$Variable,
+  "MPD",
+  "HM","trade","PCA_1","PCA_2"
+)
+
+
+#plot
+p <- ggplot(data = raw_long_S, aes(x=S, y=meanI, group=Variable, color=Variable))+
   geom_line( alpha=1, colour = "grey20")+ 
   geom_ribbon(aes(x =S, y = meanI, ymin = meanI - sdI, ymax = meanI + sdI, fill = Variable), alpha = .2, 	colour = "grey80")+
   geom_boxplot(data = as.data.frame(raw_long), aes(x=S, y=Importance, fill=Variable), 
@@ -607,30 +648,30 @@ ggplot(data = raw_long_S, aes(x=S, y=meanI, group=Variable, color=Variable))+
                alpha = 0.5
                
   )+
+  geom_text(data=out, aes(x= 2.4, y= meanI_S2, label=star, colour= Variable), show.legend = FALSE, inherit.aes = FALSE,  size=6) +
   labs(y = "Variable Importance (0-1)", x="")+
   scale_fill_manual(values = palette8)+
+  scale_color_manual(values = palette8, drop = FALSE) +
   theme_minimal()+
-facet_wrap(~Taxa)
-
-
-
-
-## v2
-
-ggplot(data = raw_long_S, aes(x=S, y=meanI, group=Variable, color=Variable))+
-  geom_line( alpha=1, colour = "grey20")+ 
-  geom_ribbon(aes(x =S, y = meanI, ymin = meanI - sdI, ymax = meanI + sdI, fill = Variable), alpha = .2, 	colour = "grey80")+
-  geom_boxplot(data = as.data.frame(raw_long), aes(x=S, y=Importance, fill=Variable), 
-               inherit.aes = FALSE,
-               position = position_dodge(width = 0.2),
-               width = 0.6, 
-               alpha = 0.5
-               
-  )+
-  geom_point(data = fig4[fig4$significance == "y", ], aes(Year, pct_change + 0.25), shape = "*", size=4.233, color="black")
-+
-  labs(y = "Variable Importance (0-1)", x="")+
-  scale_fill_manual(values = palette8)+
-  theme_minimal()+
+  guides(fill = guide_legend(title.position = "top",
+                             label.position = "bottom",
+                             nrow = 1)) +
+  theme(legend.direction = "horizontal")+
   facet_wrap(~Taxa)
+
+# Source - https://stackoverflow.com/a/58734961
+# Posted by Artem Sokolov
+# Retrieved 2026-03-11, License - CC BY-SA 4.0
+
+shift_legend3 <- function(p) {
+  pnls <- cowplot::plot_to_gtable(p) %>% gtable::gtable_filter("panel") %>%
+    with(setNames(grobs, layout$name)) %>% purrr::keep(~identical(.x,zeroGrob()))
+  
+  if( length(pnls) == 0 ) stop( "No empty facets in the plot" )
+  
+  lemon::reposition_legend( p, "center", panel=names(pnls) )
+}
+
+#put the ñegend in empty grd space
+grid.draw(shift_legend3(p))
 
