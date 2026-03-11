@@ -330,17 +330,14 @@ per_species_pvals_mean_df_long <- per_species_pvals_mean_df_sig %>% select(-p_va
 comp_cols_f <- factor(comp_cols, levels= comp_cols, ordered=TRUE)
 
 set.seed(123)
-cluster_heatmap_plot(per_species_pvals_mean_df_long, as.factor(comp_cols_f), "Heatmap of s2-s1", method = "complete")
+a<- cluster_heatmap_plot(per_species_pvals_mean_df_long, as.factor(comp_cols_f), "Heatmap of s2-s1", method = "complete")
 
 
 ###Calcualte Wilcoxon rank test for each variable rank   
 
 sub_rank <- raw %>% select(all_of(comp_cols), S, Taxa)
-sub_rank <- lapply(1:nrow(sub_rank), function(i) rank(-sub_rank[i, comp_cols])) %>% bind_rows() %>% mutate(S = sub_rank$S, Taxa = sub_rank$Taxa)
+sub_rank <- lapply(1:nrow(sub_rank), function(i) rank(sub_rank[i, comp_cols])) %>% bind_rows() %>% mutate(S = sub_rank$S, Taxa = sub_rank$Taxa)
 mean_sub_rank <- sub_rank %>% group_by(Taxa, S) %>% summarise(across(all_of(comp_cols), mean), .groups = "drop")
-
-sub_rank_long <- 
-
 
 wilcox_by_species <- sub_rank %>%
   pivot_longer(cols= comp_cols, names_to = "variable", values_to = "rank") %>%
@@ -360,34 +357,63 @@ wilcox_by_species <- sub_rank %>%
   mutate(p_adj_BH = p.adjust(p_wilcox, method = "BH")) %>%
   ungroup()
 
-wilcox_by_species %>% filter (p_wilcox < 0.05)
+wilcox_by_species$effect_norm[wilcox_by_species$p_wilcox > 0.05] <- 0
+wilcox_by_species_df_long <- wilcox_by_species %>% select(Taxa, variable, effect_norm) %>% pivot_wider(names_from= variable, values_from = effect_norm) %>% mutate(species = Taxa)
 
-###tau for each repetition and then mean tau per species
-# raw_data_long <- raw %>% select(Taxa, S, all_of(comp_cols), PA_N_new) %>%
-#   pivot_longer(all_of(comp_cols), names_to = "Variables", values_to = "Values")
-# 
-# df_kendall_byrep <- data.frame(matrix(nrow=0, ncol=3))
-# colnames(df_kendall_byrep)<- c("species", "tau", "p-value")
-# 
-# for (sp in sp_list){
-#   comp_long_spS1 <- data_long %>% filter(species == sp & S =="S1")  %>% mutate(rank1 = dense_rank(desc(Values))) 
-#   comp_long_spS2 <- data_long %>% filter(species == sp & S =="S2") %>% mutate(rank2 = dense_rank(desc(Values)))
-#   
-#   p <- cbind(comp_long_spS1, comp_long_spS2)
-#   
-#   k <- cor.test(comp_long_spS1$Values, comp_long_spS2$Values, method = "kendall", )
-#   df_kendall[sp, "tau"] <- k$estimate[1]
-#   df_kendall[sp, "p-value"] <- k$p.value
-#   
-#   comp_ord_S1 <- data_long %>% filter(species == sp & S =="S1")  %>%  arrange(desc(Values))
-#   comp_ord_S2 <- data_long %>% filter(species == sp & S =="S2") %>% arrange(desc(Values))
-#   
-#   list_ranks[[sp]] <- cbind(comp_ord_S1, comp_ord_S2)
-#   
-# }
-# 
-# list_ranks
-# df_kendall %>% arrange(desc(tau))
+set.seed(123)
+b <- cluster_heatmap_plot(wilcox_by_species_df_long, as.factor(comp_cols_f), "Heatmap of s2-s1", method = "complete")
+
+
+data_long <- wilcox_by_species_df_long %>% group_by(species) %>%
+  pivot_longer(all_of(col_w_val), names_to = "Variables", values_to = "Values")
+
+# Extract the order of the tips in the dendrogram
+
+# Order the levels according to their position in the cluster
+data_long$species <- factor(x = data_long$species,
+                            levels = per_species_pvals_mean_df_long$species[hc_order], 
+                            ordered = TRUE)
+
+
+heatmapp_plot <- ggplot(data_long, aes(Variables, species, fill = Values)) +
+  geom_tile(color = "grey80") +
+  scale_fill_gradient2(
+    low = "#740580", mid = "white", high = "#F2C447",
+    midpoint = 0
+  ) +
+  labs(
+    #title = title_c,
+    y = "Species",
+    x="Variables"
+  ) + 
+  scale_y_discrete(limits = delta_plr_df$species[hc_order])+
+  scale_x_discrete(limits = col_w_val)+
+  #geom_text(aes(label=stars), color="black", size=5) + 
+  theme_minimal(base_size = 14) +
+  theme(legend.position= "left", axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+ggarrange(a, b, ncol =2, nrow=1)
+
+
+
+###kendall
+sub_rank_long <- mean_sub_rank %>% pivot_longer(cols= comp_cols, names_to = "Variable", values_to = "Values")
+df_kendall <- data.frame(matrix(nrow=13, ncol=2), row.names = sp_list)
+colnames(df_kendall)<- c("tau", "p-value")
+ for (sp in sp_list){
+     comp_long_spS1 <- sub_rank_long %>% filter(Taxa == sp & S =="S1") 
+     comp_long_spS2 <- sub_rank_long %>% filter(Taxa == sp & S =="S2") 
+    
+       k <- cor.test(comp_long_spS1$Values, comp_long_spS2$Values, method = "kendall", )
+       df_kendall[sp, "tau"] <- k$estimate[1]
+       df_kendall[sp, "p-value"] <- k$p.value
+     
+         
+       }
+df_kendall %>% arrange(desc(tau))
+
+
 
 
 ####Sp info 
@@ -491,7 +517,7 @@ for (var in comp_cols) {
   
   # Linear mixed model
   #model <- lmer(get(var) ~ S * Occurrence + (1 | Taxa), data = var_df)
-  model <- lmer(get(var) ~ S * Occurrence + (S + Occurrence | Taxa), data = var_df)
+  model <- lmer(get(var) ~ Occurrence + (Occurrence | Taxa), data = var_df)
   
   # store# storeTaxa
   list_models[[var]] <- model
@@ -511,8 +537,8 @@ for (var in comp_cols) {
 
 
 
-ggplot(allv_pca_long, aes(Occurrence, Value))+
-  geom_boxplot()+
+ggplot(allv_pca_long, aes(Occurrence, Value, fill=Occurrence))+
+  geom_boxplot()+ theme_minimal()+ #geom_point(position = "jitter")+
   facet_wrap(~Variable, ncol=5, scales = "free")
 
 
@@ -530,7 +556,81 @@ df_ranked <- raw %>% select(all_of(comp_cols), S, Taxa)
 
 df_ranked <- lapply(1:nrow(df_ranked), function(i) rank(-df_ranked[i, comp_cols])) %>% bind_rows() %>% mutate(S = df_ranked$S, Taxa = df_ranked$Taxa )
 
-df_ranked <-  df_ranked %>% filter(Taxa == "Anoplolepis gracilipes")
-tab_MPD <- table(df_ranked$PCA_1, df_ranked$S)
-chisq.test(tab_MPD)
+df_ranked_long <- df_ranked %>% group_by(S, Taxa) %>% pivot_longer(cols= all_of(comp_cols), names_to = "Variable", values_to = "Values")
+
+sub_rank_parallel <- sub_rank_long %>% pivot_wider(names_from= S, values_from = Values)
+raw_long_parallel <- raw_long  %>% group_by(Taxa) %>% mutate(row = row_number()) %>% 
+  pivot_wider(names_from= S, values_from = Importance) %>%
+  select(-row)
+
+library(ggbump)
+library(tidyverse)
+
+ggparcoord(raw_long_parallel, columns = 3:4, groupColumn = 2) + facet_wrap(~Taxa)
+
+ggplot(sub_rank_long,aes(x=S, y=Values,color=Variable, group=Variable))+
+  geom_line() +
+  facet_wrap(~Taxa)
+
+
+
+
+##Plot 1 - Changes in the variable importance and their rank
+palette8 <- c(
+  "#1b9e77",   # Group1 S1 / S2
+  "#d95f02",
+  "#d9025330",   # Group2 S1 / S2
+  "#7570b3", 
+  "#780"   # Group3 S1 / S2
+  #  "#e7298a", "#e7298a80"    # Group4 S1 / S2
+)
+
+raw_long_S$Variable <- forcats::fct_relevel(
+  raw_long_S$Variable,
+  "MPD",
+  "HM","trade","PCA_1","PCA_2"
+)
+
+raw_long$Variable <- forcats::fct_relevel(
+  raw_long$Variable,
+  "MPD",
+  "HM","trade","PCA_1","PCA_2"
+)
+
+ggplot(data = raw_long_S, aes(x=S, y=meanI, group=Variable, color=Variable))+
+  geom_line( alpha=1, colour = "grey20")+ 
+  geom_ribbon(aes(x =S, y = meanI, ymin = meanI - sdI, ymax = meanI + sdI, fill = Variable), alpha = .2, 	colour = "grey80")+
+  geom_boxplot(data = as.data.frame(raw_long), aes(x=S, y=Importance, fill=Variable), 
+               inherit.aes = FALSE,
+               position = position_dodge(width = 0.2),
+               width = 0.6, 
+               alpha = 0.5
+               
+  )+
+  labs(y = "Variable Importance (0-1)", x="")+
+  scale_fill_manual(values = palette8)+
+  theme_minimal()+
+facet_wrap(~Taxa)
+
+
+
+
+## v2
+
+ggplot(data = raw_long_S, aes(x=S, y=meanI, group=Variable, color=Variable))+
+  geom_line( alpha=1, colour = "grey20")+ 
+  geom_ribbon(aes(x =S, y = meanI, ymin = meanI - sdI, ymax = meanI + sdI, fill = Variable), alpha = .2, 	colour = "grey80")+
+  geom_boxplot(data = as.data.frame(raw_long), aes(x=S, y=Importance, fill=Variable), 
+               inherit.aes = FALSE,
+               position = position_dodge(width = 0.2),
+               width = 0.6, 
+               alpha = 0.5
+               
+  )+
+  geom_point(data = fig4[fig4$significance == "y", ], aes(Year, pct_change + 0.25), shape = "*", size=4.233, color="black")
++
+  labs(y = "Variable Importance (0-1)", x="")+
+  scale_fill_manual(values = palette8)+
+  theme_minimal()+
+  facet_wrap(~Taxa)
 
