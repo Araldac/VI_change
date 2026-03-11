@@ -641,15 +641,17 @@ out$Variable <- forcats::fct_relevel(
 p <- ggplot(data = raw_long_S, aes(x=S, y=meanI, group=Variable, color=Variable))+
   geom_line( alpha=1, colour = "grey20")+ 
   geom_ribbon(aes(x =S, y = meanI, ymin = meanI - sdI, ymax = meanI + sdI, fill = Variable), alpha = .2, 	colour = "grey80")+
-  geom_boxplot(data = as.data.frame(raw_long), aes(x=S, y=Importance, fill=Variable), 
-               inherit.aes = FALSE,
-               position = position_dodge(width = 0.2),
-               width = 0.6, 
-               alpha = 0.5
-               
-  )+
-  geom_text(data=out, aes(x= 2.4, y= meanI_S2, label=star, colour= Variable), show.legend = FALSE, inherit.aes = FALSE,  size=6) +
+  # geom_boxplot(data = as.data.frame(raw_long), aes(x=S, y=Importance, fill=Variable), 
+  #              inherit.aes = FALSE,
+  #              position = position_dodge(width = 0.2),
+  #              width = 0.6, 
+  #              alpha = 0.5
+  #              
+  # )+
+  geom_point(show.legend = TRUE, size = 2)+
+  geom_text(data=out, aes(x= 2.4, y= meanI_S2, label=star, colour= Variable),show.legend = FALSE,   inherit.aes = FALSE,  size=6) +
   labs(y = "Variable Importance (0-1)", x="")+
+
   scale_fill_manual(values = palette8)+
   scale_color_manual(values = palette8, drop = FALSE) +
   theme_minimal()+
@@ -674,4 +676,48 @@ shift_legend3 <- function(p) {
 
 #put the ñegend in empty grd space
 grid.draw(shift_legend3(p))
+
+
+
+################################################################################
+## (new) Plot 2 - Direction of variables 0-1  ####
+################################################################################
+
+# allv_pca_long for data 
+# list_models for significance values
+
+p_v <- lapply(list_models, function(m){
+  p <- summary(m)
+  return(p$coefficients[2, "Pr(>|t|)"])
+} )
+
+
+p_val <- data.frame(matrix(ncol= 0, nrow=5))
+p_val$Variable <- names(p_v)
+p_val$p <- t(p_v %>% bind_rows())
+p_val$group1 <- as.factor(0)
+p_val$group2 <- as.factor(1)
+p_val[,".y."] <- c(270, 17, 5.5, 2.7e+15, 30)
+p_val$p.signif <- "ns"
+p_val$p.signif[p_val$p<= .05]  <- "*"
+p_val$p.signif[p_val$p <= .01]  <- "**"
+p_val$p.signif[p_val$p <= .001] <- "***"
+
+allv_pca_mean <-  allv_pca_long %>% group_by(Taxa,Occurrence, Variable) %>% summarise(across(Value, mean), .groups = "drop")
+
+palette13 <- c(brewer.pal(n = 12, name = "Paired"), "#666666")
+
+ggplot(allv_pca_long, aes(Occurrence, Value, fill=Occurrence))+
+  geom_boxplot(show.legend = FALSE, alpha = .5)+ theme_minimal()+ 
+  geom_line(data = allv_pca_mean, aes(x= Occurrence, y = Value, group = Taxa, color= Taxa), linewidth = 1.3,  inherit.aes = FALSE)+
+  scale_fill_manual(values = c("white", "grey"))+
+  geom_point(data = allv_pca_mean, aes(x= Occurrence, y = Value, group = Taxa, color= Taxa), show.legend = FALSE, size = 2)+
+  #scale_color_manual(values = wes_palette("Zissou1", 13, type = "continuous"))+
+  scale_color_manual(values = palette13) +
+  theme_bw()+
+  labs(x = "", y = "")+
+  theme(legend.position = "bottom")+
+  facet_wrap(~Variable, ncol=5, scales = "free")+
+   scale_x_discrete(labels= c("Background points", "Presences"))+
+  stat_pvalue_manual(p_val, label = "p.signif", y.position = ".y.",tip.length = 0.01)
 
