@@ -472,7 +472,7 @@ for (species in row.names(sp_info2)){
 }
 
 print(sp_info2)
-sp_info2 <- tibble::rownames_to_column(sp_info2, "species")
+sp_info2 <- tibble::rownames_to_column(sp_info2, "Taxa")
 
 par(mfrow=c(3,3))
 for (i in 1:7){
@@ -607,6 +607,7 @@ raw_long$Variable <- forcats::fct_relevel(
 )
 
 
+
 #add signficiance star and their placve in the plot
 pvals_sig <- per_species_pvals_mean_df_sig
 
@@ -622,8 +623,7 @@ pvals_sig2 <- pvals_sig %>%
 # Make a small table with S2 meanI per Taxa × Variable
 meanI_S2 <- raw_long_S %>%
   filter(S == "S2") %>%
-  select(Taxa, Variable, meanI) %>%
-  distinct() %>%                 # keep one row per Taxa×Variable (adjust if needed)
+  select(Taxa, Variable, meanI) %>%                 # keep one row per Taxa×Variable (adjust if needed)
   rename(meanI_S2 = meanI)
 
 # Now you can join safely
@@ -637,10 +637,11 @@ out$Variable <- forcats::fct_relevel(
 )
 
 
+
 #plot
-p <- ggplot(data = raw_long_S, aes(x=S, y=meanI, group=Variable, color=Variable))+
-  geom_line( alpha=1, colour = "grey20")+ 
-  geom_ribbon(aes(x =S, y = meanI, ymin = meanI - sdI, ymax = meanI + sdI, fill = Variable), alpha = .2, 	colour = "grey80")+
+p <- ggplot(data = raw_long_S, aes(x=S_num, y=meanI, group=Variable, color=Variable))+
+  #geom_line( alpha=1, colour = "grey20", show.legend = FALSE)+ 
+  geom_ribbon(aes(x =S_num, y = meanI, ymin = meanI - sdI, ymax = meanI + sdI, fill = Variable), alpha = .2, 	colour = "grey80")+
   # geom_boxplot(data = as.data.frame(raw_long), aes(x=S, y=Importance, fill=Variable), 
   #              inherit.aes = FALSE,
   #              position = position_dodge(width = 0.2),
@@ -649,17 +650,19 @@ p <- ggplot(data = raw_long_S, aes(x=S, y=meanI, group=Variable, color=Variable)
   #              
   # )+
   geom_point(show.legend = TRUE, size = 2)+
-  geom_text(data=out, aes(x= 2.4, y= meanI_S2, label=star, colour= Variable),show.legend = FALSE,   inherit.aes = FALSE,  size=6) +
-  labs(y = "Variable Importance (0-1)", x="")+
-  #xlim(0.5, 2.5)+
+  geom_text(data=out, aes(x= 2.2, y= meanI_S2, label=star, colour= Variable),  show.legend = FALSE,  inherit.aes = FALSE,  size=6) +
+  labs(y = "Variable Importance %", x="")+
+  scale_y_continuous(breaks=c(0, 0.2, .4, .6), labels =c(0, 20, 40, 60))+
+  #scale_x_discrete(labels= c("S1", "S2"), limits= 1:2)+
+  scale_x_continuous(lim= c(0.75, 2.35), breaks = c(1, 2), labels= c("S1", "S2"))+
   scale_fill_manual(values = palette8)+
   scale_color_manual(values = palette8, drop = FALSE) +
-  theme_minimal()+
+  theme_bw()+
   guides(fill = guide_legend(title.position = "top",
                              label.position = "bottom",
                              nrow = 1)) +
-  theme(legend.direction = "horizontal")+
-  facet_wrap(~Taxa)
+  theme(legend.direction = "horizontal", legend.position = "bottom")+
+  facet_wrap(~Taxa, ncol=3)
 
 # theme_classic()# Source - https://stackoverflow.com/a/58734961
 # Posted by Artem Sokolov
@@ -675,9 +678,20 @@ shift_legend3 <- function(p) {
 }
 
 #put the ñegend in empty grd space
-grid.draw(shift_legend3(p))
+p_leg <- (shift_legend3(p))
 
-
+# ggplot2::ggsave(filename =  "~/Internship UNIL/Figures_SMK/VariableImp13sp.jpg",
+#                 plot = p_leg,
+#                 width = 310, 
+#                 height = 190, units = "mm",
+                device = "jpg", dpi = 500)
+jpeg(filename =  "~/Internship UNIL/Figures_SMK/VariableImp13sp.jpeg",
+     width = 310, 
+     height = 190, units = "mm",
+      res = 500)
+#p
+(shift_legend3(p))
+dev.off()
 
 ################################################################################
 ## (new) Plot 2 - Direction of variables 0-1  ####
@@ -707,11 +721,11 @@ allv_pca_mean <-  allv_pca_long %>% group_by(Taxa,Occurrence, Variable) %>% summ
 
 palette13 <- c(brewer.pal(n = 12, name = "Paired"), "#666666")
 
-ggplot(allv_pca_long, aes(Occurrence, Value, fill=Occurrence))+
+p2 <- ggplot(allv_pca_long, aes(Occurrence, Value, fill=Occurrence))+
   geom_boxplot(show.legend = FALSE, alpha = .5)+ theme_minimal()+ 
   geom_line(data = allv_pca_mean, aes(x= Occurrence, y = Value, group = Taxa, color= Taxa), linewidth = 1.3,  inherit.aes = FALSE)+
   scale_fill_manual(values = c("white", "grey"))+
-  geom_point(data = allv_pca_mean, aes(x= Occurrence, y = Value, group = Taxa, color= Taxa), show.legend = FALSE, size = 2)+
+  geom_point(data = allv_pca_mean, aes(x= Occurrence, y = Value, group = Taxa, color= Taxa), show.legend = TRUE, size = 2)+
   #scale_color_manual(values = wes_palette("Zissou1", 13, type = "continuous"))+
   scale_color_manual(values = palette13) +
   theme_bw()+
@@ -721,11 +735,62 @@ ggplot(allv_pca_long, aes(Occurrence, Value, fill=Occurrence))+
    scale_x_discrete(labels= c("Background points", "Presences"))+
   stat_pvalue_manual(p_val, label = "p.signif", y.position = ".y.",tip.length = 0.01)
 
+jpeg(filename =  "~/Internship UNIL/Figures_SMK/Vchangeglobal.jpeg",
+     width = 310, 
+     height = 190, units = "mm",
+     res = 500)
+p2
+dev.off()
+
+################################################################################
+## (new) Map 1 - q25-q75 pca1 and pca 2  ####
+################################################################################
+
+pca11 <- unname(quantile(allv_pca$PCA_1[allv_pca$Occurrence == 1], .25))
+pca12 <- unname(quantile(allv_pca$PCA_1[allv_pca$Occurrence == 1], .75))
+
+pca21 <- unname(quantile(allv_pca$PCA_2[allv_pca$Occurrence == 1], .25))
+pca22 <- unname(quantile(allv_pca$PCA_2[allv_pca$Occurrence == 1], .75))
+
+library(terra)
+r<- terra::rast("//wsl.localhost/Ubuntu/home/admin_ait/internship-snakemake-2025/results/variables/Climate_PCA.tif")
+
+r1 <- r[[1]]
+r2 <- r[[2]]
+r1 <- terra::ifel(r1 <= pca12 & r1 >= pca11, 1, 0)
+r2 <- terra::ifel(r2 <= pca22 & r2 >= pca21, 2, 0)
+
+filter_r <- r1+r2
+plot(filter_r)
+
+library(terra)
+
+# Supposons que pca11, pca12, pca21, pca22 sont des valeurs numériques définies
+
+r_classified <- terra::ifel(
+  r[[1]] >= pca11 & r[[1]] <= pca12 & r[[2]] >= pca21 & r[[2]] <= pca22, 
+  3,  # Cas où les deux conditions sont vraies (entre les deux bornes)
+  terra::ifel(
+    r[[1]] >= pca11 & r[[1]] <= pca12, 
+    1,  # Seulement dans les bornes de la couche 1
+    terra::ifel(
+      r[[2]] >= pca21 & r[[2]] <= pca22, 
+      2,  # Seulement dans les bornes de la couche 2
+      NA  # Aucune des deux conditions (ou 0 si tu préfères)
+    )
+  )
+)
+
+plot(r[[1]], col="grey", legend=FALSE); 
+plot(r_classified, add=TRUE); 
+points(allv_pca$decimallongitude[allv_pca$Occurrence==1], allv_pca$decimallatitude[allv_pca$Occurrence==1], pch=20, cex=.3, col = rgb(.7, 0, 0, 0.4))
 
 
 ################################################################################
 ## (new) Table 1 - Evaluation metrics of RF  ####
 ################################################################################
+
+
 
 # raw for the data on the evaluations
 
@@ -752,9 +817,10 @@ df_formateado <- eval_means %>%
   ) %>%
   
   # 5. Seleccionamos las columnas finales
-  select(Taxa, AUC, Kappa, Accuracy, Sensitivity)
+  select(Taxa, AUC, Kappa, Accuracy, Sensitivity) %>% inner_join(sp_info2, by = "Taxa") 
 
 # Ver el resultado
 print(df_formateado)
 
 formattable::formattable(df_formateado)
+
