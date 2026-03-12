@@ -22,6 +22,7 @@ library(ggpubr)
 library(gtable)
 library(cowplot)
 library(grid)
+library(ggpattern)
 
 ############################
 # ##  1) Paramètres utilisateur    ####
@@ -551,29 +552,7 @@ ggplot(allv_pca_long, aes(Occurrence, Value, fill=Occurrence))+
 #############briyullon 
 
 
-library(dplyr)
 
-rank_cols <- c("MPD", "PCA_1", "PCA_2", "trade", "HM")
-
-df_ranked <- raw %>% select(all_of(comp_cols), S, Taxa) 
-
-df_ranked <- lapply(1:nrow(df_ranked), function(i) rank(-df_ranked[i, comp_cols])) %>% bind_rows() %>% mutate(S = df_ranked$S, Taxa = df_ranked$Taxa )
-
-df_ranked_long <- df_ranked %>% group_by(S, Taxa) %>% pivot_longer(cols= all_of(comp_cols), names_to = "Variable", values_to = "Values")
-
-sub_rank_parallel <- sub_rank_long %>% pivot_wider(names_from= S, values_from = Values)
-raw_long_parallel <- raw_long  %>% group_by(Taxa) %>% mutate(row = row_number()) %>% 
-  pivot_wider(names_from= S, values_from = Importance) %>%
-  select(-row)
-
-library(ggbump)
-library(tidyverse)
-
-ggparcoord(raw_long_parallel, columns = 3:4, groupColumn = 2) + facet_wrap(~Taxa)
-
-ggplot(sub_rank_long,aes(x=S, y=Values,color=Variable, group=Variable))+
-  geom_line() +
-  facet_wrap(~Taxa)
 
 
 
@@ -636,12 +615,19 @@ out$Variable <- forcats::fct_relevel(
   "HM","trade","PCA_1","PCA_2"
 )
 
+library(dplyr)
+
+raw_long_S2 <- raw_long_S %>%
+  left_join(out %>% select(Taxa, Variable, p_value),
+            by = c("Taxa", "Variable")) %>%
+  mutate(ribbon = if_else(p_value > 0.05 | is.na(p_value), 0, sdI), mean_ribbon = if_else(p_value > 0.05 | is.na(p_value), 0, meanI) )
+
 
 
 #plot
-p <- ggplot(data = raw_long_S, aes(x=S_num, y=meanI, group=Variable, color=Variable))+
+p <- ggplot(data = raw_long_S2, aes(x=S_num, y=meanI, group=Variable, color=Variable))+
   #geom_line( alpha=1, colour = "grey20", show.legend = FALSE)+ 
-  geom_ribbon(aes(x =S_num, y = meanI, ymin = meanI - sdI, ymax = meanI + sdI, fill = Variable), alpha = .2, 	colour = "grey80")+
+  geom_ribbon(aes(x =S_num, y = mean_ribbon, ymin = mean_ribbon - ribbon, ymax = mean_ribbon + ribbon, fill = Variable), alpha = .2, 	colour = "grey80")+
   # geom_boxplot(data = as.data.frame(raw_long), aes(x=S, y=Importance, fill=Variable), 
   #              inherit.aes = FALSE,
   #              position = position_dodge(width = 0.2),
@@ -650,11 +636,12 @@ p <- ggplot(data = raw_long_S, aes(x=S_num, y=meanI, group=Variable, color=Varia
   #              
   # )+
   geom_point(show.legend = TRUE, size = 2)+
+  geom_errorbar(aes(x =S_num, ymax = meanI + sdI, ymin = meanI - sdI))+
   geom_text(data=out, aes(x= 2.2, y= meanI_S2, label=star, colour= Variable),  show.legend = FALSE,  inherit.aes = FALSE,  size=6) +
   labs(y = "Variable Importance %", x="")+
   scale_y_continuous(breaks=c(0, 0.2, .4, .6), labels =c(0, 20, 40, 60))+
   #scale_x_discrete(labels= c("S1", "S2"), limits= 1:2)+
-  scale_x_continuous(lim= c(0.75, 2.35), breaks = c(1, 2), labels= c("S1", "S2"))+
+  scale_x_continuous(lim= c(0.95, 2.25), breaks = c(1, 2), labels= c("S1", "S2"))+
   scale_fill_manual(values = palette8)+
   scale_color_manual(values = palette8, drop = FALSE) +
   theme_bw()+
@@ -686,8 +673,8 @@ p_leg <- (shift_legend3(p))
 #                 height = 190, units = "mm",
                 device = "jpg", dpi = 500)
 jpeg(filename =  "~/Internship UNIL/Figures_SMK/VariableImp13sp.jpeg",
-     width = 310, 
-     height = 190, units = "mm",
+     width = 190, 
+     height = 300, units = "mm",
       res = 500)
 #p
 (shift_legend3(p))
@@ -823,4 +810,207 @@ df_formateado <- eval_means %>%
 print(df_formateado)
 
 formattable::formattable(df_formateado)
+
+
+
+################################################################################
+## plot 3 - heatmaps  ####
+################################################################################
+p_vals_hm <- per_species_pvals_mean_df 
+p_vals_hm$estimate[p_vals_hm$p_value > 0.05 ] <- 0
+
+p1 <- ggplot(p_vals_hm, aes(variable, species, fill = estimate)) +
+  geom_tile(color = "grey80") +
+  scale_fill_gradient2(
+    low = "#740580", mid = "white", high = "#F2C447",
+    midpoint = 0
+  ) +
+  labs(
+    title = "Effect size between S2-S1",
+    y = "Species",
+    x="Variables"
+  ) + 
+  scale_x_discrete(limits = col_w_val)+
+  scale_y_discrete(limits = sp_info$species)+
+  #geom_text(aes(label=stars), color="black", size=5) + 
+  theme_minimal(base_size = 14) +
+  theme(legend.position= "left", axis.text.x = element_text(angle = 45, hjust = 1), axis.text.y = element_blank())
+
+
+### arrange data ####
+#take mean variable importance
+mean_wide <- raw_long_S %>% group_by(Taxa, S) %>% select(Taxa, S, Variable, meanI) %>% pivot_wider(names_from = Variable, values_from = meanI)
+#appply ranking S1 and S2
+
+library(dplyr)
+library(tidyr)
+library(purrr)
+
+# variables to rank
+vars <- c("HM", "MPD", "PCA_1", "PCA_2", "trade")
+
+# 1. Compute within-row ranks for each Taxa/S
+ranked <- mean_wide %>%
+  rowwise() %>%
+  mutate(across(all_of(vars),
+                ~ rank(c_across(all_of(vars)), ties.method = "first")[which(vars == cur_column())],
+                .names = "rank_{col}")) %>%
+  ungroup()
+
+# 2. Pivot longer to compute rank differences
+rank_diff <- ranked %>%
+  pivot_longer(cols = starts_with("rank_"),
+               names_to = "Variable",
+               names_prefix = "rank_",
+               values_to = "Rank") %>% select(Taxa, Variable, Rank, S) %>%
+  pivot_wider(names_from = S, values_from = Rank, names_prefix = "rank_") %>%
+  mutate(RankDiff = rank_S2 - rank_S1)
+
+# 3. Add value of S2 for each variable
+value_S2 <- mean_wide %>%
+  filter(S == "S2") %>%
+  pivot_longer(cols = all_of(vars),
+               names_to = "Variable",
+               values_to = "Value_S2") %>%
+  select(Taxa, Variable, Value_S2)
+
+# 4. Final dataset
+final_df <- rank_diff %>%
+  left_join(value_S2, by = c("Taxa", "Variable")) %>%
+  select(Taxa, Variable, RankDiff, Value_S2)
+
+final_df
+#### plot ####
+p2 <- ggplot(final_df, aes(Variable, Taxa)) +
+  geom_tile(aes(fill= RankDiff)) +
+  geom_point(aes(size = Value_S2))+
+  scale_fill_gradient2(
+    low = "#D55E00", mid = "white", high = "#56B4E9",
+    midpoint = 0
+  ) +
+  labs(
+    title = "Rank and % importance in S2",
+    y = "",
+    x=""
+  ) + 
+  scale_y_discrete(limits = sp_info$species)+
+  scale_x_discrete(limits = col_w_val)+
+  #geom_text(aes(label=stars), color="black", size=5) + 
+  theme_minimal(base_size = 14) +
+  theme(legend.position= "right", axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggarrange(p1,p2, ncol=2, widths = c(0.9, 1.2))
+
+
+############################
+# ##  4) Carte S1-S2   ####
+############################
+
+pathallV <- "//wsl.localhost/Ubuntu/home/admin_ait/internship-snakemake-2025/results/species/AssignVariables/"
+allV_files <- list.files(pathallV,  pattern = "_allv\\.csv$", full.names = T)
+all_coords <- lapply(allV_files, function(f) {
+  df <- read.csv(f, sep = ",", stringsAsFactors = FALSE)
+  df <- df %>%  filter(Occurrence ==1 )
+  
+  return(df)
+}) %>% bind_rows() %>% select(BEN, S, Taxa)
+
+# all maps toegther
+
+
+ben_s_sp_df <- all_coords %>%
+  select(BEN, S, Taxa) %>%
+  filter(S %in% c("S1", "S2")) %>%
+  group_by(Taxa, BEN) %>%
+  summarise(
+    # If S1 is present for this Taxa+BEN, keep S1, else S2
+    S = if (any(S == "S1")) "S1" else "S2",
+    .groups = "drop"
+  )
+
+taxa_list <- sort(unique(ben_s_sp_df$Taxa))
+
+
+ben_wide <- ben_s_sp_df %>% select(BEN, S) %>% 
+  mutate(value = 1) %>%                  # mark presence
+  distinct(BEN, S, .keep_all = TRUE) %>% # avoid duplicates
+  pivot_wider(names_from = S,
+              values_from = value,
+              values_fill = 0)           # fill missing with 0
+
+ben_wide
+
+
+facet_df <- ant_ll %>%
+  st_drop_geometry() %>%
+  distinct(BEN) %>%
+  left_join(ben_wide, by = c("BEN")) %>%
+  left_join(ant_ll %>% select(BEN, geometry), by = "BEN") %>%
+  st_as_sf()
+
+facet_df[is.na(facet_df)] <- 0 
+
+library(ggpattern)
+ggplot(facet_df) +
+  ggpattern::geom_sf_pattern(aes(fill=as.factor(S1), pattern = as.factor(S2)),
+                             color = "grey90",
+                             size = 0.01,
+                             pattern_density = 1.1, 
+                             pattern_fill    = 'black',
+                             pattern_colour  = 'black')+
+
+  labs(
+    title = "BEN status by species",
+    subtitle = "S1 overrides S2 within each (Taxa, BEN)"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom", axis.text.x=element_blank(), axis.text.y = element_blank())
+
+
+#if needed to do one by one plot
+
+# Keep only needed columns and only S1/S2
+ben_s_sp_df <- all_coords %>%
+  select(BEN, S, Taxa) %>%
+  filter(S %in% c("S1", "S2")) %>%
+  group_by(Taxa, BEN) %>%
+  summarise(
+    # If S1 is present for this Taxa+BEN, keep S1, else S2
+    S = if (any(S == "S1")) "S1" else "S2",
+    .groups = "drop"
+  )
+
+ant_ll <- st_transform(antmaps_pol, 4326)  # WGS84 (lon/lat)
+
+plot_species_map <- function(species) {
+  sp_df <- ben_s_sp_df %>% filter(Taxa == species)
+  
+  native_df <- antmaps_dis[[species]] %>% filter(category == "N") %>% select(gid) %>% add_column(Native = 1)
+  
+  # left_join keeps all BEN polygons; S will be NA where species not present
+  geom_sp <- ant_ll %>%
+    left_join(sp_df, by = "BEN")
+  
+  geom_sp$S[geom_sp$BEN %in% native_df$gid] <- "N"
+  
+  plot <- ggplot(geom_sp) +
+    geom_sf(aes(fill = S), color = "grey60", size = 0.1) +
+    scale_fill_manual(
+      values = c(S1 = "#e41a1c", S2 = "#ff7f00", N = "green"),
+      drop = FALSE,
+      na.translate = FALSE,
+      name = "Status"
+    ) +
+    labs(
+      title = paste0("BEN status for ", species),
+      subtitle = "S1 overrides S2 where both exist"
+    ) +
+    theme_minimal() +
+    theme(legend.position = "bottom")
+  plot
+  return(plot)
+}
+
+
+
 
