@@ -9,7 +9,8 @@
 args <- commandArgs(trailingOnly = TRUE)
 data <-args[1]
 params <- args[2]
-output <- args[3]
+data_type <- args[3]
+output <- args[4]
 
 
 pkg <- c( "randomForest", "pROC", "dplyr", "tidyr", "foreach", "pbapply", "doParallel", "doSNOW")
@@ -22,7 +23,10 @@ lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
 #### #### Train with X test with Y, evaluation ####  ####
 RF_apply<-function(data, env_vars, params, S_train, S_test, PA_train, PA_test, rep, Mod){
   
-  seed <- PA_train + 4*PA_test + rep
+  if (data_type == "1"){
+     seed <- rep
+  } else (seed <- PA_train + 4*PA_test + rep)
+ 
   set.seed(seed)
   
   # Idenitfy lines with NA 
@@ -44,16 +48,23 @@ RF_apply<-function(data, env_vars, params, S_train, S_test, PA_train, PA_test, r
   
   # Évaluation
   predictions <- predict(rf_trained, data.test[, env_vars], type = "prob")[, 2]
-  auc_S2 <- auc(roc(as.factor(data.test$Occurrence), predictions))
-  
-  # Valores reales
+   # Valores reales
   actuals <- data.test$Occurrence
+  actuals <- factor(actuals, levels = c(0,1))
+
+  #if (data_type == "0"){
+  #    auc_S2 <- NA
+  #} else (auc_S2 <- auc(roc(as.factor(actuals), predictions)))
+  
+  #auc_S2 <- auc(roc(as.factor(data.test$Occurrence), predictions))
+  
+ 
   
   # Convertir probabilidades a clases (0 o 1) usando umbral 0.5
   threshold <- 0.5
   predictions_class <- ifelse(predictions >= threshold, 1, 0)
 
-  actuals <- factor(actuals, levels = c(0,1))
+
   predictions_class <- factor(predictions_class, levels = c(0,1))
   confusion.matrix.training <- table(actuals,predictions_class)
 
@@ -71,11 +82,12 @@ RF_apply<-function(data, env_vars, params, S_train, S_test, PA_train, PA_test, r
   df_results$S_train <- S_train
   df_results$S_test <- S_test
   df_results$Rep <- rep
-  df_results$AUC <- as.numeric(auc_S2)
+  df_results$AUC <- NA #as.numeric(auc_S2)
   df_results$TP <- confusion.matrix.training[2,2]
   df_results$TN <- confusion.matrix.training[1,1]
   df_results$FP <- confusion.matrix.training[1,2]
   df_results$FN <- confusion.matrix.training[2,1]
+  df_results$type_d <- data_type
   
   return(df_results)
   
@@ -89,6 +101,48 @@ RF_apply<-function(data, env_vars, params, S_train, S_test, PA_train, PA_test, r
 data_PCA<- read.csv(data)
 params_PCA <- read.csv(params)
 
+data_type <- as.character(data_type)
+cat("Filtering dat by data_type", data_type, "\n")
+
+##filter data_PCA by input data type
+if (data_type == "0"){
+  #filter S2 data to just have absences 
+  data_PCA <- data_PCA %>% filter(S == "S2" & Occurrence == 0 | S == "S1")
+  all_comb_RF <- expand.grid(
+  S_train = "S1",
+  S_test = "S2",
+  PA_train = 1:10,
+  PA_test = 1:10,
+  stringsAsFactors = FALSE)
+
+} 
+
+if (data_type == "1"){
+  #filter to just have ocurrences (1) for S2
+  data_PCA <- data_PCA %>% filter(S == "S2" & Occurrence == 1 | S == "S1")
+
+    #expand all options
+  all_comb_RF <- expand.grid(
+  S_train = "S1",
+  S_test = "S2",
+  PA_train = 1,
+  PA_test = 1,
+  stringsAsFactors = FALSE)
+
+} 
+
+if (data_type == "All"){
+  data_PCA <- data_PCA
+
+  #expand all options
+all_comb_RF <- expand.grid(
+  S_train = "S1",
+  S_test = "S2",
+  PA_train = 1:10,
+  PA_test = 1:10,
+  stringsAsFactors = FALSE)
+}
+
 head(data_PCA)
 head(params_PCA)
 
@@ -101,13 +155,6 @@ if (length(taxa) > 1){
   }
 
 
-#expand all options
-all_comb_RF <- expand.grid(
-  S_train = "S1",
-  S_test = "S2",
-  PA_train = 1:10,
-  PA_test = 1:10,
-  stringsAsFactors = FALSE)
 
 #remove cases where it is training and testing on the same dataset
 all_comb_RF <- all_comb_RF %>%
@@ -144,6 +191,7 @@ resultAllComb <- foreach(
   #print(all_comb_RF[i, ])
 
   #--- PCA ---
+  if (data_type == "1"){ #bc just one set of absences
   PCA_r <- lapply(1:100, function(rep){
     RF_apply(
       data      = data_PCA,
@@ -156,7 +204,23 @@ resultAllComb <- foreach(
       rep       = rep,
       Mod       = "PCA"
     )
+  })}
+
+  else{
+PCA_r <- lapply(1:10, function(rep){
+    RF_apply(
+      data      = data_PCA,
+      env_vars  = PCA_vars,
+      params    = params_PCA, 
+      S_train   = all_comb_RF[i, 1],
+      S_test    = all_comb_RF[i, 2],
+      PA_train  = all_comb_RF[i, 3],
+      PA_test   = all_comb_RF[i, 4],
+      rep       = rep,
+      Mod       = "PCA"
+    )
   })
+  }
   
   # Return list for this combination
   return(PCA_r)

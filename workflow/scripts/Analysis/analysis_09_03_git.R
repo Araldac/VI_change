@@ -42,6 +42,7 @@ perc_scale <- 100                # si vos pourcentages sont en 0–100
 
 cluster_mode <- "species_S"      # "species_S", "species_avg", "by_PA"
 
+
 ############################
 # ## 2) Chargement     ####
 ############################
@@ -167,11 +168,13 @@ figure_Eval
 # ##  Evaluation metrics recast     ####
 ############################
 pathallV <- "//wsl.localhost/Ubuntu/home/admin_ait/internship-snakemake-2025/results/species/Anlaysis//"
-allV_files <- list.files(pathallV,  pattern = "_forecast\\.csv$", full.names = T)
+allV_filesRE <- list.files(pathallV,  pattern = "_forecast\\.csv$", full.names = T)
+allV_files <- list.files(pathallV,  pattern = "_forecast", full.names = T)
+allV_files <- allV_files[! allV_files %in% allV_filesRE ]
 recast <- lapply(allV_files, function(f) {
-  df <- read.csv(f, sep = ",", stringsAsFactors = FALSE)
+  df <- read.csv(f, sep = ",", stringsAsFactors = FALSE) %>% mutate(type_d = as.character(type_d))
   return(df)
-}) %>% bind_rows()  %>% mutate(Accuracy = (TP+TN)/(TP+TN+FP+FN), Sensitivity = TP/(FN+TP), Specificity = TN/(TN+FP),
+})  %>% bind_rows()  %>% mutate(Accuracy = (TP+TN)/(TP+TN+FP+FN), Sensitivity = TP/(FN+TP), Specificity = TN/(TN+FP),
 # Total observations
 N = TP + TN + FP + FN,
 # Expected agreement (correct formula)
@@ -183,32 +186,32 @@ Kappa = (Po - Pe) / (1 - Pe)
 )
 
 #AUC
-auc_p_R <- ggplot(recast, aes(Taxa, AUC))+
+auc_p_R <- ggplot(recast, aes(Taxa, AUC, fill= type_d))+
   geom_boxplot()+   theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank()) +
   
   theme_minimal()
 #+labs(title = "AUC of ROC for CSI and PCA RF models")
 
 # Accuracy
-acc_p_R <- ggplot(recast, aes(Taxa, Accuracy))+
+acc_p_R <- ggplot(recast, aes(Taxa, Accuracy, fill= type_d))+
   geom_boxplot()+   theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank()) +
   
   theme_minimal()
 #+labs(title = "Model Accuracy of CSI and PCA RF models")
 
 #Kappa
-Kapp_p_R <- ggplot(recast, aes(Taxa, Kappa))+
+Kapp_p_R <- ggplot(recast, aes(Taxa, Kappa, fill= type_d))+
   geom_boxplot()+
   theme_minimal()+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank())
   
 
-sens_p_R <-  ggplot(recast, aes(Taxa, Sensitivity))+
+sens_p_R <-  ggplot(recast, aes(Taxa, Sensitivity, fill= type_d))+
   geom_boxplot()+   theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank()) +
   theme_minimal()
 #+labs(title = "Model Cohens Kappa of CSI and PCA RF models")
 
 
-figure_Eval_R <- ggarrange(auc_p_R, acc_p_R, Kapp_p_R, sens_p_R, common.legend = TRUE, ncol=1, nrow=4, labels= c("A", "B", "C", "D"), legend ="right")
+figure_Eval_R <- ggarrange(acc_p_R, Kapp_p_R, sens_p_R, common.legend = TRUE, ncol=1, nrow=4, labels= c("A", "B", "C"), legend ="right")
 #ggexport(figure_Eval, filename = "~/Internship UNIL/Figures_SMK/figure_EvalCSI.pdf")
 figure_Eval_R
 
@@ -217,6 +220,7 @@ figure_Eval_R
 #  Heatmap %S1 , S2, S2-S1 and Kendall ####
 ########################################
 
+species_list <- unique(raw$Taxa)
 #### make mean using LMMM
 per_species_pvals_mean_df <- list()
 #mean_s1 <- list()
@@ -823,15 +827,15 @@ p1 <- ggplot(p_vals_hm, aes(variable, species, fill = estimate)) +
   geom_tile(color = "grey80") +
   scale_fill_gradient2(
     low = "#740580", mid = "white", high = "#F2C447",
-    midpoint = 0
+    midpoint = 0, name = "Effect size"
   ) +
   labs(
-    title = "Effect size between S2-S1",
+    #title = "Effect size between S2-S1",
     y = "Species",
-    x="Variables"
+    #x= "Variables"
   ) + 
-  scale_x_discrete(limits = col_w_val)+
-  scale_y_discrete(limits = sp_info$species)+
+  scale_x_discrete(limits = comp_cols)+
+  scale_y_discrete(limits = sp_info2$species)+
   #geom_text(aes(label=stars), color="black", size=5) + 
   theme_minimal(base_size = 14) +
   theme(legend.position= "left", axis.text.x = element_text(angle = 45, hjust = 1), axis.text.y = element_blank())
@@ -886,21 +890,31 @@ p2 <- ggplot(final_df, aes(Variable, Taxa)) +
   geom_point(aes(size = Value_S2))+
   scale_fill_gradient2(
     low = "#D55E00", mid = "white", high = "#56B4E9",
-    midpoint = 0
+    midpoint = 0, 
+    name = "Rank difference"
   ) +
+  scale_size(name = "% Importance S2" )+
   labs(
-    title = "Rank and % importance in S2",
+    #title = "Rank and % importance in S2",
     y = "",
-    x=""
+    x= ""
   ) + 
-  scale_y_discrete(limits = sp_info$species)+
-  scale_x_discrete(limits = col_w_val)+
+  scale_y_discrete(limits = sp_info2$species)+
+  scale_x_discrete(limits = comp_cols)+
   #geom_text(aes(label=stars), color="black", size=5) + 
   theme_minimal(base_size = 14) +
   theme(legend.position= "right", axis.text.x = element_text(angle = 45, hjust = 1))
 
-ggarrange(p1,p2, ncol=2, widths = c(0.9, 1.2))
+ggarrange(p1,p2, ncol=2, widths = c(0.9, 1.2),labels= c("A", "B") )
 
+jpeg(filename =  "~/Internship UNIL/Figures_SMK/Heatmap2.jpeg",
+     width = 300, 
+     height = 190, units = "mm",
+     res = 500)
+
+ggarrange(p1,p2, ncol=2, widths = c(0.8, 1.2),labels= c("A", "B") )
+
+dev.off()
 
 ############################
 # ##  4) Carte S1-S2   ####
@@ -947,70 +961,47 @@ facet_df <- ant_ll %>%
   left_join(ben_wide, by = c("BEN")) %>%
   left_join(ant_ll %>% select(BEN, geometry), by = "BEN") %>%
   st_as_sf()
+library(dplyr)
 
-facet_df[is.na(facet_df)] <- 0 
+df <- facet_df %>%
+  mutate(
+    S = case_when(
+      S1 == 1 & S2 == 1 ~ "S1 & S2",
+      S1 == 1 & S2 == 0 ~ "S1",
+      S1 == 0 & S2 == 1 ~ "S2",
+      TRUE ~ NA_character_
+    )
+  )
+
+facet_df$S2[facet_df$S2 == 0] <- NA
+facet_df$S1[facet_df$S1== 0] <- NA 
+
+# ggplot(facet_df)+
+#   geom_sf(aes(fill=S), color= "grey90") + theme_minimal() +
+#   theme(legend.position = "bottom", axis.text.x=element_blank(), axis.text.y = element_blank())
+# 
+# 
 
 library(ggpattern)
-ggplot(facet_df) +
-  ggpattern::geom_sf_pattern(aes(fill=as.factor(S1), pattern = as.factor(S2)),
-                             color = "grey90",
-                             size = 0.01,
-                             pattern_density = 1.1, 
-                             pattern_fill    = 'black',
-                             pattern_colour  = 'black')+
 
-  labs(
-    title = "BEN status by species",
-    subtitle = "S1 overrides S2 within each (Taxa, BEN)"
-  ) +
+map <- ggplot(df) +
+  geom_sf(fill = "grey90")+
+  geom_sf(aes(fill=as.factor(S)),
+                             color = "grey80")+
+  scale_fill_manual(
+    values = c("S1" = "#F0E442", "S2" = "#56B4E9", "S1 & S2"= "#009E73"),
+    drop = FALSE,
+    na.translate = FALSE,
+    name = "First record in : "
+  ) + 
   theme_minimal() +
   theme(legend.position = "bottom", axis.text.x=element_blank(), axis.text.y = element_blank())
 
 
-#if needed to do one by one plot
 
-# Keep only needed columns and only S1/S2
-ben_s_sp_df <- all_coords %>%
-  select(BEN, S, Taxa) %>%
-  filter(S %in% c("S1", "S2")) %>%
-  group_by(Taxa, BEN) %>%
-  summarise(
-    # If S1 is present for this Taxa+BEN, keep S1, else S2
-    S = if (any(S == "S1")) "S1" else "S2",
-    .groups = "drop"
-  )
-
-ant_ll <- st_transform(antmaps_pol, 4326)  # WGS84 (lon/lat)
-
-plot_species_map <- function(species) {
-  sp_df <- ben_s_sp_df %>% filter(Taxa == species)
-  
-  native_df <- antmaps_dis[[species]] %>% filter(category == "N") %>% select(gid) %>% add_column(Native = 1)
-  
-  # left_join keeps all BEN polygons; S will be NA where species not present
-  geom_sp <- ant_ll %>%
-    left_join(sp_df, by = "BEN")
-  
-  geom_sp$S[geom_sp$BEN %in% native_df$gid] <- "N"
-  
-  plot <- ggplot(geom_sp) +
-    geom_sf(aes(fill = S), color = "grey60", size = 0.1) +
-    scale_fill_manual(
-      values = c(S1 = "#e41a1c", S2 = "#ff7f00", N = "green"),
-      drop = FALSE,
-      na.translate = FALSE,
-      name = "Status"
-    ) +
-    labs(
-      title = paste0("BEN status for ", species),
-      subtitle = "S1 overrides S2 where both exist"
-    ) +
-    theme_minimal() +
-    theme(legend.position = "bottom")
-  plot
-  return(plot)
-}
-
-
-
-
+jpeg(filename =  "~/Internship UNIL/Figures_SMK/MapS1S2.jpeg",
+     width = 300, 
+     height = 230, units = "mm",
+     res = 500)
+map
+dev.off()
