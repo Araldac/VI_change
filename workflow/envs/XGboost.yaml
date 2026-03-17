@@ -1,0 +1,12 @@
+name: RF
+
+channels:
+    - conda-forge
+    - bioconda
+    - r
+
+dependencies: 
+    - python
+    - py-xgboost
+    - py-numpy
+    - py-pandas

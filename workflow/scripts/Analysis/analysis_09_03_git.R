@@ -186,11 +186,11 @@ Kappa = (Po - Pe) / (1 - Pe)
 )
 
 #AUC
-auc_p_R <- ggplot(recast, aes(Taxa, AUC, fill= type_d))+
-  geom_boxplot()+   theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank()) +
-  
-  theme_minimal()
-#+labs(title = "AUC of ROC for CSI and PCA RF models")
+# auc_p_R <- ggplot(recast, aes(Taxa, AUC, fill= type_d))+
+#   geom_boxplot()+   theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank()) +
+#   
+#   theme_minimal()
+# #+labs(title = "AUC of ROC for CSI and PCA RF models")
 
 # Accuracy
 acc_p_R <- ggplot(recast, aes(Taxa, Accuracy, fill= type_d))+
@@ -215,6 +215,7 @@ figure_Eval_R <- ggarrange(acc_p_R, Kapp_p_R, sens_p_R, common.legend = TRUE, nc
 #ggexport(figure_Eval, filename = "~/Internship UNIL/Figures_SMK/figure_EvalCSI.pdf")
 figure_Eval_R
 
+#best to use just Accuracy plot
 
 ########################################
 #  Heatmap %S1 , S2, S2-S1 and Kendall ####
@@ -785,7 +786,7 @@ points(allv_pca$decimallongitude[allv_pca$Occurrence==1], allv_pca$decimallatitu
 
 # raw for the data on the evaluations
 
-eval_means <- raw %>% group_by(Taxa) %>% 
+eval_means <- raw %>% group_by(Taxa, S) %>% 
 summarise(across(
   .cols = c(AUC, Kappa, Accuracy, Sensitivity), 
   .fns = list(Mean = mean, SD = sd), na.rm = TRUE, 
