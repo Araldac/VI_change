@@ -4,13 +4,12 @@
 # Description: apply XGboost weigthed
 # Date: 03/12/2025
 ################################################################################
+import sys
 
 occurrences = sys.argv[1]
 model = sys.argv[2]
-
-output_metrics = sys.argv[]
-output_shap_raw = sys.argv[]
-output_shap = sys.argv[]
+output_metrics = sys.argv[3]
+output_shap_raw = sys.argv[4]
 
 #import modules 
 import glob
@@ -25,6 +24,7 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 import enlighten
+from tqdm import tqdm 
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.utils.class_weight import compute_sample_weight
@@ -82,7 +82,7 @@ def features_ml_models(X, y, random_seed, variables, is_binary=False, is_balance
     # Define the models
     models = {
        # "RF": RandomForestClassifier(n_estimators=100, random_state=42),
-        "XGB": XGBClassifier(random_state=42),
+        "XGB": XGBClassifier(random_state=random_seed),
         #"SVC": SVC(kernel="rbf", cache_size=1000, probability=True, random_state=42),
     }
 
@@ -151,8 +151,11 @@ def features_ml_models(X, y, random_seed, variables, is_binary=False, is_balance
                     shap.plots.beeswarm(explanation) #, feature_names=X.columns)
                 #shap.summary_plot(explanation)
                 
-                shap_values_df = pd.DataFrame(shap_values,  columns=X.columns)
+                #shap_values_df = pd.DataFrame(shap_values,  columns=X.columns)
+                vals= np.abs(shap_values).mean(0)
 
+                feature_importance = pd.DataFrame(list(zip(X.columns, vals)))
+                feature_importance_df = feature_importance.T
 
 
             train_time = time.time() - start_time
@@ -209,7 +212,7 @@ def features_ml_models(X, y, random_seed, variables, is_binary=False, is_balance
     )
         metrics_df = pd.DataFrame(metrics_results)
         
-    return metrics_df, shap_values_df
+    return metrics_df, feature_importance_df
 
 
 ################################################################################
@@ -231,17 +234,12 @@ if model == "Equal":
         
     # Initialize storage
     metrics_rows = []
-    shap_values_store = {}
+    shap_values_rows = []
 
     replicates = 10
 
-    ##initialize progress bar
-    manager = enlighten.get_manager()
-    max_count = 10*2*replicates
-    tocks = manager.counter(total=max_count, desc='Tocks', unit='tocks')
-        
+    seed = 0     
     for s in S_levels:
-        seed = 0 
         for pa_n in PA_N_levels:
             for rep in range(1, replicates + 1):
                 
@@ -254,9 +252,7 @@ if model == "Equal":
                 metrics_df, shap_df =  features_ml_models(x, Y, seed, variables, is_binary=True, is_balanced=True) 
                 
                 # MOCK DATA FOR DEMONSTRATION (Replace with your function call)
-                #metrics_df = pd.DataFrame({'mean_score': [0.85], 'accuracy': [0.92]})
-                #shap_df = pd.DataFrame(np.random.rand(20, 5), columns=['var_1', 'var_2', 'var_3', 'var_4', 'var_5'])
-                
+
                 # 3. Store Metrics
                 # Add metadata columns
                 metrics_df['Taxa'] = sp_name
@@ -266,79 +262,59 @@ if model == "Equal":
                 
                 metrics_rows.append(metrics_df)
                 
+                # 3. Store SHAP
+                # Add metadata columns
+                shap_df.columns = shap_df.iloc[0]
+                shap_df = shap_df[1:]
+                shap_df['Taxa'] = sp_name
+                shap_df['S'] = s
+                shap_df['PA_N'] = pa_n
+                shap_df['Replicate'] = rep
+                
+                shap_values_rows.append(shap_df)
                 # 4. Store SHAP Values
                 # Key: (Taxa, S, Replicate, PA_N) -> Value: (n, 5) DataFrame
-                key = (sp_name, s, rep, pa_n)
-                shap_values_store[key] = shap_df
+                #key = (sp_name, s, rep, pa_n)
+                #shap_values_store[key] = shap_df
 
                 seed += 1
 
-                #update progress bar
-                tocks.update()
+
+                
 
 
-    manager.stop()
     # 5. Combine all metrics into one DataFrame and save as csv
     final_metrics_df = pd.concat(metrics_rows, ignore_index=True)
     final_metrics_df.to_csv(output_metrics)
 
-    processed_dfs = []
+    
+    shap_final_df = pd.concat(shap_values_rows, ignore_index=True)
 
-    for key, df in shap_values_store.items():
-        # 1. Unpack the 4-element tuple key
-        # key[0] = Species, key[1] = S, key[2] = Replicate, key[3] = Model
-        species = key[0]
-        s_val = key[1]
-        replicate = key[2]
-        model = key[3]
-        
-        # 2. Add metadata columns to the DataFrame
-        # We create a new DataFrame with the metadata added
-        df_with_meta = df.assign(
-            Species=species,
-            S=s_val,
-            Replicate=replicate,
-            Model=model
-        )
-        
-        processed_dfs.append(df_with_meta)
+    #order columns 
+    cols = ['Taxa', 'S', 'Replicate', 'Model', 'PCA_1', 'PCA_2', 'HM', 'trade', 'MPD']
+    available_cols = [c for c in cols if c in shap_final_df.columns]
+    
+    shap_final_df = shap_final_df[available_cols]
 
-    # 3. Combine all DataFrames into one
-    if processed_dfs:
-        final_df = pd.concat(processed_dfs, ignore_index=True)
-        
-        # Reorder columns to match your specific request
-        # Ensure these columns exist before selecting
-        cols = ['Species', 'S', 'Replicate', 'Model', 'PCA_1', 'PCA_2', 'HM', 'trade', 'MPD']
-        available_cols = [c for c in cols if c in final_df.columns]
-        
-        final_df = final_df[available_cols]
-        
-        print("Final DataFrame Head:")
-        print(final_df.head())
-        print(f"Total rows: {len(final_df)}")
-        print(f"Total species: {final_df['Species'].nunique()}")
-    else:
-        print("No DataFrames found in the dictionary.")
+    print(shap_final_df.head())
+    shap_final_df.to_csv(output_shap_raw)
 
-    final_df.to_csv(output_shap_raw)
+
 
 if model == "Weighted":
-   
     # Initialize storage
     metrics_rows = []
-    shap_values_store = {}
+    shap_values_rows = []
 
     replicates = 100
-
-    ##initialize progress bar
-    manager = enlighten.get_manager()
-    max_count = 2*replicates
-    tocks = manager.counter(total=max_count, desc='Tocks', unit='tocks')
-        
+    seed = 0     
+    #max_count = replicates*2
+    #manager = enlighten.get_manager()
+    #tocks = manager.counter(total=max_count, desc='Tocks', unit='tocks')
 
     for s in S_levels:
-        for rep in range(1, replicates + 1):
+        print(f"Starting models Weighted for {sp_name} for s {s}")
+        for rep in tqdm(range(1, replicates + 1)):
             #print(f"species {sp_name} s {s} rep {seed}/100")
             # 1. Filter or Prepare the specific dataset slice
             mask = ((a['S'] == s))
@@ -357,59 +333,37 @@ if model == "Weighted":
             metrics_df['Replicate'] = rep
             
             metrics_rows.append(metrics_df)
+                
+            # 3. Store SHAP
+            # Add metadata columns
+            shap_df.columns = shap_df.iloc[0]
+            shap_df = shap_df[1:]
+            shap_df['Taxa'] = sp_name
+            shap_df['S'] = s
+            shap_df['PA_N'] = "Weighted"
+            shap_df['Replicate'] = rep
             
-            # 4. Store SHAP Values
-            # Key: (Taxa, S, Replicate, PA_N) -> Value: (n, 5) DataFrame
-            key = (sp_name, s, rep, "Weighted")
-            shap_values_store[key] = shap_df
+            shap_values_rows.append(shap_df)
 
             seed += 1
+            #tocks.update()
+            
 
-            tocks.update()
-
-    manager.stop()
+    #manager.stop()
 
     # 5. Combine all metrics into one DataFrame and save as csv
     final_metrics_df = pd.concat(metrics_rows, ignore_index=True)
     final_metrics_df.to_csv(output_metrics)
 
-    processed_dfs = []
+    shap_final_df = pd.concat(shap_values_rows, ignore_index=True)
 
-    for key, df in shap_values_store.items():
-        # 1. Unpack the 4-element tuple key
-        # key[0] = Species, key[1] = S, key[2] = Replicate, key[3] = Model
-        species = key[0]
-        s_val = key[1]
-        replicate = key[2]
-        model = key[3]
-        
-        # 2. Add metadata columns to the DataFrame
-        # We create a new DataFrame with the metadata added
-        df_with_meta = df.assign(
-            Species=species,
-            S=s_val,
-            Replicate=replicate,
-            Model=model
-        )
-        
-        processed_dfs.append(df_with_meta)
+    #order columns 
+    cols = ['Taxa', 'S', 'Replicate', 'Model', 'PCA_1', 'PCA_2', 'HM', 'trade', 'MPD']
+    available_cols = [c for c in cols if c in shap_final_df.columns]
+    
+    shap_final_df = shap_final_df[available_cols]
 
-    # 3. Combine all DataFrames into one
-    if processed_dfs:
-        final_df = pd.concat(processed_dfs, ignore_index=True)
-        
-        # Reorder columns to match your specific request
-        # Ensure these columns exist before selecting
-        cols = ['Species', 'S', 'Replicate', 'Model', 'PCA_1', 'PCA_2', 'HM', 'trade', 'MPD']
-        available_cols = [c for c in cols if c in final_df.columns]
-        
-        final_df = final_df[available_cols]
-        
-        print("Final DataFrame Head:")
-        print(final_df.head())
-        print(f"Total rows: {len(final_df)}")
-        print(f"Total species: {final_df['Species'].nunique()}")
-    else:
-        print("No DataFrames found in the dictionary.")
+    print(shap_final_df.head())
+    shap_final_df.to_csv(output_shap_raw)
 
-    final_df.to_csv(output_shap_raw)
+    

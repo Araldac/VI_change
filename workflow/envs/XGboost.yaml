@@ -6,7 +6,12 @@ channels:
     - r
 
 dependencies: 
-    - python
-    - py-xgboost
-    - py-numpy
-    - py-pandas
+    - python=3.14.3
+    - xgboost
+    - numpy
+    - pandas
+    - scikit-learn
+    - enlighten=1.14.1
+    - shap
+    - tqdm
+
