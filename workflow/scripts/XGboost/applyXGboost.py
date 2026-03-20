@@ -292,7 +292,7 @@ if model == "Equal":
     shap_final_df = pd.concat(shap_values_rows, ignore_index=True)
 
     #order columns 
-    cols = ['Taxa', 'S', 'Replicate', 'Model', 'PCA_1', 'PCA_2', 'HM', 'trade', 'MPD']
+    cols = ['Taxa', 'S', 'PA_N', 'Replicate', 'Model', 'PCA_1', 'PCA_2', 'HM', 'trade', 'MPD']
     available_cols = [c for c in cols if c in shap_final_df.columns]
     
     shap_final_df = shap_final_df[available_cols]
@@ -360,7 +360,7 @@ if model == "Weighted":
     shap_final_df = pd.concat(shap_values_rows, ignore_index=True)
 
     #order columns 
-    cols = ['Taxa', 'S', 'Replicate', 'Model', 'PCA_1', 'PCA_2', 'HM', 'trade', 'MPD']
+    cols = ['Taxa', 'S', 'PA_N', 'Replicate', 'Model', 'PCA_1', 'PCA_2', 'HM', 'trade', 'MPD']
     available_cols = [c for c in cols if c in shap_final_df.columns]
     
     shap_final_df = shap_final_df[available_cols]

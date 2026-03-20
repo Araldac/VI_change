@@ -113,6 +113,7 @@ print(list_files)
 
 all_oc <- lapply(list_files, function(f) {{
 df <- read.csv(f, sep = ",", stringsAsFactors = FALSE)
+df$PA_N <- as.character(df$PA_N)
 return(df)
 }}) %>% dplyr::bind_rows()  
 
