@@ -269,6 +269,7 @@ if model == "Equal":
                 shap_df['Taxa'] = sp_name
                 shap_df['S'] = s
                 shap_df['PA_N'] = pa_n
+                shap_df['Model'] = "Equal"
                 shap_df['Replicate'] = rep
                 
                 shap_values_rows.append(shap_df)
@@ -341,6 +342,7 @@ if model == "Weighted":
             shap_df['Taxa'] = sp_name
             shap_df['S'] = s
             shap_df['PA_N'] = "Weighted"
+            shap_df['Model'] = "Weighted"
             shap_df['Replicate'] = rep
             
             shap_values_rows.append(shap_df)
