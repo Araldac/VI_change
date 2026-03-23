@@ -140,11 +140,11 @@ def features_ml_models(X, y, random_seed, variables, is_binary=False, is_balance
             if model_name == "XGB":
                 #print("XGB")
                 explainer = shap.TreeExplainer(model)
-                explanation = explainer(X)
+                explanation = explainer(X_train)
 
                 shap_values = explanation.values
                 # make sure the SHAP values add up to marginal predictions
-                np.abs(shap_values.sum(axis=1) + explanation.base_values - y).max()
+                #np.abs(shap_values.sum(axis=1) + explanation.base_values - y_test).max()
                 
                 #new_index = [ix for ix_test_fold in ix_test for ix in ix_test_fold]
                 if plot == True :
@@ -154,7 +154,7 @@ def features_ml_models(X, y, random_seed, variables, is_binary=False, is_balance
                 #shap_values_df = pd.DataFrame(shap_values,  columns=X.columns)
                 vals= np.abs(shap_values).mean(0)
 
-                feature_importance = pd.DataFrame(list(zip(X.columns, vals)))
+                feature_importance = pd.DataFrame(list(zip(X_train.columns, vals)))
                 feature_importance_df = feature_importance.T
 
 

@@ -149,8 +149,8 @@ def features_ml_models(X, y, random_seed, variables, is_binary=False, is_balance
             #np.abs(shap_values.sum(axis=1) + explanation.base_values - y).max()
             
             #new_index = [ix for ix_test_fold in ix_test for ix in ix_test_fold]
-            if plot == True :
-                shap.plots.beeswarm(explanation) #, feature_names=X.columns)
+            #if plot == True :
+            #    shap.plots.beeswarm(explanation) #, feature_names=X.columns)
             #shap.summary_plot(explanation)
             
             #shap_values_df = pd.DataFrame(shap_values,  columns=X.columns)
