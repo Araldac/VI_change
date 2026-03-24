@@ -8,8 +8,9 @@ import sys
 
 occurrences = sys.argv[1]
 model = sys.argv[2]
-output_metrics = sys.argv[3]
-output_shap_raw = sys.argv[4]
+methods = sys.argv[3]
+output_metrics = sys.argv[4]
+output_shap_raw = sys.argv[5]
 
 #import modules 
 import glob
@@ -45,7 +46,7 @@ from xgboost import XGBClassifier
 #Functions
 ################################################################################
 
-def features_ml_models(X, y, random_seed, variables, is_binary=False, is_balanced = False, plot = False):
+def features_ml_models(X, y, methods, random_seed, variables, is_binary=False, is_balanced = False, plot = False):
     """Train and evaluate ML models on feature data, extracting both metrics and confusion matrices.
 
     Args:
@@ -80,11 +81,15 @@ def features_ml_models(X, y, random_seed, variables, is_binary=False, is_balance
     )
 
     # Define the models
-    models = {
-       # "RF": RandomForestClassifier(n_estimators=100, random_state=42),
-        "XGB": XGBClassifier(random_state=random_seed),
-        #"SVC": SVC(kernel="rbf", cache_size=1000, probability=True, random_state=42),
-    }
+    if methods == "RF":
+        models = {
+            "RF": RandomForestClassifier(n_estimators=100, random_state=random_seed)
+        }
+
+    if methods == "XG":    
+        models = {
+            "XGB": XGBClassifier(random_state=random_seed)
+        }
 
     # Create lists to store the results and confusion matrix data
     metrics_results = []
@@ -141,7 +146,6 @@ def features_ml_models(X, y, random_seed, variables, is_binary=False, is_balance
                 #print("XGB")
                 explainer = shap.TreeExplainer(model)
                 explanation = explainer(X_train)
-
                 shap_values = explanation.values
                 # make sure the SHAP values add up to marginal predictions
                 #np.abs(shap_values.sum(axis=1) + explanation.base_values - y_test).max()
@@ -155,6 +159,27 @@ def features_ml_models(X, y, random_seed, variables, is_binary=False, is_balance
                 vals= np.abs(shap_values).mean(0)
 
                 feature_importance = pd.DataFrame(list(zip(X_train.columns, vals)))
+                feature_importance_df = feature_importance.T
+
+            if model_name == "RF":
+
+                explainer = shap.TreeExplainer(model, )
+
+                shap_values = explainer.shap_values(X) ## try modeks output to raw  or change to Explainer 
+
+                #print(f"shapeof shap_values {shap_values.shape}")
+                # make sure the SHAP values add up to marginal predictions
+                #np.abs(shap_values.sum(axis=1) + explanation.base_values - y).max()
+                
+                #new_index = [ix for ix_test_fold in ix_test for ix in ix_test_fold]
+                if plot == True :
+                    shap.plots.beeswarm(explanation[:,:,1])#, feature_names=X.columns)
+                #shap.summary_plot(explanation)
+                
+                #shap_values_df = pd.DataFrame(shap_values,  columns=X.columns)
+                vals= np.abs(shap_values).mean(axis = (0,2))
+
+                feature_importance = pd.DataFrame(list(zip(X.columns, vals)))
                 feature_importance_df = feature_importance.T
 
 
@@ -196,6 +221,7 @@ def features_ml_models(X, y, random_seed, variables, is_binary=False, is_balance
         metrics_results.append(
         {
             "model": model_name,
+            "methods": methods, 
             "roc_auc": roc_auc,
             "accuracy": accuracy,
             "balanced_acc": balanced_accuracy,
@@ -249,7 +275,7 @@ if model == "Equal":
                 Y = a.loc[mask, 'Occurrence']
 
                 # 2. Run your function
-                metrics_df, shap_df =  features_ml_models(x, Y, seed, variables, is_binary=True, is_balanced=True) 
+                metrics_df, shap_df =  features_ml_models(x, Y, methods, seed, variables, is_binary=True, is_balanced=True) 
                 
                 # MOCK DATA FOR DEMONSTRATION (Replace with your function call)
 
@@ -271,6 +297,7 @@ if model == "Equal":
                 shap_df['PA_N'] = pa_n
                 shap_df['Model'] = "Equal"
                 shap_df['Replicate'] = rep
+                shap_df["Method"] = methods
                 
                 shap_values_rows.append(shap_df)
                 # 4. Store SHAP Values
@@ -292,7 +319,7 @@ if model == "Equal":
     shap_final_df = pd.concat(shap_values_rows, ignore_index=True)
 
     #order columns 
-    cols = ['Taxa', 'S', 'PA_N', 'Replicate', 'Model', 'PCA_1', 'PCA_2', 'HM', 'trade', 'MPD']
+    cols = ['Taxa', 'S', 'Method' 'PA_N', 'Replicate', 'Model', 'PCA_1', 'PCA_2', 'HM', 'trade', 'MPD']
     available_cols = [c for c in cols if c in shap_final_df.columns]
     
     shap_final_df = shap_final_df[available_cols]
@@ -323,7 +350,7 @@ if model == "Weighted":
             Y = a.loc[mask, 'Occurrence']
 
             # 2. Run your function
-            metrics_df, shap_df =  features_ml_models(x, Y, seed, variables, is_binary=True, is_balanced=False) 
+            metrics_df, shap_df =  features_ml_models(x, Y,methods, seed, variables, is_binary=True, is_balanced=False) 
             
 
             # 3. Store Metrics
@@ -344,6 +371,7 @@ if model == "Weighted":
             shap_df['PA_N'] = "Weighted"
             shap_df['Model'] = "Weighted"
             shap_df['Replicate'] = rep
+            shap_df["Method"] = methods
             
             shap_values_rows.append(shap_df)
 
@@ -360,7 +388,7 @@ if model == "Weighted":
     shap_final_df = pd.concat(shap_values_rows, ignore_index=True)
 
     #order columns 
-    cols = ['Taxa', 'S', 'PA_N', 'Replicate', 'Model', 'PCA_1', 'PCA_2', 'HM', 'trade', 'MPD']
+    cols = ['Taxa', 'S', 'Method', 'PA_N', 'Replicate', 'Model', 'PCA_1', 'PCA_2', 'HM', 'trade', 'MPD']
     available_cols = [c for c in cols if c in shap_final_df.columns]
     
     shap_final_df = shap_final_df[available_cols]

@@ -6,6 +6,7 @@ sp = ["LH",  "TM",  "PL",  "MP",  "PM",  "MF",  "HP" ,  "HO", "WA", "AG", "TB", 
 
 var_type = ["CSI", "Raw"]
 model=["Equal", "Weighted"]
+method = ["XG", "RF"]
 
 list_AV =  expand("results/species/AssignVariables/{species}_allv.csv", species=sp)
 #subset_sp = ["LH",  "TM",  "PL"]

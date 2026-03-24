@@ -140,10 +140,12 @@ def features_ml_models(X, y, random_seed, variables, is_binary=False, is_balance
 
             #if model_name == "XGB":
                 #print("XGB")
-            explainer = shap.TreeExplainer(model)
+            explainer = shap.TreeExplainer(model, )
             #explanation = explainer(X)
             #shap_values = explanation.values
-            shap_values = explainer.shap_values(X)
+            shap_values = explainer.shap_values(X) ## try modeks output to raw  or change to Explainer 
+
+
             print(f"shapeof shap_values {shap_values.shape}")
             # make sure the SHAP values add up to marginal predictions
             #np.abs(shap_values.sum(axis=1) + explanation.base_values - y).max()
@@ -272,6 +274,7 @@ if model == "Equal":
                 shap_df['PA_N'] = pa_n
                 shap_df['Model'] = "Equal"
                 shap_df['Replicate'] = rep
+                shap_df["Method"] = "RF"
                 
                 shap_values_rows.append(shap_df)
                 # 4. Store SHAP Values
@@ -293,7 +296,7 @@ if model == "Equal":
     shap_final_df = pd.concat(shap_values_rows, ignore_index=True)
 
     #order columns 
-    cols = ['Taxa', 'S','PA_N',  'Replicate', 'Model', 'PCA_1', 'PCA_2', 'HM', 'trade', 'MPD']
+    cols = ['Taxa', 'Method', 'S','PA_N',  'Replicate', 'Model', 'PCA_1', 'PCA_2', 'HM', 'trade', 'MPD']
     available_cols = [c for c in cols if c in shap_final_df.columns]
     
     shap_final_df = shap_final_df[available_cols]
@@ -345,6 +348,7 @@ if model == "Weighted":
             shap_df['PA_N'] = "Weighted"
             shap_df['Model'] = "Weighted"
             shap_df['Replicate'] = rep
+            shap_df["Method"] = "RF"
             
             shap_values_rows.append(shap_df)
 
@@ -361,7 +365,7 @@ if model == "Weighted":
     shap_final_df = pd.concat(shap_values_rows, ignore_index=True)
 
     #order columns 
-    cols = ['Taxa', 'S', 'PA_N', 'Replicate', 'Model', 'PCA_1', 'PCA_2', 'HM', 'trade', 'MPD']
+    cols = ['Taxa', 'Method', 'S', 'PA_N', 'Replicate', 'Model', 'PCA_1', 'PCA_2', 'HM', 'trade', 'MPD']
     available_cols = [c for c in cols if c in shap_final_df.columns]
     
     shap_final_df = shap_final_df[available_cols]
