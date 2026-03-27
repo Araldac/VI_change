@@ -51,6 +51,8 @@ cluster_mode <- "species_S"      # "species_S", "species_avg", "by_PA"
 ############################
 raw <- read_csv(data_path, show_col_types = FALSE)
 head(raw)
+species_list <- unqiue(raw$Taxa)
+
 
 ############################
 # ## 3) Eval metrics      ####
@@ -58,34 +60,34 @@ head(raw)
 #### plot
 raw_metrics <- read_csv(data_path_metrics, show_col_types = FALSE)
 
-raw_metrics$Model <- "Equal"
-raw_metrics$Model[raw_metrics$PA_N == "Weighted"] <- "Weighted"
+#raw_metrics$Model <- "Equal"
+#raw_metrics$Model[raw_metrics$PA_N == "Weighted"] <- "Weighted"
 
 raw_metrics <- raw_metrics %>% mutate(Sensitivity = TP/(FN+TP))
-auc_p <- ggplot(raw_metrics, aes(Taxa, roc_auc, fill= S))+
-  geom_violin()+   theme_bw() + 
-  theme(axis.text.x = element_blank(), legend.title = element_blank()) +facet_wrap(~Model)
+ggplot(raw_metrics, aes(Taxa, roc_auc, fill= S))+
+  geom_boxplot()+  geom_points()+ theme_bw() + 
+  theme(axis.text.x = element_blank(), legend.title = element_blank()) +facet_wrap(Method~Model)
 
 
 acc_p <- ggplot(raw_metrics, aes(Taxa, balanced_acc, fill= S))+
   geom_violin()+   
-  theme_bw() + 
-  theme(axis.text.x = element_blank(), legend.title = element_blank()) +facet_wrap(~Model)
+  geom_boxplot()+  geom_points()+ theme_bw() + 
+  theme(axis.text.x = element_blank(), legend.title = element_blank()) +facet_wrap(Method~Model)
 
 sens_p <- ggplot(raw_metrics, aes(Taxa, Sensitivity, fill= S))+
-  geom_violin()+   theme_bw() + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank()) +facet_wrap(~Model)
+  geom_boxplot()+  geom_points()+ theme_bw() + 
+  theme(axis.text.x = element_blank(), legend.title = element_blank()) +facet_wrap(Method~Model)
 
-figure_Eval_R <- ggarrange(acc_p, auc_p, sens_p, common.legend = TRUE, ncol=1, nrow=3, labels= c("A", "B", "C"), legend ="right")
+#figure_Eval_R <- ggarrange(acc_p, auc_p, sens_p, common.legend = TRUE, ncol=1, nrow=3, labels= c("A", "B", "C"), legend ="right")
 #ggexport(figure_Eval, filename = "~/Internship UNIL/Figures_SMK/figure_EvalCSI.pdf")
-figure_Eval_R
+#figure_Eval_R
 
 
 #LMM to test wether Model and S have an effect on the AUC and accuracy values with species as random factors
 
 eval_metrics<- c("roc_auc", "balanced_acc", "Sensitivity")
 fits <- lapply(eval_metrics, function(coord) {
-  lmer(as.formula(paste0(coord, " ~ S + Model + (1|Taxa)")),
+  lmer(as.formula(paste0(coord, " ~ S + Model*Methods + (1|Taxa)")),
        data = raw_metrics)
 })
 names(fits) <- eval_metrics
@@ -104,15 +106,10 @@ summary(fits[[3]])
 # ## 3) Shap values      ####
 ############################
 
-
-#### calcualte differences ####
+#### calcualte differences
 raw_long <- raw %>% pivot_longer(all_of(comp_cols), names_to = "Variable", values_to = "Values")
 
-ggplot(raw_long, aes(Variable, Values, fill= S))+
-  geom_boxplot()+   theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.title = element_blank()) +
-  theme_bw() + facet_wrap(Taxa~Model)
-
-
+### A- LMM ####
 coef_sp <- list()
 emmeans_sp <- list()
 contrasts_sp<- list()
@@ -149,10 +146,12 @@ contrast_long_p$estimate[contrast_long_p$p.value > 0.05] <- 0
 #because i am inerested in S2- S1 not S1-S2
 contrast_long_p$estimate <- contrast_long_p$estimate * (-1)
 
+### B- Rank ####
 #rank difference of emmeans 
 wide_mean <- emmeans_long %>% select(Taxa, S, emmean, Variable) %>% pivot_wider(names_from = Variable, values_from = emmean)
 sub_rank <- lapply(1:nrow(wide_mean), function(i) rank(wide_mean[i, comp_cols])) %>% bind_rows() %>% mutate(S = wide_mean$S, Taxa = wide_mean$Taxa)
 
+#setting rank differences
 rank_diff <- sub_rank %>%
   pivot_longer(cols = all_of(comp_cols),
                names_to = "Variable",
@@ -175,6 +174,8 @@ rank_diff$RankDiff <- forcats::fct_relevel(
 
 rank_palette <- c("#B10318", "#D82526", "#F26C64","white", "#9FCD99", "#69B764" ,"#309343"   )
 
+
+## plot emmeas S1-S2
 emmean_p <- ggplot(emmeans_long, aes(Variable, emmean, color  =S))+
   geom_point(position = position_dodge(.5), size=3)+
   ylim(0,5.7)+
@@ -187,8 +188,6 @@ emmean_p <- ggplot(emmeans_long, aes(Variable, emmean, color  =S))+
   scale_colour_manual(values = c( "#364B9A",  "#98CAE1", rank_palette ))+
   facet_wrap(~Taxa)
 
-
-
 shift_legend3 <- function(p) {
   pnls <- cowplot::plot_to_gtable(p) %>% gtable::gtable_filter("panel") %>%
     with(setNames(grobs, layout$name)) %>% purrr::keep(~identical(.x,zeroGrob()))
@@ -200,7 +199,7 @@ shift_legend3 <- function(p) {
 shift_legend3(emmean_p)
 
 
-
+#plot contrasts and rank differences 
 heatmapp_rank <- ggplot(rank_diff, aes(Variable, Taxa, fill = RankDiff)) +
   geom_tile(color = "grey80") +
   geom_point(data = as.data.frame(contrast_long_p), aes(Variable, Taxa, color= estimate), size = 8, inherit.aes = FALSE)+
@@ -217,6 +216,124 @@ heatmapp_rank <- ggplot(rank_diff, aes(Variable, Taxa, fill = RankDiff)) +
 
 
 
+############################
+# ##  4) Carte S1-S2    ####
+############################
+
+pathallsp <- "//wsl.localhost/Ubuntu/home/admin_ait/internship-snakemake-2025/results/species/AssignVariables/"
+allV_files <- list.files(pathallsp,  pattern = "_allv\\.csv$", full.names = T)
+all_coords <- lapply(allV_files, function(f) {
+  df <- read.csv(f, sep = ",", stringsAsFactors = FALSE)
+  df <- df %>%  filter(Occurrence ==1 )
+  
+  return(df)
+}) %>% bind_rows() #%>% select(BEN, S, Taxa)
+
+
+all_coords_ben <- all_coords %>% left_join(ant_ll %>% 
+                                             select(BEN, geometry),
+                                           by = "BEN") %>% st_as_sf()
+
+
+  all_coords_ben$S <- forcats::fct_relevel(
+    all_coords_ben$S ,
+    "S1","S2" 
+  )
+
+# obtain BEN x sp
+ben_s_sp_df <- all_coords %>%
+  select(BEN, S, Taxa) %>%
+  filter(S %in% c("S1", "S2")) %>%
+  group_by(Taxa, BEN) %>%
+  summarise(
+    # If S1 is present for this Taxa+BEN, keep S1, else S2
+    S = if (any(S == "S1")) "S1" else "S2",
+    .groups = "drop"
+  )
+
+#wide ben 
+ben_wide <- ben_s_sp_df %>% select(BEN, S, Taxa) %>% 
+  mutate(value = 1) %>%                  # mark presence
+  distinct(BEN, S, .keep_all = TRUE) %>% # avoid duplicates
+  pivot_wider(names_from = S,
+              values_from = value,
+              values_fill = 0)           # fill missing with 0
+
+#merge antmaps bentities
+facet_df <- ant_ll %>%
+  st_drop_geometry() %>%
+  distinct(BEN) %>%
+  left_join(ben_wide, by = c("BEN")) %>%
+  left_join(ant_ll %>% select(BEN, geometry), by = "BEN") %>%
+  st_as_sf()
+
+df <- facet_df %>%
+  mutate(
+    S_unique = case_when(
+      S1 == 1 & S2 == 1 ~ "S1",
+      S1 == 1 & S2 == 0 ~ "S1",
+      S1 == 0 & S2 == 1 ~ "S2",
+      TRUE ~ NA_character_
+    )
+  )
+
+df<- df %>% filter(! is.na(Taxa)) 
+df$S <- as.factor (df$S)
+
+all_coords_ben <- all_coords_ben %>% arrange(desc(S))
+
+#map LH
+ggplot(data=all_coords_ben[all_coords_ben$Taxa == "Linepithema humile",])+
+  geom_sf(data = ant_ll$geometry, fill = "grey93")+
+  geom_sf(aes(fill=as.factor(S)))+
+  geom_point(data=all_coords[all_coords$Taxa == "Linepithema humile",],
+             aes(x=decimallongitude, y=decimallatitude, color=S, alpha =S), 
+             inherit.aes = FALSE)+
+  scale_alpha_manual(values = c(1, 0.4), guide = "none")+
+  scale_color_manual(
+    values = c("#B2182BFF", "#2166ACFF"),
+    name = "Occurrence in :"
+  )+
+  scale_fill_manual(
+    values = c("S1" = "#FDDBC7FF", "S2" = "#D1E5F0FF", "S1 & S2"= "#009E73"),
+    drop = FALSE,
+    na.translate = FALSE,
+    name = "First record in : "
+  ) +    
+  xlab("")+
+  ylab("")+
+  theme_bw() +
+  theme(axis.text = element_blank(), 
+                     axis.title = element_blank(),
+                     legend.position = "bottom")+ 
+  facet_wrap(~Taxa) 
+
+
+#map rest 
+ggplot(data=all_coords_ben[all_coords_ben$Taxa != "Linepithema humile",])+
+  geom_sf(data = ant_ll$geometry, fill = "grey93")+
+  geom_sf(aes(fill=as.factor(S)))+
+  geom_point(data=all_coords[all_coords$Taxa != "Linepithema humile",],
+             aes(x=decimallongitude, y=decimallatitude, color=S, alpha =S), 
+             inherit.aes = FALSE)+
+  scale_alpha_manual(values = c(1, 0.4), guide = "none")+
+  scale_color_manual(
+    values = c("#B2182BFF", "#2166ACFF"),
+    name = "Occurrence in :"
+  )+
+  scale_fill_manual(
+    values = c("S1" = "#FDDBC7FF", "S2" = "#D1E5F0FF", "S1 & S2"= "#009E73"),
+    drop = FALSE,
+    na.translate = FALSE,
+    name = "First record in : "
+  ) +    
+  xlab("")+
+  ylab("")+
+ 
+  theme_bw() + theme(axis.text = element_blank(), 
+        axis.title = element_blank(),
+        legend.position = "bottom")+ 
+  facet_wrap(~Taxa, ncol=3, nrow=4) 
 
 
 
@@ -227,11 +344,7 @@ heatmapp_rank <- ggplot(rank_diff, aes(Variable, Taxa, fill = RankDiff)) +
 
 
 
-
-
-
-
-
+###############3333brouillon
 
 ##plot 
 raw_long_S <- raw_long %>% group_by(Taxa, S, Variable) %>% summarise(meanI=mean(Values), sdI = sd(Values)) 
