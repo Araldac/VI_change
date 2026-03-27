@@ -50,6 +50,7 @@ cluster_mode <- "species_S"      # "species_S", "species_avg", "by_PA"
 # ## 2) Chargement     ####
 ############################
 raw <- read_csv(data_path, show_col_types = FALSE)
+raw$Method[is.na(raw$Method)] <- "Equal"
 head(raw)
 species_list <- unqiue(raw$Taxa)
 
@@ -60,44 +61,57 @@ species_list <- unqiue(raw$Taxa)
 #### plot
 raw_metrics <- read_csv(data_path_metrics, show_col_types = FALSE)
 
+raw
 #raw_metrics$Model <- "Equal"
 #raw_metrics$Model[raw_metrics$PA_N == "Weighted"] <- "Weighted"
 
 raw_metrics <- raw_metrics %>% mutate(Sensitivity = TP/(FN+TP))
-ggplot(raw_metrics, aes(Taxa, roc_auc, fill= S))+
-  geom_boxplot()+  geom_points()+ theme_bw() + 
-  theme(axis.text.x = element_blank(), legend.title = element_blank()) +facet_wrap(Method~Model)
+auc_p <- ggplot(raw_metrics, aes(Taxa, roc_auc, fill= S))+
+  geom_boxplot()+  geom_point(alpha=0.2)+ theme_bw() + 
+  theme(axis.text.x = element_blank(), legend.title = element_blank()) +facet_wrap(methods~model)
 
 
 acc_p <- ggplot(raw_metrics, aes(Taxa, balanced_acc, fill= S))+
-  geom_violin()+   
-  geom_boxplot()+  geom_points()+ theme_bw() + 
-  theme(axis.text.x = element_blank(), legend.title = element_blank()) +facet_wrap(Method~Model)
+  geom_boxplot()+  geom_point(alpha=0.2)+ theme_bw() + 
+  theme(axis.text.x = element_blank(), legend.title = element_blank()) +facet_wrap(methods~model)
 
 sens_p <- ggplot(raw_metrics, aes(Taxa, Sensitivity, fill= S))+
-  geom_boxplot()+  geom_points()+ theme_bw() + 
-  theme(axis.text.x = element_blank(), legend.title = element_blank()) +facet_wrap(Method~Model)
+  geom_boxplot()+  geom_point(alpha=0.2)+ theme_bw() + 
+  theme(axis.text.x = element_blank(), legend.title = element_blank()) +facet_wrap(methods~model)
 
-#figure_Eval_R <- ggarrange(acc_p, auc_p, sens_p, common.legend = TRUE, ncol=1, nrow=3, labels= c("A", "B", "C"), legend ="right")
+time_p <- ggplot(raw_metrics, aes(Taxa, log(time), fill= S))+
+  geom_boxplot()+  geom_point(alpha=0.2)+ theme_bw() + 
+  theme(axis.text.x = element_blank(), legend.title = element_blank()) +facet_wrap(methods~model)
+
+figure_Eval_R <- ggarrange(acc_p, auc_p, sens_p, time_p, common.legend = TRUE, ncol=4, nrow=1, labels= c("A", "B", "C", "D"), legend ="right")
 #ggexport(figure_Eval, filename = "~/Internship UNIL/Figures_SMK/figure_EvalCSI.pdf")
 #figure_Eval_R
 
 
 #LMM to test wether Model and S have an effect on the AUC and accuracy values with species as random factors
+emmeans_l <- list()
+eval_metrics<- c("roc_auc", "balanced_acc", "Sensitivity", "time")
 
-eval_metrics<- c("roc_auc", "balanced_acc", "Sensitivity")
-fits <- lapply(eval_metrics, function(coord) {
-  lmer(as.formula(paste0(coord, " ~ S + Model*Methods + (1|Taxa)")),
+for( coord in eval_metrics) {
+  fit <- lmer(as.formula(paste0(coord, " ~ S+ model*methods + (1|Taxa)")),
        data = raw_metrics)
-})
+  fits[[coord]] <- fit
+  emmeans_l[[coord]] <- emmeans(fit, pairwise ~ model | methods, adjust = "tukey")$emmeans
+
+}
 names(fits) <- eval_metrics
+names(emmeans_l) <- eval_metrics
 
 model_evaluations <- tibble(
   Metrics = eval_metrics,
   estimate_S=  sapply(fits, function(m) summary(m)$coefficients[2, "Estimate"]),
   p_value_S = sapply(fits, function(m) summary(m)$coefficients[2, "Pr(>|t|)"]),
-  estimate_Model=  sapply(fits, function(m) summary(m)$coefficients[3, "Estimate"]),
-  p_value_Model = sapply(fits, function(m) summary(m)$coefficients[3, "Pr(>|t|)"])
+  estimate_weighted=  sapply(fits, function(m) summary(m)$coefficients[3, "Estimate"]),
+  p_value_weighted = sapply(fits, function(m) summary(m)$coefficients[3, "Pr(>|t|)"]),
+  estimate_XG=  sapply(fits, function(m) summary(m)$coefficients[4, "Estimate"]),
+  p_value_Model = sapply(fits, function(m) summary(m)$coefficients[4, "Pr(>|t|)"]),
+  estimate_weightXG=  sapply(fits, function(m) summary(m)$coefficients[5, "Estimate"]),
+  p_value_weightXG = sapply(fits, function(m) summary(m)$coefficients[5, "Pr(>|t|)"])
 )
 
 summary(fits[[3]])

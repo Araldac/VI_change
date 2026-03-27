@@ -70,6 +70,12 @@ print(list_files)
 
 all_oc <- lapply(list_files, function(f) {{
 df <- read.csv(f, sep = ",", stringsAsFactors = FALSE)
+if(!"PA_N" %in% colnames(df))
+ {{
+   df$PA_N <- "Weighted"
+ }}
+ 
+
 df$PA_N <- as.character(df$PA_N)
 return(df)
 }}) %>% dplyr::bind_rows()  
@@ -80,6 +86,7 @@ write.csv(all_oc, '{output.out}')
 EOF
 Rscript {rule}.$$.tmp.R
 rm {rule}.$$.tmp.R
+
         """
 
 rule bind_metrics:
@@ -110,13 +117,20 @@ rule bind_metrics:
 cat <<'EOF' > {rule}.$$.tmp.R
 
 library(dplyr)
+library(stringr)
 list_files <- strsplit('{input.list_files}', " +")
 list_files<-unlist(list_files)
 
 print(list_files)
 
 all_oc <- lapply(list_files, function(f) {{
+a <- str_extract(f, "Weighted")
+if (is.na(a)){{
+    a <- stringr::str_extract(f, "Equal")
+}}
+
 df <- read.csv(f, sep = ",", stringsAsFactors = FALSE)
+df$model <- a
 df$PA_N <- as.character(df$PA_N)
 return(df)
 }}) %>% dplyr::bind_rows()  

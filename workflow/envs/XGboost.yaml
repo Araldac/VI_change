@@ -9,6 +9,7 @@ dependencies:
     - python=3.14.3
     - r-base=4.3
     - r-dplyr
+    - r-stringr
     - xgboost
     - numpy
     - pandas

@@ -46,7 +46,7 @@ from xgboost import XGBClassifier
 #Functions
 ################################################################################
 
-def features_ml_models(X, y, methods, random_seed, variables, is_binary=False, is_balanced = False, plot = False):
+def features_ml_models(X, y, methods, model, random_seed, variables, is_binary=False, is_balanced = False, plot = False):
     """Train and evaluate ML models on feature data, extracting both metrics and confusion matrices.
 
     Args:
@@ -220,7 +220,7 @@ def features_ml_models(X, y, methods, random_seed, variables, is_binary=False, i
 
         metrics_results.append(
         {
-            "model": model_name,
+            "model": model,
             "methods": methods, 
             "roc_auc": roc_auc,
             "accuracy": accuracy,
@@ -275,7 +275,7 @@ if model == "Equal":
                 Y = a.loc[mask, 'Occurrence']
 
                 # 2. Run your function
-                metrics_df, shap_df =  features_ml_models(x, Y, methods, seed, variables, is_binary=True, is_balanced=True) 
+                metrics_df, shap_df =  features_ml_models(x, Y, methods, model, seed, variables, is_binary=True, is_balanced=True) 
                 
                 # MOCK DATA FOR DEMONSTRATION (Replace with your function call)
 
@@ -350,7 +350,7 @@ if model == "Weighted":
             Y = a.loc[mask, 'Occurrence']
 
             # 2. Run your function
-            metrics_df, shap_df =  features_ml_models(x, Y,methods, seed, variables, is_binary=True, is_balanced=False) 
+            metrics_df, shap_df =  features_ml_models(x, Y,methods, model, seed, variables, is_binary=True, is_balanced=False) 
             
 
             # 3. Store Metrics
