@@ -163,7 +163,7 @@ def features_ml_models(X, y, methods, model, random_seed, variables, is_binary=F
 
             if model_name == "RF":
 
-                explainer = shap.TreeExplainer(model, )
+                explainer = shap.TreeExplainer(model)
 
                 shap_values = explainer.shap_values(X) ## try modeks output to raw  or change to Explainer 
 
@@ -177,6 +177,8 @@ def features_ml_models(X, y, methods, model, random_seed, variables, is_binary=F
                 #shap.summary_plot(explanation)
                 
                 #shap_values_df = pd.DataFrame(shap_values,  columns=X.columns)
+                #shap_pos = shap_values[1]   # select class 1 SHAP matrix
+                #vals = np.abs(shap_pos).mean(axis=0)
                 vals= np.abs(shap_values).mean(axis = (0,2))
 
                 feature_importance = pd.DataFrame(list(zip(X.columns, vals)))
@@ -285,6 +287,7 @@ if model == "Equal":
                 metrics_df['S'] = s
                 metrics_df['PA_N'] = pa_n
                 metrics_df['Replicate'] = rep
+                metrics_df["Method"] = methods
                 
                 metrics_rows.append(metrics_df)
                 
@@ -359,6 +362,7 @@ if model == "Weighted":
             metrics_df['S'] = s
             metrics_df['PA_N'] = "Weighted"
             metrics_df['Replicate'] = rep
+            metrics_df["Method"] = methods
             
             metrics_rows.append(metrics_df)
                 

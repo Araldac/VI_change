@@ -6,7 +6,7 @@ sp = ["LH",  "TM",  "PL",  "MP",  "PM",  "MF",  "HP" ,  "HO", "WA", "AG", "TB", 
 
 var_type = ["CSI", "Raw"]
 model=["Equal", "Weighted"]
-method = ["XG", "RF"]
+method = ["RF"] #
 
 list_AV =  expand("results/species/AssignVariables/{species}_allv.csv", species=sp)
 #subset_sp = ["LH",  "TM",  "PL"]
@@ -18,7 +18,7 @@ list_AV =  expand("results/species/AssignVariables/{species}_allv.csv", species=
 #list_RF3 =  expand("results/species/CSI/Raw_RF_{species}_relimpAUC1.csv", species=sp)
 type = ["0" , "1", "All"]
 
-list_RF3 =  expand("results/species/XGboost/{species}_applyXGboost_shap_{t}.csv", species=sp, t = model)
+list_RF3 =  expand('results/species/XGboost/{species}_applyXGboost_shap_{t}_RF_1.csv', species=sp, t = model, me = method)
 
 rule all:
     input: list_RF3
