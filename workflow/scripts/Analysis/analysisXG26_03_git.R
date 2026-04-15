@@ -50,9 +50,13 @@ cluster_mode <- "species_S"      # "species_S", "species_avg", "by_PA"
 # ## 2) Chargement     ####
 ############################
 raw <- read_csv(data_path, show_col_types = FALSE)
-raw$Method[is.na(raw$Method)] <- "Equal"
+#raw$Method[is.na(raw$Method)] <- "Weighted"
+raw$Method <- as.factor(raw$Method)
+raw$Model <- as.factor(raw$Model)
+
 head(raw)
-species_list <- unqiue(raw$Taxa)
+
+species_list <- unique(raw$Taxa)
 
 
 ############################
@@ -83,10 +87,11 @@ time_p <- ggplot(raw_metrics, aes(Taxa, log(time), fill= S))+
   geom_boxplot()+  geom_point(alpha=0.2)+ theme_bw() + 
   theme(axis.text.x = element_blank(), legend.title = element_blank()) +facet_wrap(methods~model)
 
-figure_Eval_R <- ggarrange(acc_p, auc_p, sens_p, time_p, common.legend = TRUE, ncol=4, nrow=1, labels= c("A", "B", "C", "D"), legend ="right")
+figure_Eval_R <- ggarrange(acc_p, auc_p, sens_p, time_p, common.legend = TRUE, ncol=2, nrow=2, labels= c("A", "B", "C", "D"), legend ="right")
 #ggexport(figure_Eval, filename = "~/Internship UNIL/Figures_SMK/figure_EvalCSI.pdf")
-#figure_Eval_R
+figure_Eval_R
 
+raw_metrics %<% filter(Model="Weighted", Method = "XG") %>% summarise(all_of(roc_auc, balanced_acc, Sensitivity))
 
 #LMM to test wether Model and S have an effect on the AUC and accuracy values with species as random factors
 emmeans_l <- list()
@@ -129,7 +134,7 @@ emmeans_sp <- list()
 contrasts_sp<- list()
 for (sp in species_list) { ##do this with lmer wih PA_N as random
   
-  sub <- raw_long %>% filter(Taxa == sp, Model == "Weighted")
+  sub <- raw_long %>% filter(Taxa == sp, Model == "Weighted", Method == "XG")
   sub$S <- as.factor(sub$S)
   sub$Variable <- as.factor(sub$Variable)
   
@@ -160,7 +165,7 @@ contrast_long_p$estimate[contrast_long_p$p.value > 0.05] <- 0
 #because i am inerested in S2- S1 not S1-S2
 contrast_long_p$estimate <- contrast_long_p$estimate * (-1)
 
-### B- Rank ####
+### B- PLot A - Rank ####
 #rank difference of emmeans 
 wide_mean <- emmeans_long %>% select(Taxa, S, emmean, Variable) %>% pivot_wider(names_from = Variable, values_from = emmean)
 sub_rank <- lapply(1:nrow(wide_mean), function(i) rank(wide_mean[i, comp_cols])) %>% bind_rows() %>% mutate(S = wide_mean$S, Taxa = wide_mean$Taxa)
@@ -192,11 +197,17 @@ rank_palette <- c("#B10318", "#D82526", "#F26C64","white", "#9FCD99", "#69B764" 
 ## plot emmeas S1-S2
 emmean_p <- ggplot(emmeans_long, aes(Variable, emmean, color  =S))+
   geom_point(position = position_dodge(.5), size=3)+
-  ylim(0,5.7)+
+  #ylim(0,5.7)+
   geom_errorbar(aes(ymin=lower.CL, ymax=upper.CL),size=1, width=0.3, position = position_dodge(.5))+
   theme(legend.position = "horizontal", legend.location = "bottom")+
   theme_bw()+
-  geom_text(data=rank_diff, aes(x=Variable, y= 5.5, colour=RankDiff, label= RankDiff), show.legend = FALSE,  inherit.aes = FALSE,  size=5) +
+  geom_text(data=rank_diff, aes(x=Variable, 
+                                y= 0.5,  #5.5
+                                colour=RankDiff, 
+                                label= RankDiff), 
+            show.legend = FALSE,  
+            inherit.aes = FALSE,  
+            size=5) +
   #coord_flip()+
  # theme(legend.position = "none")+
   scale_colour_manual(values = c( "#364B9A",  "#98CAE1", rank_palette ))+
@@ -213,6 +224,7 @@ shift_legend3 <- function(p) {
 shift_legend3(emmean_p)
 
 
+### B- PLot B - Hetampa rank est ####
 #plot contrasts and rank differences 
 heatmapp_rank <- ggplot(rank_diff, aes(Variable, Taxa, fill = RankDiff)) +
   geom_tile(color = "grey80") +
@@ -229,6 +241,24 @@ heatmapp_rank <- ggplot(rank_diff, aes(Variable, Taxa, fill = RankDiff)) +
   theme(legend.position= "bottom", axis.text.x = element_text(angle = 45, hjust = 1))
 
 
+
+
+
+
+
+#mod_meth_ord <- list()
+mod_meth_ord#[["RF_Equal"]] <- sum_diff %>% arrange(sum)
+t2 <- contrasts_sp %>% bind_rows() %>% select( contrast, estimate, Variable, p.value, Taxa)  %>% group_by (Taxa) %>% pivot_wider(names_from = contrast, values_from = estimate, names_prefix = "A")
+
+sum_diff <- data.frame(matrix(nrow=13, ncol=0))
+sum_diff$Taxa <- species_list  
+
+  for (sp in species_list){
+    sum_diff$sum[sum_diff$Taxa == sp] <-  sum(abs(t2$`AS1 - S2`[t2$Taxa == sp]))
+    
+  }
+  sum(abs(t2$`AS1 - S2`))
+list_diff[[species]] <- sum_diff
 
 ############################
 # ##  4) Carte S1-S2    ####
@@ -357,11 +387,11 @@ ggplot(data=all_coords_ben[all_coords_ben$Taxa != "Linepithema humile",])+
 
 
 
-
-###############3333brouillon
+ 
+############### brouillon ####
 
 ##plot 
-raw_long_S <- raw_long %>% group_by(Taxa, S, Variable) %>% summarise(meanI=mean(Values), sdI = sd(Values)) 
+raw_long_S <- raw_long %>% filter(Method == "XG", Model == "Weighted" ) %>% group_by(Taxa, S, Variable) %>% summarise(meanI=mean(Values), sdI = sd(Values)) 
 
 #set palette
 palette8 <- c(
@@ -391,16 +421,14 @@ raw_long$Variable <- forcats::fct_relevel(
 
 ##add sigficance levels 
 #add signficiance star and their placve in the plot
-pvals_sig <- per_species_pvals_mean_df_sig
+pvals_sig <- contrast_long_p
 
 pvals_sig$star <- ""
-pvals_sig$star[pvals_sig$p_value<= .05]  <- "*"
-pvals_sig$star[pvals_sig$p_value <= .01]  <- "**"
-pvals_sig$star[pvals_sig$p_value <= .001] <- "***"
+pvals_sig$star[pvals_sig$p.value > .05]  <- "ns"
+pvals_sig$star[pvals_sig$p.value<= .05]  <- "s"
 
-pvals_sig2 <- pvals_sig %>%
-  mutate(Taxa = species, Variable = variable) %>%
-  select(Taxa, Variable, everything())
+
+
 
 # Make a small table with S2 meanI per Taxa × Variable
 meanI_S2 <- raw_long_S %>%
@@ -409,7 +437,7 @@ meanI_S2 <- raw_long_S %>%
   rename(meanI_S2 = meanI)
 
 # Now you can join safely
-out <- pvals_sig2 %>%
+out <- pvals_sig %>%
   inner_join(meanI_S2, by = c("Taxa", "Variable"))
 
 out$Variable <- forcats::fct_relevel(
@@ -418,42 +446,67 @@ out$Variable <- forcats::fct_relevel(
   "HM","trade","PCA_1","PCA_2"
 )
 
-library(dplyr)
+out$star <- forcats::fct_relevel(
+  out$star,
+  "s",
+  "ns"
+)
 
 raw_long_S2 <- raw_long_S %>%
-  left_join(out %>% select(Taxa, Variable, p_value),
-            by = c("Taxa", "Variable")) %>%
-  mutate(ribbon = if_else(p_value > 0.05 | is.na(p_value), 0, sdI), mean_ribbon = if_else(p_value > 0.05 | is.na(p_value), 0, meanI) )
-
-
+  left_join(out %>% select(Taxa, Variable, star),
+            by = c("Taxa", "Variable"))
 
 #plot
-p <- ggplot(data = raw_long_S, aes(x=S, y=meanI, group=Variable, color=Variable)) +
-  geom_ribbon(aes(x =S, y = meanI, ymin = meanI - sdI, ymax = meanI + sdI, fill = Variable), alpha = .2, 	colour = "grey80")+
-  # geom_boxplot(data = as.data.frame(raw_long), aes(x=S, y=Importance, fill=Variable), 
-  #              inherit.aes = FALSE,
-  #              position = position_dodge(width = 0.2),
-  #              width = 0.6, 
-  #              alpha = 0.5
-  #              
-  # )+
+p<- ggplot(data = raw_long_S2, aes(x=S, y=meanI, group=Variable, color=Variable, linetype=star)) +
   geom_point(show.legend = TRUE, size = 2)+
-  geom_errorbar(aes(x =S, ymax = meanI + sdI, ymin = meanI - sdI),width = 0.2 )+
-  #geom_text(data=out, aes(x= 2.2, y= meanI_S2, label=star, colour= Variable),  show.legend = FALSE,  inherit.aes = FALSE,  size=6) +
+  geom_line()+
   labs(y = "SHAP value", x="")+
   scale_fill_manual(values = palette8)+
   scale_color_manual(values = palette8, drop = FALSE) +
   theme_bw()+
+  labs(
+    color = "Variable",
+    linetype = "Change significance") +
   guides(fill = guide_legend(title.position = "top",
                              label.position = "bottom",
                              nrow = 1)) +
-  theme(legend.direction = "horizontal", legend.position = "bottom")+
-  facet_wrap(~Taxa, ncol=3, scales = "free" )
+  theme(legend.direction = "horizontal",
+        aspect.ratio = 1, 
+        legend.position = "bottom",
+        strip.text.x = element_text(size = 11),
+        legend.text =  element_text(size = 11) ,
+        legend.title =  element_text(size = 11, face="bold") ,
+        legend.box="vertical"
+        )+
+  scale_x_discrete(labels = c("T1", "T2"))+
+  guides(color=guide_legend(nrow=2, byrow=TRUE))+
+  facet_wrap(~Taxa, ncol=5, scales = "free",
+ labeller = label_wrap_gen(width=10))
 
-# theme_classic()# Source - https://stackoverflow.com/a/58734961
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+emmeans_long$Variable <- forcats::fct_relevel(
+   emmeans_long$Variable,
+   "MPD",
+   "HM","trade","PCA_1","PCA_2"
+ )
+ 
+ 
+
+ 
+
+ # theme_classic()# Source - https://stackoverflow.com/a/58734961
 # Posted by Artem Sokolov
 # Retrieved 2026-03-11, License - CC BY-SA 4.0
 
+ 
 shift_legend3 <- function(p) {
   pnls <- cowplot::plot_to_gtable(p) %>% gtable::gtable_filter("panel") %>%
     with(setNames(grobs, layout$name)) %>% purrr::keep(~identical(.x,zeroGrob()))
