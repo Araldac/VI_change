@@ -91,8 +91,27 @@ figure_Eval_R <- ggarrange(acc_p, auc_p, sens_p, time_p, common.legend = TRUE, n
 #ggexport(figure_Eval, filename = "~/Internship UNIL/Figures_SMK/figure_EvalCSI.pdf")
 figure_Eval_R
 
-raw_metrics %<% filter(Model="Weighted", Method = "XG") %>% summarise(all_of(roc_auc, balanced_acc, Sensitivity))
+df_metrics <- raw_metrics %>% filter(model =="Weighted", methods == "XG") %>% 
+  group_by(Taxa, S) %>% 
+  summarise(
+    across(
+      all_of(c("roc_auc", "balanced_acc", "Sensitivity")), 
+      list(mean = ~mean(., na.rm = TRUE), sd = ~sd(., na.rm = TRUE)),
+      .names = "{.col}_{.fn}"
+    ),
+    .groups = "drop"
+  )
 
+overall_df_metrics <-   raw_metrics %>% filter(model =="Weighted", methods == "XG") %>% 
+  group_by(S) %>% 
+  summarise(
+    across(
+      all_of(c("roc_auc", "balanced_acc", "Sensitivity")), 
+      list(mean = ~mean(., na.rm = TRUE), sd = ~sd(., na.rm = TRUE)),
+      .names = "{.col}_{.fn}"
+    ),
+    .groups = "drop"
+  )
 #LMM to test wether Model and S have an effect on the AUC and accuracy values with species as random factors
 emmeans_l <- list()
 eval_metrics<- c("roc_auc", "balanced_acc", "Sensitivity", "time")
