@@ -31,20 +31,9 @@ library(paletteer)
 
 data_path   <- "//wsl.localhost/Ubuntu/home/admin_ait/internship-snakemake-2025/results/species/XGboost/bind_SHAP.csv"       # Chemin vers votre fichier CSV
 data_path_metrics   <- "//wsl.localhost/Ubuntu/home/admin_ait/internship-snakemake-2025/results/species/XGboost/bind_metrics.csv"       # Chemin vers votre fichier CSV
-
-species_col <- "Taxa"
-pa_col      <- "PA_N"
-S_col       <- "S"               # facteur S1 / S2
+            # facteur S1 / S2
 
 comp_cols<- c("MPD", "PCA_1", "PCA_2", "trade", "HM")
-
-level_S1 <- "S1"
-level_S2 <- "S2"
-
-perc_scale <- 100                # si vos pourcentages sont en 0–100
-
-cluster_mode <- "species_S"      # "species_S", "species_avg", "by_PA"
-
 
 ############################
 # ## 2) Chargement     ####
@@ -60,14 +49,10 @@ species_list <- unique(raw$Taxa)
 
 
 ############################
-# ## 3) Eval metrics      ####
+# ## 3) Eval metrics    ####
 ############################
 #### plot
 raw_metrics <- read_csv(data_path_metrics, show_col_types = FALSE)
-
-raw
-#raw_metrics$Model <- "Equal"
-#raw_metrics$Model[raw_metrics$PA_N == "Weighted"] <- "Weighted"
 
 raw_metrics <- raw_metrics %>% mutate(Sensitivity = TP/(FN+TP))
 auc_p <- ggplot(raw_metrics, aes(Taxa, roc_auc, fill= S))+
@@ -572,3 +557,11 @@ ggplot(data = raw_long_S, aes(x=Variable, y=meanI, group=S, color=S)) +
                              nrow = 1)) +
   theme(legend.direction = "horizontal", legend.position = "bottom")+
   facet_wrap(~Taxa, ncol=3 )
+
+
+
+
+#### VIF ###
+
+pca_c<-dudi.pca(st_drop_geometry(envtcel_c[, v_cl]), center=TRUE, scale=TRUE, nf=length(v_cl), scannf = FALSE )
+s.corcircle(pca_c$co)
