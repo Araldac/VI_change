@@ -140,6 +140,25 @@ contrast_long_p$estimate[contrast_long_p$p.value > 0.05] <- 0
 #because i am inerested in S2- S1 not S1-S2
 contrast_long_p$estimate <- contrast_long_p$estimate * (-1)
 
+
+#get abs sum of contrasts
+t2 <- contrasts_sp %>% bind_rows() %>% dplyr::select( contrast, estimate, Variable, p.value, Taxa)  %>% group_by (Taxa) %>% pivot_wider(names_from = contrast, values_from = estimate, names_prefix = "A")
+
+sum_diff <- data.frame(matrix(nrow=13, ncol=0))
+sum_diff$Taxa <- species_list  
+
+for (sp in species_list){
+  sum_diff$sum[sum_diff$Taxa == sp] <-  sum(abs(t2$`AS1 - S2`[t2$Taxa == sp]))
+}
+print(sum_diff)
+
+sum_diff_v <- data.frame(matrix(nrow=5, ncol=0))
+sum_diff_v$Variable <- comp_cols  
+for (variable_v in comp_cols){
+  sum_diff_v$sum[sum_diff_v$Variable == variable_v] <-  sum(abs(t2$`AS1 - S2`[t2$Variable == variable_v]))
+}
+
+print(sum_diff_v)
 ############################
 # ## ) (F2X) SHAP values ####
 ############################
