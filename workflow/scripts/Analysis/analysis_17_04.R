@@ -85,6 +85,108 @@ overall_df_metrics <-   raw_metrics %>% filter(model =="Weighted", methods == "X
     .groups = "drop"
   )
 
+
+############################
+# ## ) T-tests             ####
+############################
+
+t_list <- list()
+
+df_tt <- data.frame(matrix(ncol=4, nrow=13*5))
+colnames(df_tt) <- c("Taxa", "Variable", "t", "p_value")
+
+i= 1
+for (sp in species_list) { 
+  for (var_name in comp_cols){
+    sub1 <- raw %>% 
+      filter(Taxa == sp, Model == "Weighted", Method == "XG", S == "S1") %>%
+      dplyr::select(var_name)
+    
+    sub2 <- raw %>% 
+      filter(Taxa == sp, Model == "Weighted", Method == "XG", S == "S2") %>%
+      dplyr::select(var_name)
+    
+    tt <- t.test(sub1, sub2)
+    
+    df_tt$t[i] <- tt$statistic
+    df_tt$p_value[i] <- tt$p.value
+    df_tt$Taxa[i] <- sp
+    df_tt$Variable[i] <- var_name
+    
+    i = i+1
+    
+    
+  }}
+
+add_stars <- function(p) {
+  if (p < 0.001) return("***")
+  else if (p < 0.01) return("**")
+  else if (p < 0.05) return("*")
+  else return("")
+}
+
+
+#Create table with T-test results
+df_wide <- df_tt %>%
+  mutate(
+    stars = sapply(p_value, add_stars),
+    cell_text = paste0("t = ", round(t, 2),  
+                       ", p = ", ifelse(p_value < 0.001, sprintf("%.2e", p_value), 
+                                        round(p_value, 3)), 
+                       " ", stars)
+  ) %>%
+  pivot_wider(
+    names_from = Variable,
+    values_from = cell_text,
+    id_cols = Taxa
+  )
+
+# View result
+print(df_wide)
+
+#plot desnities (optional)
+
+##Sigficance levels 
+pvals_tt <- as.data.frame(df_tt)
+pvals_tt$star <- ""
+pvals_tt$star[pvals_tt$p.value > .05]  <- "ns" #non-significant
+pvals_tt$star[pvals_tt$p.value<= .05]  <- "s"  #significant
+
+pvals_tt$star <- forcats::fct_relevel(
+  pvals_tt$star,
+  "s",
+  "ns"
+)
+
+
+#graph of densities
+raw_long_filtered <- raw_long %>% filter(Model == "Weighted", Method == "XG") %>%
+    dplyr::select(Taxa, Variable, Values, S)
+
+ggplot(raw_long_filtered, aes(Values, fill=S)) + 
+  geom_density(alpha= 0.5) +
+
+    facet_grid(Taxa ~Variable )
+
+############################
+# ## ) AOV            ####
+############################
+
+aov_list <- list()
+
+for (sp in species_list) { 
+  sub <- raw_long %>% filter(Taxa == sp, Model == "Weighted", Method == "XG")
+  #hist(sub$Values )
+  sub$S <- as.factor(sub$S)
+  sub$Variable <- as.factor(sub$Variable)
+  
+  a <- aov(Values ~ S*Variable, data=sub)
+  aov_list[[sp]] <- summary(a)
+  
+           
+}
+
+aov_list
 ############################
 # ## ) LMM             ####
 ############################
@@ -94,28 +196,41 @@ ggplot(raw_long, aes(Values, color=Variable))+geom_density()
 
 raw_long <- raw %>% pivot_longer(all_of(comp_cols), names_to = "Variable", values_to = "Values")
 
+ggplot(raw[raw$Taxa == "Tapinoma melanocephalum" & raw$Model == "Weighted"& raw$Method == "XG",], aes(PCA_1, fill=S))+geom_histogram()
+
+
 coef_sp <- list()
 emmeans_sp <- list()
 contrasts_sp<- list()
 
 #LMM for each species
 for (sp in species_list) { 
-  
+   
+ # sp <- species_list[8]
   sub <- raw_long %>% filter(Taxa == sp, Model == "Weighted", Method == "XG")
+  #hist(sub$Values )
   sub$S <- as.factor(sub$S)
   sub$Variable <- as.factor(sub$Variable)
   
-  fits <-  lmer(as.formula("Values ~ S*Variable + (1| Replicate)"),
+ # hist(sub$Values )
+  fits <-  lmer(as.formula("Values ~ S*Variable + (1|Replicate)"),
          data = sub)
-  
+  # 
+  # fits3 <- glm(as.formula("Values ~ S*Variable"),
+  #             data = sub)
+  # 
   print(sp)
   #print(summary(fits))
   #print(anova(fits))
   coef_sp[[sp]] <- summary(fits)
+  #res <- simulateResiduals(fits3)
+  #plot(res)
   
+  #Dharma::simulateresiduals(model)
+  # performance::check_model(fits3)
   #plots if needed
-  #plot_redres(fits, type = "std_cond")
-  #plot_resqq(fits)
+ # plot_redres(fits3, type = "std_cond")
+  #plot_resqq(fits3)
 
   
    emean <- emmeans(fits, pairwise ~ S | Variable, adjust = "tukey")
@@ -226,13 +341,13 @@ p<- ggplot(data = raw_long_S2, aes(x=S, y=meanI, group=Variable, color=Variable,
         aspect.ratio = 1, 
         legend.position = "bottom",
         strip.text.x = element_text(size = 11),
-        legend.text =  element_text(size = 11) ,
-        legend.title =  element_text(size = 11, face="bold") ,
+        legend.text =  element_text(size = 13) ,
+        legend.title =  element_text(size = 13, face="bold") ,
         legend.box="vertical"
   )+
   scale_x_discrete(labels = c("T1", "T2"))+
   guides(color=guide_legend(nrow=2, byrow=TRUE))+
-  facet_wrap(~Taxa, ncol=5, scales = "free",
+  facet_wrap(~Taxa, ncol=4, scales = "free",
              labeller = label_wrap_gen(width=10))
 
 # Source - https://stackoverflow.com/a/58734961
@@ -343,6 +458,25 @@ all_coords_ben$S <- forcats::fct_relevel(
   "S1","S2" 
 )
 
+all_coords_ben <- all_coords_ben %>%
+  mutate(
+    S_new = case_when(
+      S == "S1"  ~ "T1",
+      S == "S2" ~ "T2",
+      TRUE ~ NA_character_
+    )
+  )
+
+all_coords <- all_coords %>%
+  mutate(
+    S_new = case_when(
+      S == "S1"  ~ "T1",
+      S == "S2" ~ "T2",
+      TRUE ~ NA_character_
+    )
+  )
+
+
 # obtain BEN x sp
 ben_s_sp_df <- all_coords %>%
   select(BEN, S, Taxa) %>%
@@ -373,9 +507,9 @@ facet_df <- ant_ll %>%
 df <- facet_df %>%
   mutate(
     S_unique = case_when(
-      S1 == 1 & S2 == 1 ~ "S1",
-      S1 == 1 & S2 == 0 ~ "S1",
-      S1 == 0 & S2 == 1 ~ "S2",
+      S1 == 1 & S2 == 1 ~ "T1",
+      S1 == 1 & S2 == 0 ~ "T1",
+      S1 == 0 & S2 == 1 ~ "T2",
       TRUE ~ NA_character_
     )
   )
@@ -383,14 +517,15 @@ df <- facet_df %>%
 df<- df %>% filter(! is.na(Taxa)) 
 df$S <- as.factor (df$S)
 
-all_coords_ben <- all_coords_ben %>% arrange(desc(S))
+all_coords_ben <- all_coords_ben %>% arrange(desc(S_new))
+all_coords_ben
 
 #map LH
 ggplot(data=all_coords_ben[all_coords_ben$Taxa == "Linepithema humile",])+
   geom_sf(data = ant_ll$geometry, fill = "grey93")+
-  geom_sf(aes(fill=as.factor(S)))+
+  geom_sf(aes(fill=as.factor(S_new)))+
   geom_point(data=all_coords[all_coords$Taxa == "Linepithema humile",],
-             aes(x=decimallongitude, y=decimallatitude, color=S, alpha =S), 
+             aes(x=decimallongitude, y=decimallatitude, color=S_new, alpha =S_new), 
              inherit.aes = FALSE)+
   scale_alpha_manual(values = c(1, 0.4), guide = "none")+
   scale_color_manual(
@@ -398,7 +533,7 @@ ggplot(data=all_coords_ben[all_coords_ben$Taxa == "Linepithema humile",])+
     name = "Occurrence in :"
   )+
   scale_fill_manual(
-    values = c("S1" = "#FDDBC7FF", "S2" = "#D1E5F0FF", "S1 & S2"= "#009E73"),
+    values = c("T1" = "#FDDBC7FF", "T2" = "#D1E5F0FF", "S1 & S2"= "#009E73"),
     drop = FALSE,
     na.translate = FALSE,
     name = "First record in : "
@@ -408,6 +543,9 @@ ggplot(data=all_coords_ben[all_coords_ben$Taxa == "Linepithema humile",])+
   theme_bw() +
   theme(axis.text = element_blank(), 
         axis.title = element_blank(),
+        strip.text.x = element_text(size = 13),
+        legend.text =  element_text(size = 13) ,
+        legend.title =  element_text(size = 13, face="bold") ,
         legend.position = "bottom")+ 
   facet_wrap(~Taxa) 
 
@@ -415,9 +553,9 @@ ggplot(data=all_coords_ben[all_coords_ben$Taxa == "Linepithema humile",])+
 #map rest of species
 ggplot(data=all_coords_ben[all_coords_ben$Taxa != "Linepithema humile",])+
   geom_sf(data = ant_ll$geometry, fill = "grey93")+
-  geom_sf(aes(fill=as.factor(S)))+
+  geom_sf(aes(fill=as.factor(S_new)))+
   geom_point(data=all_coords[all_coords$Taxa != "Linepithema humile",],
-             aes(x=decimallongitude, y=decimallatitude, color=S, alpha =S), 
+             aes(x=decimallongitude, y=decimallatitude, color=S_new, alpha =S_new), 
              inherit.aes = FALSE)+
   scale_alpha_manual(values = c(1, 0.4), guide = "none")+
   scale_color_manual(
@@ -425,18 +563,21 @@ ggplot(data=all_coords_ben[all_coords_ben$Taxa != "Linepithema humile",])+
     name = "Occurrence in :"
   )+
   scale_fill_manual(
-    values = c("S1" = "#FDDBC7FF", "S2" = "#D1E5F0FF", "S1 & S2"= "#009E73"),
+    values = c("T1" = "#FDDBC7FF", "T2" = "#D1E5F0FF", "S1 & S2"= "#009E73"),
     drop = FALSE,
     na.translate = FALSE,
     name = "First record in : "
-  ) +    
+  ) +  
   xlab("")+
   ylab("")+
-  
-  theme_bw() + theme(axis.text = element_blank(), 
-                     axis.title = element_blank(),
-                     legend.position = "bottom")+ 
-  facet_wrap(~Taxa, ncol=3, nrow=4) 
+  theme_bw() +
+  theme(axis.text = element_blank(), 
+        axis.title = element_blank(),
+        strip.text.x = element_text(size = 13),
+        legend.text =  element_text(size = 13) ,
+        legend.title =  element_text(size = 13, face="bold") ,
+        legend.position = "bottom")+ 
+  facet_wrap(~Taxa, ncol= 2) 
 
 ############################
 # ##  ) VIF and Variable correlation    ####

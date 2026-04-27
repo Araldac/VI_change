@@ -8,6 +8,33 @@ configfile: 'config/InternshipSMKConfig.yaml'
 #print("DEBUG species_name type:", config.get("Tribe_list"))
 
 
+rule Trade_first_records:
+      '''
+   From the Tradhist dataset, assign the current country names ot the entries and divide the flow by the counrey size
+   Interpolate NAs by the closer data avaliable
+    '''
+    input:
+        firstrecords = 'data/variables/Trade/alien_ant_first_records.tsv' ,
+        antmaps_pol = 'data/distribution/AntmapsPolGeneral.RData'
+
+    output:
+        out='results/variables/Trade/WA_first_records.csv.csv'
+        
+    log:
+        err = "logs/VariablesPrep/Trade_first_records.err",
+        out = "logs/VariablesPrep/Trade_first_records.out"
+    conda:
+	    '../envs/VariablesPrep.yaml'
+
+    shell:
+        r"""
+        Rscript workflow/scripts/VariablesPrep/Trade_first_records.R \
+        {input.firstrecords} \
+        {input.antmaps_pol} \
+        {output.out} \
+        >{log.out} 2> {log.err}
+        """
+
 
 rule Trade_HistoricalInterpolated:
     '''

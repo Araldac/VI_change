@@ -5,7 +5,7 @@ method = ["XG", "RF"]
 
 rule applyXGboost:
     '''
-    XGboost or RF fro shap to weighted or eql 
+    XGboost or RF for shap to weighted or eql 
     '''
     input:
         data = 'results/species/AssignVariables/{sp}_allv.csv'

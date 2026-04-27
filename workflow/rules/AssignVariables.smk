@@ -2,7 +2,7 @@ configfile: 'config/InternshipSMKConfig.yaml'
 
 rule add_Climate_PA:
     '''
-   Add climate and pseudo-absences , 10 PA sets for each (s1 and S2)
+   Add climate and pseudo-absences , 10x backround points than presences for each (s1 and S2)
     '''
     input:
         occurrences = 'results/species/DatasetPrep/{sp}_thinV.csv',
@@ -36,50 +36,12 @@ rule add_Climate_PA:
         """
 
 
-rule add_BioticRelatedness:
+rule add_BioticMPD:
     '''
-    General rule to Clean, Thin and Select Exotic occurrences, the following rules decompose these three steps
+    Add biotic Mean Phylogenetic Distance
     '''
     input:
         occurrences = 'results/species/AssignVariables/{sp}_PA.csv',
-        distributionData = 'results/variables/N_dis.RData' ,
-        relatedSpecies = 'data/variables/Biotic/{sp}_tribe_genus.csv',
-        antmaps_pol = 'data/distribution/AntmapsPolGeneral.RData'
-
-    output:
-        out='results/species/AssignVariables/{sp}_PA_B1.csv'
-        
-    log:
-        err = "logs/AssignVariables/{sp}_add_BioticRelatedness.err",
-        out = "logs/AssignVariables/{sp}_add_BioticRelatedness.out"
-
-    conda:
-	    '../envs/AssignVariables.yaml'
-
-    params:
-        sp_name = lambda wildcards: config["species_name"][wildcards.sp],
-        tribe_list = lambda wildcards: config["Tribe_list"][wildcards.sp]
-
-    shell:
-        r"""
-        Rscript workflow/scripts/AssignVariables/add_BioticRelatedness.R \
-        {input.occurrences} \
-        {input.relatedSpecies} \
-        {input.distributionData} \
-        {input.antmaps_pol} \
-        "{params.sp_name}" \
-        "{params.tribe_list}" \
-        {output.out} \
-        >{log.out} 2> {log.err}
-        """
-
-
-rule add_BioticMPD:
-    '''
-    Add biotic MPD
-    '''
-    input:
-        occurrences = 'results/species/AssignVariables/{sp}_PA_B1.csv',
         antmaps_pol = 'data/distribution/AntmapsPolGeneral.RData',
         sp_MPD = 'results/variables/Biotic_MPD_{sp}.csv'
 
