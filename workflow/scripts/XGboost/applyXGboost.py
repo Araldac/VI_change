@@ -80,12 +80,6 @@ def features_ml_models(X, y, methods, model, random_seed, variables, is_binary=F
         X, y_encoded, stratify=y_encoded, test_size=0.25, random_state=random_seed
     )
 
-    # Define the models
-    if methods == "RF":
-        models = {
-            "RF": RandomForestClassifier(n_estimators=100, random_state=random_seed)
-        }
-
     if methods == "XG":    
         models = {
             "XGB": XGBClassifier(random_state=random_seed)
@@ -161,29 +155,6 @@ def features_ml_models(X, y, methods, model, random_seed, variables, is_binary=F
                 feature_importance = pd.DataFrame(list(zip(X_train.columns, vals)))
                 feature_importance_df = feature_importance.T
 
-            if model_name == "RF":
-
-                explainer = shap.TreeExplainer(model)
-
-                shap_values = explainer.shap_values(X) ## try modeks output to raw  or change to Explainer 
-
-                #print(f"shapeof shap_values {shap_values.shape}")
-                # make sure the SHAP values add up to marginal predictions
-                #np.abs(shap_values.sum(axis=1) + explanation.base_values - y).max()
-                
-                #new_index = [ix for ix_test_fold in ix_test for ix in ix_test_fold]
-                if plot == True :
-                    shap.plots.beeswarm(explanation[:,:,1])#, feature_names=X.columns)
-                #shap.summary_plot(explanation)
-                
-                #shap_values_df = pd.DataFrame(shap_values,  columns=X.columns)
-                #shap_pos = shap_values[1]   # select class 1 SHAP matrix
-                #vals = np.abs(shap_pos).mean(axis=0)
-                vals= np.abs(shap_values).mean(axis = (0,2))
-
-                feature_importance = pd.DataFrame(list(zip(X.columns, vals)))
-                feature_importance_df = feature_importance.T
-
 
             train_time = time.time() - start_time
 
@@ -255,81 +226,6 @@ sp_name = a.loc[1, 'Taxa']
 #set parameters
 S_levels = ['S1', 'S2']
 variables = ["PCA_1", "PCA_2", "HM", "trade", "MPD"]
-
-
-if model == "Equal":
-    PA_N_levels = range(1, 11)  # 1 to 10
-        
-    # Initialize storage
-    metrics_rows = []
-    shap_values_rows = []
-
-    replicates = 10
-
-    seed = 0     
-    for s in S_levels:
-        for pa_n in PA_N_levels:
-            for rep in range(1, replicates + 1):
-                
-                # 1. Filter or Prepare the specific dataset slice
-                mask = ((a['PA_N'] == pa_n ) & (a['S'] == s) ) | ((a['PA_N'].isna()) & (a['S'] == s))
-                x = a.loc[mask, variables]
-                Y = a.loc[mask, 'Occurrence']
-
-                # 2. Run your function
-                metrics_df, shap_df =  features_ml_models(x, Y, methods, model, seed, variables, is_binary=True, is_balanced=True) 
-                
-                # MOCK DATA FOR DEMONSTRATION (Replace with your function call)
-
-                # 3. Store Metrics
-                # Add metadata columns
-                metrics_df['Taxa'] = sp_name
-                metrics_df['S'] = s
-                metrics_df['PA_N'] = pa_n
-                metrics_df['Replicate'] = rep
-                metrics_df["Method"] = methods
-                
-                metrics_rows.append(metrics_df)
-                
-                # 3. Store SHAP
-                # Add metadata columns
-                shap_df.columns = shap_df.iloc[0]
-                shap_df = shap_df[1:]
-                shap_df['Taxa'] = sp_name
-                shap_df['S'] = s
-                shap_df['PA_N'] = pa_n
-                shap_df['Model'] = "Equal"
-                shap_df['Replicate'] = rep
-                shap_df["Method"] = methods
-                
-                shap_values_rows.append(shap_df)
-                # 4. Store SHAP Values
-                # Key: (Taxa, S, Replicate, PA_N) -> Value: (n, 5) DataFrame
-                #key = (sp_name, s, rep, pa_n)
-                #shap_values_store[key] = shap_df
-
-                seed += 1
-
-
-                
-
-
-    # 5. Combine all metrics into one DataFrame and save as csv
-    final_metrics_df = pd.concat(metrics_rows, ignore_index=True)
-    final_metrics_df.to_csv(output_metrics)
-
-    
-    shap_final_df = pd.concat(shap_values_rows, ignore_index=True)
-
-    #order columns 
-    cols = ['Taxa', 'S', 'Method' 'PA_N', 'Replicate', 'Model', 'PCA_1', 'PCA_2', 'HM', 'trade', 'MPD']
-    available_cols = [c for c in cols if c in shap_final_df.columns]
-    
-    shap_final_df = shap_final_df[available_cols]
-
-    print(shap_final_df.head())
-    shap_final_df.to_csv(output_shap_raw)
-
 
 
 if model == "Weighted":

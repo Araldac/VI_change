@@ -1,35 +1,11 @@
 
-#list_files = ["results/species/RF/RF_TM_relimpAUC1.csv", "results/species/CSI/Raw_RF_TM_relimpAUC1.csv"]
-#list_files = expand("results/species/RF/RF_{species}_relimpAUC1.csv", species=sp)
 sp = ["LH",  "TM",  "PL",  "MP",  "PM",  "MF",  "HP" ,  "HO", "WA", "AG", "TB", "TA", "HE"]
-#sp = ["MP", "TA", "HE"]
-
-var_type = ["CSI", "Raw"]
-model=["Equal", "Weighted"]
-method = ["RF"] #
-
-list_AV =  expand("results/species/AssignVariables/{species}_allv.csv", species=sp)
-#subset_sp = ["LH",  "TM",  "PL"]
-#list_RF =  expand("results/species/RF/RF_{species}_params.csv", species=sp)
-
-
-#list_RF2 =  expand("results/species/RF/RF_{species}_relimpAUC1.csv", species=sp)
-
-#list_RF3 =  expand("results/species/CSI/Raw_RF_{species}_relimpAUC1.csv", species=sp)
-type = ["0" , "1", "All"]
-
-list_RF3 =  expand('results/species/XGboost/{species}_applyXGboost_shap_{t}_RF_1.csv', species=sp, t = model, me = method)
 
 rule all:
-    input: list_RF3
-
+    input: 'results/species/XGboost/bind_SHAP.csv'
 
 #Snakefile at repo root
 include: "workflow/rules/DatasetPrep.smk"   
 include: "workflow/rules/VariablesPrep.smk" 
 include: "workflow/rules/AssignVariables.smk"   
-#include: "workflow/rules/BRT.smk"   
-include: "workflow/rules/RF.smk"  
-include: "workflow/rules/CSI.smk" 
-include: "workflow/rules/Analysis.smk"
 include: "workflow/rules/XGboost.smk"  

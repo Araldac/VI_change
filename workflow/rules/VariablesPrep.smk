@@ -7,7 +7,6 @@ configfile: 'config/InternshipSMKConfig.yaml'
 #print("DEBUG species_name type:", config.get("species_name"))
 #print("DEBUG species_name type:", config.get("Tribe_list"))
 
-
 rule Trade_first_records:
       '''
    From the Tradhist dataset, assign the current country names ot the entries and divide the flow by the counrey size
@@ -133,33 +132,6 @@ rule Climate_DownloadPCA:
         {output.out} \
         >{log.out} 2> {log.err}
         """
-
-rule Climate_TestPCA:
-    '''
-    Testing wether the copy-paste from windows to WSL of the ouput of the Climate_DownloadPCA works
-    Result is a copy of the PCA_ax1-2.RData in the results
-    '''
-    input: 
-        pca = 'data/variables/PCA_ax1-2.RData'
-    
-    output:
-        out = 'results/variables/Climate_TEST_PCA.RData'
-        
-    log:
-        err = "logs/VariablesPrep/Climate_TestPCA.err",
-        out = "logs/VariablesPrep/Climate_TestPCA.out"
-    conda:
-	    '../envs/VariablesPrep.yaml'
-
-    shell:
-        r"""
-        Rscript --vanilla workflow/scripts/VariablesPrep/Climate_TestPCA.R \
-        {input.pca} \
-        {output.out} \
-        >{log.out} 2> {log.err}
-        """
-
-
 
 rule HM_RasterCreation:
     '''

@@ -1,7 +1,7 @@
 configfile: 'config/InternshipSMKConfig.yaml'
 
-model=[ "Equal", "Weighted"]
-method = ["XG", "RF"]
+model=["Weighted"]
+method = ["XG"]
 
 rule applyXGboost:
     '''
