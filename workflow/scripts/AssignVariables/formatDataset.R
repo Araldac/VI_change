@@ -18,9 +18,9 @@ library(dplyr)
 ################################################################################
 
 ###extracte biotic variables
-biotic_var <- strsplit(biotic, " +")
-biotic_var<-unlist(biotic_var)
-cat(sprintf("  Tribes to analyze: %s\n", paste(biotic_var, collapse = ", ")))
+#biotic_var <- strsplit(biotic, " +")
+#biotic_var<-unlist(biotic_var)
+#cat(sprintf("  Tribes to analyze: %s\n", paste(biotic_var, collapse = ", ")))
 
 data <- read.csv(occurrences)
 
@@ -38,7 +38,6 @@ data_ref <- data %>% dplyr::select(Taxa,
                                     PCA_2,
                                     trade,
                                     HM,
-                                    MPD,
-                                    biotic_var)
+                                    MPD)
 
 write.csv(data_ref, output)

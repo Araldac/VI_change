@@ -1,7 +1,7 @@
 ###############################################################################
 # Project: Intersnship UNIL 2025
 # Athor: Aitana
-# Description: Biotic Data:obtain the number of relted genus for each close tribe per bentity
+# Description: add MPD data to each occurrence/background point
 # Date: 03/12/2025
 ###############################################################################
 
@@ -72,8 +72,9 @@ MPD_SP <- read.csv(sp_MPD)
 
 head(MPD_SP)
 head(MPD_SP[, 2])
+
 #### Fix missing data ####
-antmaps_pol$NAME[antmaps_pol$BEN=="BEN20610"]<-"Italy" #complete data with BEN20610 Tuscan Archipelago
+antmaps_pol$NAME[antmaps_pol$BEN=="BEN20610"] <- "Italy" #complete data with BEN20610 Tuscan Archipelago
 
 #### Assign bentities to occurrences, if not in an exact poygon finds the nearest ####
 cat("\nAssigning bentities to occurrences (this may take a few minutes)...\n")

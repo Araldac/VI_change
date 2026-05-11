@@ -1,15 +1,9 @@
 ###############################################################################
 # Project: Intersnship UNIL 2025
 # Athor: Aitana
-# Description: Historical data: convert to current countries and interpolates NA
+# Description: create files with the first record data for each species
 # Date: 26/11/2025
 ###############################################################################
-
-
-args <- commandArgs(trailingOnly = TRUE)
-path_first_rec <- args[1]
-antmaps_pol <-args[2]
-output <- args[5]
 
 
 FR_NISO_forSMK<- function(first_records, species_name, acronym){
@@ -30,7 +24,8 @@ FR_NISO_forSMK<- function(first_records, species_name, acronym){
 
 
 #load data
-first_records <- read.csv(path_first_rec, sep = "\t")
+first_records <- read.csv("data/variables/Trade/alien_ant_first_records.tsv", sep = "\t")
+load("data/distribution/AntmapsPolGeneral.RData")
 
 
 

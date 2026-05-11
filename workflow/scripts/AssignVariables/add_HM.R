@@ -24,8 +24,8 @@ lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
 
 load_HM<- function(data){
   # Convert to SpatRaster
-  d_s1<-data %>% filter(S=="S1") %>% dplyr::select(decimallongitude, decimallatitude)
-  d_s2<-data %>% filter(S=="S2") %>% dplyr::select(decimallongitude, decimallatitude)
+  d_s1 <- data %>% filter(S=="S1") %>% dplyr::select(decimallongitude, decimallatitude)
+  d_s2 <- data %>% filter(S=="S2") %>% dplyr::select(decimallongitude, decimallatitude)
   
   
   #hm_1970 <- terra::rast(hm_1970)
@@ -63,10 +63,9 @@ load_HM<- function(data){
 
 #### #### load data #### ####
 cat("Loading data \n")
-#load(hm1970)
-#load(hm2025)
-hm_1970 <- terra::rast(hm1970)      # should define climate_data2
-hm_2025 <- terra::rast(hm2025)      # should define climate_data2
+
+hm_1970 <- terra::rast(hm1970)      
+hm_2025 <- terra::rast(hm2025)      
 
 
 LH_C_B_PP <- read.csv(occurrences)

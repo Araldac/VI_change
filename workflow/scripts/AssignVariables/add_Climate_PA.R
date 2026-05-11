@@ -1,7 +1,7 @@
 ###############################################################################
 # Project: Intersnship UNIL 2025
 # Athor: Aitana
-# Description: Add Climate and PA 
+# Description: Add Climate and Background points
 # Date: 26/11/2025
 ###############################################################################
 
@@ -15,8 +15,7 @@ antmaps_pol <- args[3]
 sp_name <-args[4]
 speciesDistribution <- args[5]
 output <- args[6]
-#imageS1 <- args[7]
-#imageS2 <- args[8]
+
 
 #download/install packages
 pkg <- c("terra", "dplyr", "tidyr", "raster", "tiff", "sf")

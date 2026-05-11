@@ -1,7 +1,7 @@
 ###############################################################################
 # Project: Intersnship UNIL 2025
 # Athor: Aitana
-# Description: Historical data: convert to current countries and interpolates NA
+# Description: Create HM raster with GDP, Pop desnity and anthromes
 # Date: 26/11/2025
 ###############################################################################
 
@@ -42,7 +42,8 @@ lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
   #Create a new raster with the normalized values
   gpw_raster_normalized <- terra::setValues(raster_data, gpw_normalized)
   
-  gpw_raster_normalized<-gpw_raster_normalized*10
+  #transform to 10
+  gpw_raster_normalized <- gpw_raster_normalized*10
   
   return(gpw_raster_normalized)
 }
@@ -51,27 +52,28 @@ lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
 
 #### #### Anthromes #### ####
 cat("change anthromes  \n")
+
 ##change anthromes to specific value
-anth_values<-c("11", "12", "21", "22", "23", "24", "31", "32", "33", "34", "41", "42", "43", "51", "52", "53", "54", "61", "62", "63", "70")
-anth_values<-as.numeric(anth_values)
-lof_values<-c(rep(10,2), 7, 10, 7, 7, 7, 7, 4, 4, 4, 4, 0, 4, 4, 0, 2, 0, 0, 0, 0)
-anth_to_lw<-data.frame(anth_values, lof_values)
+anth_values <- c("11", "12", "21", "22", "23", "24", "31", "32", "33", "34", "41", "42", "43", "51", "52", "53", "54", "61", "62", "63", "70")
+anth_values <- as.numeric(anth_values)
+lof_values <- c(rep(10,2), 7, 10, 7, 7, 7, 7, 4, 4, 4, 4, 0, 4, 4, 0, 2, 0, 0, 0, 0)
+anth_to_lw <- data.frame(anth_values, lof_values)
 
 cat("substitue values   \n")
 #substitue values 
-anthromes_subs<-subs(anthromes, anth_to_lw)
+anthromes_subs <- subs(anthromes, anth_to_lw)
 
 #### #### Population density 
-upd_pop<-rearrange_popdensity(population)
+upd_pop <- rearrange_popdensity(population)
 
 ##change resolution of GDP raster to match the other two
-gdp_resized<-resample(gdp, upd_pop)
+gdp_resized <- resample(gdp, upd_pop)
 
 #transformt them to values between 0-10
 gdp_10 = calc(gdp_resized, fun=function(x, max=gdp_resized@data@max) { (x/max)*10 })
 
 ##Sum all the three values
-hm<- overlay(gdp_10, upd_pop, anthromes_subs, fun=function(x,y,z){x+y+z})
+hm <- overlay(gdp_10, upd_pop, anthromes_subs, fun=function(x,y,z){x+y+z})
 
 if (plot== TRUE){
     my.palette <- rev(brewer.pal(n = 30, name = "Spectral"))
@@ -105,10 +107,8 @@ hm_1970<-create_HM_raster(d_pop1970, g_1980, d_ant1970)
 hm_2025<-create_HM_raster(d_pop2025, g3_2020, d_ant2025)
 
 #### #### save output #### ####
-#save(hm_1970, file=output_1970)
-#save(hm_2025, file=output_2025)
 
-cat("erite \n")
+cat("Save rasters \n")
 terra::writeRaster(hm_1970, filename = output_1970, filetype = "GTiff", overwrite = TRUE)
 terra::writeRaster(hm_2025, filename = output_2025, filetype = "GTiff", overwrite = TRUE)
 

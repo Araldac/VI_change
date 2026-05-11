@@ -11,14 +11,20 @@ or
  
 ## Roadmap
 
-- A. Obtaining first records csv for each species on script Extra/FirstRecbySp.R
-- B. "Dry run" to test wether the dependencies of the data, rules and scripts work well run 
+- 1. Obtaining first records csv for each species on script worflow/scripts/VariablesPrerp/Trade_first_records.R
+- 2. "Dry run" to test wether the dependencies of the data, rules and scripts work well run 
   
 ```bash
   snakemake -s  --cores 7   --use-conda  --dry-run 
 ```
-- C. Run Snakemake workflow
-  
+- 3. Run Snakemake workflow
+Contains four parts: 
+  A_ DatasetPrep: using the occurrences loaded from GBIF for, select alien occurreces, clean, thin and verify that they make sense based on first record data
+  B_VariablesPrep: prepare the four variables Climate, Mean Phylogenetic distance, Trade and Human modification
+  C_AssignVariables: draw background points. To each occurrence and background point assign the valu for each variable
+  D_XGBoost: run algorithm and extract the SHAP values, one model per period and 100 replicates
+
+For running the four parts at once
  ```bash
 snakemake  --cores 10 --use-conda --rerun-triggers mtime
 
@@ -28,6 +34,15 @@ snakemake  --cores 10 --use-conda results/species/XGboost/bind_metrics.csv --rer
 The "--rerun-triggers mtime " prevents snakemake 
 from rerunning rules due to changes in the software environment (e.g., conda or container definitions)
 
-- D. Run analysis and figure on script Extra/Analysis.R
+For running each part inidivually:
+
+Create a run all function 
+ ```bash
+snakemake  --cores 10 --use-conda --rerun-triggers mtime
+
+snakemake  --cores 10 --use-conda results/species/XGboost/bind_metrics.csv --rerun-triggers mtime
+
+```
+- 4. Run analysis and figure on Rscript Extra/Analysis.R and ShapBeeswarmPlot on Extra/ShapPlot.ipynb
 
 

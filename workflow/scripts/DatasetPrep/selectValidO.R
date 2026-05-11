@@ -1,7 +1,7 @@
 ###############################################################################
 # Project: Intersnship UNIL 2025
 # Athor: Aitana
-# Description: Thinning
+# Description: Filter using dta from Bertelsmeier et al (2017) on first alien occurrences
 # Date: 26/11/2025
 ###############################################################################
 
@@ -20,7 +20,7 @@ output <- args[3]
 
 occ_thin20_colsR <- read.csv(data_thinned)
 head(occ_thin20_colsR)
-##filter occurrences that shouldn't have been there with webber data
+##filter occurrences with published dataset 
 first_records_df <- read.csv(first_record)
 head(first_records_df)
 
@@ -32,11 +32,9 @@ for (i in seq_len(nrow(first_records_df))) {
     if (! country %in% occ_valid$countrycode) next
     #country <- countrycode::countrycode(country, origin="iso2c", destination="iso3c")
     date <- first_records_df$FirstRecord[i]
-
     
     occ_valid <- occ_valid %>% filter(! (countrycode == country &  year < date))
-    
-    
+
     
 
   }

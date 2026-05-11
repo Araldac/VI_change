@@ -76,11 +76,6 @@ coords2admin2 <- function(data, admin = antmaps_pol) {
 load(antmaps_pol)
 load(distributionData)
 
-# Load RData files correctly
-#load(antmaps_pol)
-#load(distributionData)
-#antmaps_dis <- (load(distributionData))
-
 ## Loading occurrences of sp from GBIF in 2025
 sp <- read.csv(occurrencesGBIF, sep = "\t") #
 
@@ -98,9 +93,9 @@ occ_cle <- sp %>% drop_na(year) # remove data without a year
 #load(antmaps_pol)
 #load(distributionData)
 
-occ_ben<-coords2admin2(sp)
+occ_ben <- coords2admin2(sp)
 
-occ_E<-select_E(occ_ben, sp_name)
+occ_E <- select_E(occ_ben, sp_name)
 
 occ_E$S[occ_E$year <= 1970] <- "S1" # assign the dataset 1 or 2 depending on year
 occ_E$S[occ_E$year > 1970] <- "S2"

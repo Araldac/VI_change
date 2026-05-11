@@ -1,7 +1,7 @@
 ###############################################################################
 # Project: Intersnship UNIL 2025
 # Athor: Aitana
-# Description: Historical data: convert to current countries and interpolates NA
+# Description: Compare HM rasters method with the Human Footprint map 2016
 # Date: 26/11/2025
 ###############################################################################
 

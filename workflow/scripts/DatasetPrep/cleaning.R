@@ -1,7 +1,7 @@
 ###############################################################################
 # Project: Intersnship UNIL 2025
 # Athor: Aitana
-# Description: Preparation of the variables for snakemake
+# Description: Cleaning occurrences
 # Date: 26/11/2025
 ###############################################################################
 
@@ -9,12 +9,10 @@
 
 args <- commandArgs(trailingOnly = TRUE)
 occurrencesE <- args[1]
-#distributionData <- args[2]
 sf_lak <- args[2]
 sf_land <- args[3]
 sf_sea <- args[4]
 sf_unland <- args[5]
-#antmaps_pol <-args[7]
 output <- args[6]
 
 pkg <- c("spacesXYZ", "geosphere", "parallel", "raster", "readr", "colorspace", "rgl", "ade4", "farver", "dplyr", "tidyr")
@@ -321,16 +319,6 @@ sp <- read.csv(occurrencesE, sep = ",") #
 # clean data removing Unvalid and duplicated, occurences, occurrences in lakes,
 # sea etc. Information in cleaning.docx
 
-#if (sp %in% c("Technomyrmex albipes", "Anochetus graeffei", "Hypoponera eduardi", "Iridomyrmex suchieri")){
-#    res <- occ_cleaning(occ_E, details = FALSE, lon = "decimallongitude", lat = "decimallatitude", occ_precision = NULL, sea = FALSE, lak = FALSE, map = FALSE)
-#    occ_cle <- occ_E[res, ]  
-#    
-#  }
-#  else {
-#  res <- occ_cleaning(occ_E, details = FALSE, lon = "decimallongitude", lat = "decimallatitude", sea = FALSE, lak = FALSE, map = FALSE)
-#  occ_cle <- occ_E[res, ]}
-  
-
 cat("Cleaning S1 \n")
 sp_s1 <- sp %>% filter(S =="S1")
 res1 <- occ_cleaning(sp_s1, details = FALSE, lon = "decimallongitude", lat = "decimallatitude", sea = FALSE, lak = FALSE, map = FALSE)
@@ -343,7 +331,6 @@ sp_s2 <- sp %>% filter(S =="S2")
 res2 <- occ_cleaning(sp_s2, details = FALSE, lon = "decimallongitude", lat = "decimallatitude", sea = FALSE, lak = FALSE, map = FALSE)
 #occ_cleS2 <- sp_s2[as.vector(res2), ]
 occ_cleS2 <- sp_s2[res2, , drop = FALSE]
-
 
 
 cat("Clenaing ended, join rows \n")

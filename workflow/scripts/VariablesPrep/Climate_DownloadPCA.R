@@ -21,22 +21,6 @@ lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
 ################################################################################
 #Code
 ################################################################################
-#load data
-
-#load(paste0(path_OB_NAS, "/Soil_Data/WorldclimPCA_25.RData")) # summary of princomp PCA
-
-##Load the first 2 axis 
-#datafiles <- Sys.glob(paste0(path_OB_NAS,"*.tif")) # download all .tif files
-#print(datafiles)
-#pca_world_2.5 <- stack()
-
-#for(i in 1:2){ ### just select firast 2 axis
-  
-#  raster <- raster(datafiles[i])
-#  names(raster) <- paste0('PCA_', i)
-#  pca_world_2.5 <- stack(pca_world_2.5,raster)
-  
-#}
 
 # Create the raster stack
 r_a1 <- terra::rast(ax1)
@@ -45,9 +29,7 @@ r_a2 <- terra::rast(ax2)
 climate_data2 <- c(r_a1, r_a2)
 names(climate_data2) <- c("PCA_1", "PCA_2")
 
-# Wrap directly (this handles memory internally)
-#climate_data2 <- terra::wrap(pca_world_2.5)
 
 # Save
-#save(climate_data2, file = output)
+
 terra::writeRaster(climate_data2, filename = output, filetype = "GTiff", overwrite = TRUE)

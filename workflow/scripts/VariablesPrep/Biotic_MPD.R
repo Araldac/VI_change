@@ -1,7 +1,7 @@
 ###############################################################################
 # Project: Intersnship UNIL 2025
 # Athor: Aitana
-# Description: Keep only 
+# Description: Calculate cophenetic distance between the alien sp and native ones
 # Date: 03/12/2025
 ###############################################################################
 
@@ -36,6 +36,8 @@ ant <- ape::read.tree(tree)
 #create cophenetic distance
 cophen_ant <- cophenetic.phylo(ant)
 
+#filter antmaps to the genera that is present in the tree
+
 filtered_antmaps <- list()
 for (i in names(N_antmaps_dis)){
   #print(i)
@@ -61,7 +63,6 @@ cat("length before filtering \n")
 length(N_antmaps_dis)
 cat("length after filtering \n")
 length(filtered_antmaps)
-#i="Vombisidris jacobsoni"
 
 ##### #### bentity x species matrix #### ####
 

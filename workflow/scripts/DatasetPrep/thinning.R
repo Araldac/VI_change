@@ -348,8 +348,9 @@ r_a1 <- terra::rast(raster)
 #head(occ_cle)
 ### Thinning
 
-# Thinning of the data using code from Olivia bates and Sebatien Ollier. More information in thnning.docx
+# Thinning of the data using code from Olivia bates and Sebatien Ollier (thin1 and thin2)
 
+#Thinning using climate raster (thin1R and thin2R)
 set.seed(1)
 cat("Thinning S1 \n")
 occ_thin1 <- thin_period(occ_cle, "S1")
@@ -374,6 +375,8 @@ cat("Total rows after Thinning", nrow(occ_thin20_cols), "\n")
 cat("S1 Presences after Thinning: ", nrow(occ_thin20_cols[occ_thin20_cols$S == "S1", ]), "\n")
 cat("S2 Presences after Thinning: ", nrow(occ_thin20_cols[occ_thin20_cols$S == "S2", ]), "\n")
 
+
+## Saving the results of the grid thinnig
 cat("Total rows after Thinning raster ", nrow(occ_thin1R)+nrow(occ_thin2R), "\n")
 cat("S1 Presences after Thinning raster: ", nrow(occ_thin1R[occ_thin1R$S == "S1", ]), "\n")
 cat("S2 Presences after Thinning raster: ", nrow(occ_thin2R[occ_thin2R$S == "S2", ]), "\n")

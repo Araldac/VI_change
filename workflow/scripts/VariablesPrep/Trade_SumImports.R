@@ -2,7 +2,7 @@
 ###############################################################################
 # Project: Intersnship UNIL 2025
 # Athor: Aitana
-# Description: Historical data: convert to current countries and interpolates NA
+# Description: Sum imports from countries with species present
 # Date: 26/11/2025
 ###############################################################################
 
@@ -29,9 +29,9 @@ lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
 #### #### Sum imports from countries where the species is present  #### ####
 
 sum_import<-function(data, iso3_first_records, ISOcountry, min_year=max(firstRecord_date,1827), max_year=2014){
-  year_sumimport<-data.frame(ISO3= character(), year=numeric(), Sum=numeric(),stringsAsFactors = FALSE )
+  year_sumimport <- data.frame(ISO3= character(), year=numeric(), Sum=numeric(),stringsAsFactors = FALSE )
 
-  c_w_lh<-c() 
+  c_w_lh <- c() #countries with the species present
   
   for (y in min_year:max_year){
     
@@ -42,8 +42,7 @@ sum_import<-function(data, iso3_first_records, ISOcountry, min_year=max(firstRec
     }
     
   
-    #all_t<-sum(data %>% filter(iso3_origin %in% c_w_lh, iso3_destination==ISOcountry, !is.na(FLOW_split)) %>% dplyr::select(FLOW_split))
-   
+ 
     all_t <- sum(data %>%
                 filter(iso3_origin %in% c_w_lh,
                       iso3_destination == ISOcountry,
@@ -64,7 +63,7 @@ sum_import<-function(data, iso3_first_records, ISOcountry, min_year=max(firstRec
       year_sumimport <- rbind(year_sumimport, new_row)
     }
     else{
-      cum_t<-sum(year_sumimport$Sum[year_sumimport$ISO3==ISOcountry & year_sumimport$year== y-1 ], all_t)
+      cum_t <- sum(year_sumimport$Sum[year_sumimport$ISO3==ISOcountry & year_sumimport$year== y-1 ], all_t)
       
       # Create the new row as a data frame
       new_row <- data.frame(
@@ -111,7 +110,7 @@ iso2_first_records<-first_records[nchar(first_records$ISO2) == 2,]
 iso2_first_records$iso3 <- countrycode::countrycode(iso2_first_records$ISO2, origin="iso2c", destination="iso3c")
 #iso2_first_records$iso3<-iso2ToIso3(iso2_first_records$ISO2) # add iso 2 columns
 #iso3_first_records<-iso2_first_records[3:4]#just select year and country code
-iso3_first_records<-iso2_first_records %>% select(iso3, FirstRecord)
+iso3_first_records <- iso2_first_records %>% select(iso3, FirstRecord)
 
 head(iso3_first_records)
 
@@ -132,14 +131,14 @@ cat(" Sum over each year when the species is present in that country \n")
 #### #### Sum over each year when the species is present in that country #### ####
 
 #get unique names
-u_o<-unique(HistTrade$iso3_origin)
+u_o <- unique(HistTrade$iso3_origin)
 
 #1st records as list 
-list1rec<-as.list(first_records)
+list1rec <- as.list(first_records)
 
 #Run function 
 # 100% elapsed=51m 57s
-all_c_year_sumimport<-list()
+all_c_year_sumimport <- list()
 print("starting function")
 pboptions(type = "timer")  # or "txt"
 all_c_year_sumimport <- pbapply::pblapply(1:length(u_o), function(i) {
