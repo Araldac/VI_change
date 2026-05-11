@@ -59,6 +59,16 @@ raw_metrics <- read_csv(data_path_metrics, show_col_types = FALSE)
 
 raw_metrics <- raw_metrics %>% mutate(Sensitivity = TP/(FN+TP))
 
+
+wilcox.test(raw_metrics$roc_auc[raw_metrics$model =="Weighted" & raw_metrics$methods == "XG"],
+       raw_metrics$roc_auc[raw_metrics$model =="Equal" & raw_metrics$methods == "XG"])
+wilcox.test(raw_metrics$time[raw_metrics$model =="Weighted" & raw_metrics$methods == "XG"],
+            raw_metrics$time[raw_metrics$model =="Equal" & raw_metrics$methods == "XG"])
+wilcox.test(raw_metrics$time[raw_metrics$model =="Weighted" & raw_metrics$methods == "XG"],
+            raw_metrics$time[raw_metrics$model =="Equal" & raw_metrics$methods == "XG"])
+
+
+
 #Taxa and S 
 df_metrics <- raw_metrics %>% filter(model =="Weighted", methods == "XG") %>% 
   group_by(Taxa, S) %>% 
