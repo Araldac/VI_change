@@ -97,7 +97,7 @@ rule thinning:
 
 rule selectValidO:
     '''
-    Thinning data using grid with geothinner package and the climate raster as grid cell
+    Double check the date of the occurrences matches the frist records known by country using dataet from Bertelsmeier et al., (2017)
     '''
     input:
         data_thinned = 'results/species/DatasetPrep/{sp}_thin.csv',

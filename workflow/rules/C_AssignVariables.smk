@@ -2,7 +2,7 @@ configfile: 'config/InternshipSMKConfig.yaml'
 
 rule add_Climate_PA:
     '''
-   Add climate and pseudo-absences , 10x backround points than presences for each (s1 and S2)
+   Add climate and background points, 10x background points than presences for each (S1 and S2)
     '''
     input:
         occurrences = 'results/species/DatasetPrep/{sp}_thinV.csv',
@@ -38,7 +38,7 @@ rule add_Climate_PA:
 
 rule add_BioticMPD:
     '''
-    Add biotic Mean Phylogenetic Distance
+    Add the Mean Phylogenetic Distance
     '''
     input:
         occurrences = 'results/species/AssignVariables/{sp}_PA.csv',

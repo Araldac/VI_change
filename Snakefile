@@ -5,7 +5,7 @@ rule all:
     input: 'results/species/XGboost/bind_SHAP.csv'
 
 #Snakefile at repo root
-include: "workflow/rules/DatasetPrep.smk"   
-include: "workflow/rules/VariablesPrep.smk" 
-include: "workflow/rules/AssignVariables.smk"   
-include: "workflow/rules/XGboost.smk"  
+include: "workflow/rules/A_DatasetPrep.smk"   
+include: "workflow/rules/B_VariablesPrep.smk" 
+include: "workflow/rules/C_AssignVariables.smk"   
+include: "workflow/rules/D_XGboost.smk"  

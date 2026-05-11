@@ -1,15 +1,9 @@
 configfile: 'config/InternshipSMKConfig.yaml'
 
-#sp = ["LH"]
-
-#print("DEBUG Native_Countries type:", config.get("Native_Countries"))
-#print("DEBUG First_Record_Date value:", config.get("First_Record_Date"))
-#print("DEBUG species_name type:", config.get("species_name"))
-#print("DEBUG species_name type:", config.get("Tribe_list"))
 
 rule Trade_HistoricalInterpolated:
     '''
-   From the Tradhist dataset, assign the current country names ot the entries and divide the flow by the counrey size
+   From the Tradhist dataset, assign the current country names ot the entries and divide the flow by the country size
    Interpolate NAs by the closer data avaliable
     '''
     input:
@@ -40,7 +34,8 @@ rule Trade_HistoricalInterpolated:
 
 rule Trade_SumImports:
     '''
-    From the first occurrences at each country, sum the imports from the countries where the species is present. Needs to be adapted to each species
+    From the first occurrences at each country, sum the imports from the countries where the species is present.
+    Needs to be adapted to each species
     '''
     input:
         historicaltrade = rules.Trade_HistoricalInterpolated.output.out ,
@@ -58,15 +53,6 @@ rule Trade_SumImports:
     params:
         firstRecord = lambda wildcards: config["First_Record_Date"][wildcards.sp],
         nativeCountries = lambda wildcards: config["Native_Countries"][wildcards.sp]
-        #firstRecord = lambda wildcards: (
-        #    [d[wildcards.sp] for d in config["First_Record_Date"] if wildcards.sp in d]
-        #    ),
-        #nativeCountries = lambda wildcards: (
-        #    [d[wildcards.sp] for d in config["Native_Countries"] if wildcards.sp in d]
-        #    )
-
-        #nativeCountries = config["Native_Countries"][0]["LH"],
-        #firstRecord = config["First_Record_Date"][0]["LH"]
 
     shell:
         r"""
@@ -82,7 +68,7 @@ rule Trade_SumImports:
 
 rule Climate_DownloadPCA:
     '''
-    Load the 2PCA Axes from the NAS - Error: ca't be loaded from the wsl, needs to be runned on Windows
+    Load the 2PCA Axes and merge them in a single .tif file
     '''
     input:
         ax1 = 'data/variables/Climate/pca_Worldclim_25p_1.tif',
@@ -107,7 +93,7 @@ rule Climate_DownloadPCA:
 
 rule HM_RasterCreation:
     '''
-    From the first occurrences at each country, sum the imports from the countries where the species is present. Needs to be adapted to each species
+    Create Human modification of the environement raster using GDP, Population density and anthromes
     '''
     input:
         pop_1970 = 'data/variables/HM/popd_1970AD.asc',
@@ -139,7 +125,7 @@ rule HM_RasterCreation:
 
 rule HM_ComparisonHF2016:
     '''
-    From the first occurrences at each country, sum the imports from the countries where the species is present. Needs to be adapted to each species
+    Compare our methodology for making a HM map of 2016 with the Human Footprint map from 2016
     '''
     input:
         pop_2016= 'data/variables/HM/popd_2016AD.asc',
@@ -191,10 +177,7 @@ rule Biotic_DistributionN:
 
 rule Biotic_MPD:
     '''
-    create and mpd matrix for all the species studied and each bentity
-    '''
-    '''
-    Keep only native distirbution of species 
+    create and MPD matrix for all the alien species to the native oneas for each bentity
     '''
     input:
         distributionData = 'results/variables/N_dis.RData',

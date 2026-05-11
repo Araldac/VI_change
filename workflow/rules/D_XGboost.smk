@@ -5,7 +5,8 @@ method = ["XG"]
 
 rule applyXGboost:
     '''
-    XGboost or RF for shap to weighted or eql 
+    XGboost with weight by class (balance the number of presences and background points)
+    Takes some time (4-5h aprox)
     '''
     input:
         data = 'results/species/AssignVariables/{sp}_allv.csv'
@@ -37,7 +38,7 @@ rule applyXGboost:
 
 rule bind_SHAP:
     '''
-    XGboost to weighted or eql 
+    Bind all the SHAP values in a single file
     '''
     input:
         list_files = expand("results/species/XGboost/{species}_applyXGboost_shap_{t}_{met}.csv", species=sp, t = model, met= method)
@@ -99,7 +100,7 @@ rm {rule}.$$.tmp.R
 
 rule bind_metrics:
     '''
-    XGboost to weighted or eql 
+    Bind all the evaluation metrics in a single file
     '''
     input:
         list_files = expand("results/species/XGboost/{species}_applyXGboost_metrics_{t}_{met}.csv", species=sp, t = model, met= method)
