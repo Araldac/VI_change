@@ -83,6 +83,9 @@ df_metrics <- raw_metrics %>% filter(model =="Weighted", methods == "XG") %>%
 
 df_metrics
 
+table(all_coords_ben$Taxa, all_coords_ben$S)
+
+
 #Overall S 
 overall_df_metrics <-   raw_metrics %>% filter(model =="Weighted", methods == "XG") %>% 
   group_by(S) %>% 
@@ -119,14 +122,20 @@ for (sp in species_list) {
     tt <- t.test(sub1, sub2)
     
     df_tt$t[i] <- tt$statistic
-    df_tt$p_value[i] <- tt$p.value
+    df_tt$p_v[i] <- tt$p.value
     df_tt$Taxa[i] <- sp
     df_tt$Variable[i] <- var_name
     
     i = i+1
     
-    
   }}
+
+# Assume 'p_values' is a vector of your 65 raw p-values, apply Bonferroni corection
+#adjusted_pBH <- p.adjust(df_tt$p_v, method = "BH")
+adjusted_pbonf <- p.adjust(df_tt$p_v, method = "bonferroni")
+# Check which are significant at FDR 0.05
+#significant <- adjusted_p > 0.05
+df_tt$p_value <- adjusted_pbonf
 
 add_stars <- function(p) {
   if (p < 0.001) return("***")
@@ -307,16 +316,17 @@ raw_long$Variable <- forcats::fct_relevel(
   "HM","trade","PCA_1","PCA_2"
 )
 
+
 ##Sigficance levels 
-pvals_sig <- as.data.frame(contrast_long_p)
+pvals_sig <- as.data.frame(pvals_tt)
 pvals_sig$star <- ""
-pvals_sig$star[pvals_sig$p.value > .05]  <- "ns" #non-significant
-pvals_sig$star[pvals_sig$p.value<= .05]  <- "s"  #significant
+pvals_sig$star[pvals_sig$p_value > .05]  <- "non-significant" #non-significant
+pvals_sig$star[pvals_sig$p_value<= .05]  <- "significant"  #significant
 
 pvals_sig$star <- forcats::fct_relevel(
   pvals_sig$star,
-  "s",
-  "ns"
+  "significant",
+  "non-significant"
 )
 
 #join to df
@@ -338,8 +348,10 @@ p<- ggplot(data = raw_long_S2, aes(x=S, y=meanI, group=Variable, color=Variable,
   geom_point(show.legend = TRUE, size = 2)+
   geom_line()+
   labs(y = "SHAP value", x="")+
-  scale_fill_manual(values = palette8)+
-  scale_color_manual(values = palette8, drop = FALSE) +
+  scale_fill_manual(values = palette8, labels =c("Mean Phylogenetic Distance",
+                                                 "Human Modification","Trade","PCA_1","PCA_2"))+
+  scale_color_manual(values = palette8, drop = FALSE, labels =c("Mean Phylogenetic Distance",
+                                                                "Human Modification","Trade","PCA_1","PCA_2") ) +
   theme_bw()+
   labs(
     color = "Variable",
@@ -350,9 +362,9 @@ p<- ggplot(data = raw_long_S2, aes(x=S, y=meanI, group=Variable, color=Variable,
   theme(legend.direction = "horizontal",
         aspect.ratio = 1, 
         legend.position = "bottom",
-        strip.text.x = element_text(size = 11),
-        legend.text =  element_text(size = 13) ,
-        legend.title =  element_text(size = 13, face="bold") ,
+        strip.text.x = element_text(size = 11, face = "italic"),
+        legend.text =  element_text(size = 12) ,
+        legend.title =  element_text(size = 12, face="bold") ,
         legend.box="vertical"
   )+
   scale_x_discrete(labels = c("T1", "T2"))+
@@ -448,6 +460,10 @@ list_diff[[species]] <- sum_diff
 ############################
 # ##  ) (F1 & FS1) Map S1-S2    ####
 ############################
+
+############################
+# ##  ) (F1 & FS1) Map S1-S2    ####
+############################
 pathallsp <- "//wsl.localhost/Ubuntu/home/admin_ait/internship-snakemake-2025/results/species/AssignVariables/"
 allV_files <- list.files(pathallsp,  pattern = "_allv\\.csv$", full.names = T)
 all_coords <- lapply(allV_files, function(f) {
@@ -459,7 +475,7 @@ all_coords <- lapply(allV_files, function(f) {
 
 
 all_coords_ben <- all_coords %>% left_join(ant_ll %>% 
-                                             select(BEN, geometry),
+                                             dplyr::select(BEN, geometry),
                                            by = "BEN") %>% st_as_sf()
 
 
@@ -489,7 +505,7 @@ all_coords <- all_coords %>%
 
 # obtain BEN x sp
 ben_s_sp_df <- all_coords %>%
-  select(BEN, S, Taxa) %>%
+  dplyr::select(BEN, S, Taxa) %>%
   filter(S %in% c("S1", "S2")) %>%
   group_by(Taxa, BEN) %>%
   summarise(
@@ -499,7 +515,8 @@ ben_s_sp_df <- all_coords %>%
   )
 
 #wide ben 
-ben_wide <- ben_s_sp_df %>% select(BEN, S, Taxa) %>% 
+ben_wide <- ben_s_sp_df %>% 
+  dplyr::select(BEN, S, Taxa) %>% 
   mutate(value = 1) %>%                  # mark presence
   distinct(BEN, S, .keep_all = TRUE) %>% # avoid duplicates
   pivot_wider(names_from = S,
@@ -511,7 +528,7 @@ facet_df <- ant_ll %>%
   st_drop_geometry() %>%
   distinct(BEN) %>%
   left_join(ben_wide, by = c("BEN")) %>%
-  left_join(ant_ll %>% select(BEN, geometry), by = "BEN") %>%
+  left_join(ant_ll %>% dplyr::select(BEN, geometry), by = "BEN") %>%
   st_as_sf()
 
 df <- facet_df %>%
@@ -525,7 +542,7 @@ df <- facet_df %>%
   )
 
 df<- df %>% filter(! is.na(Taxa)) 
-df$S <- as.factor (df$S)
+df$S_unique <- as.factor(df$S_unique)
 
 all_coords_ben <- all_coords_ben %>% arrange(desc(S_new))
 all_coords_ben
