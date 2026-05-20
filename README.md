@@ -15,7 +15,7 @@ or
 - 2. "Dry run" to test wether the dependencies of the data, rules and scripts work well run 
   
 ```bash
-  snakemake -s  --cores 7   --use-conda  --dry-run 
+  snakemake   --cores 7   --use-conda  --dry-run 
 ```
 - 3. Run Snakemake workflow
 Contains four parts: 
