@@ -5,10 +5,25 @@ Explore wether variable importance of drivers of establihsment success in ant sp
 
 
 ## Prerequisites
-[Snakemake installation option A](https://snakemake.readthedocs.io/en/v7.8.0/tutorial/setup.html)
-or
-[Snakemake installation option B](https://github.com/ThibaultLatrille/workshop-snakemake-unil2025)
- 
+See the guidelines in
+[Snakemake installation](https://snakemake.readthedocs.io/en/v7.8.0/tutorial/setup.html)
+for Unix-like platforms (Mac OS & Linux) you can also follow these [guidelines](https://github.com/ThibaultLatrille/workshop-snakemake-unil2025)
+
+ run this script on the terminal
+```bash
+wget "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
+bash Miniforge3-$(uname)-$(uname -m).sh
+```
+ create a snakemake environement
+```bash
+# Create a new empty environment called "snakemake"
+conda create --name snakemake
+# Activate the environment "snakemake"
+conda activate snakemake
+# Install snakemake from the Bioconda channel (conda-forge contains dependencies)
+mamba install -c conda-forge -c bioconda snakemake
+```
+
 ## Roadmap
 
 - 1. Obtaining first records csv for each species on script worflow/scripts/VariablesPrerp/Trade_first_records.R
