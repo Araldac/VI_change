@@ -1,7 +1,7 @@
 
 # Variable Change over Time
 
-Explore wether variable importance of drivers of establihsment success in ant species varies with time.
+Explore whether variable importance of drivers of establihsment success in ant species varies with time.
 
 
 ## Prerequisites
