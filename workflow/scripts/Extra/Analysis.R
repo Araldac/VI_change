@@ -397,7 +397,7 @@ LH_map <- ggplot(data=all_coords_ben[all_coords_ben$Taxa == "Linepithema humile"
   theme_bw() +
   theme(axis.text = element_blank(), 
         axis.title = element_blank(),
-        strip.text.x = element_text(size = 13),
+        strip.text.x = element_text(size = 13, face = "italic"),
         legend.text =  element_text(size = 13) ,
         legend.title =  element_text(size = 13, face="bold") ,
         legend.position = "bottom")+ 
@@ -442,7 +442,7 @@ all_map <- ggplot(data=all_coords_ben[all_coords_ben$Taxa != "Linepithema humile
   theme_bw() +
   theme(axis.text = element_blank(), 
         axis.title = element_blank(),
-        strip.text.x = element_text(size = 13),
+        strip.text.x = element_text(size = 13, face = "italic"),
         legend.text =  element_text(size = 13) ,
         legend.title =  element_text(size = 13, face="bold") ,
         legend.position = "bottom")+
