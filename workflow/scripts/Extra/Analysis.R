@@ -31,9 +31,10 @@ library(mgcv)
 ############################
 # ##  1) Parameters    ####
 ############################
+my_path <- "//wsl.localhost/Ubuntu/home/admin_ait/internship-snakemake-2025" # add the working directory in the snakemake workflow
 
-data_path   <- "//wsl.localhost/Ubuntu/home/admin_ait/internship-snakemake-2025/results/species/XGboost/bind_SHAP.csv"       # Chemin vers votre fichier CSV
-data_path_metrics   <- "//wsl.localhost/Ubuntu/home/admin_ait/internship-snakemake-2025/results/species/XGboost/bind_metrics.csv"       # Chemin vers votre fichier CSV
+data_path   <- "/results/species/XGboost/bind_SHAP.csv"       # Chemin vers votre fichier CSV
+data_path_metrics   <- "/results/species/XGboost/bind_metrics.csv"       # Chemin vers votre fichier CSV
             # facteur S1 / S2
 
 comp_cols<- c("MPD", "PCA_1", "PCA_2", "trade", "HM")
@@ -41,7 +42,7 @@ comp_cols<- c("MPD", "PCA_1", "PCA_2", "trade", "HM")
 ############################
 # ## 2) Charge data     ####
 ############################
-raw <- read_csv(data_path, show_col_types = FALSE)
+raw <- read_csv(paste0(my_path, data_path), show_col_types = FALSE)
 
 raw$Method <- as.factor(raw$Method)
 raw$Model <- as.factor(raw$Model)
@@ -55,19 +56,9 @@ species_list <- unique(raw$Taxa)
 # ## ) Eval metrics    ####
 ############################
 
-raw_metrics <- read_csv(data_path_metrics, show_col_types = FALSE)
+raw_metrics <- read_csv(paste0(my_path,data_path_metrics), show_col_types = FALSE)
 
 raw_metrics <- raw_metrics %>% mutate(Sensitivity = TP/(FN+TP))
-
-
-wilcox.test(raw_metrics$roc_auc[raw_metrics$model =="Weighted" & raw_metrics$methods == "XG"],
-       raw_metrics$roc_auc[raw_metrics$model =="Equal" & raw_metrics$methods == "XG"])
-wilcox.test(raw_metrics$time[raw_metrics$model =="Weighted" & raw_metrics$methods == "XG"],
-            raw_metrics$time[raw_metrics$model =="Equal" & raw_metrics$methods == "XG"])
-wilcox.test(raw_metrics$time[raw_metrics$model =="Weighted" & raw_metrics$methods == "XG"],
-            raw_metrics$time[raw_metrics$model =="Equal" & raw_metrics$methods == "XG"])
-
-
 
 #Taxa and S 
 df_metrics <- raw_metrics %>% filter(model =="Weighted", methods == "XG") %>% 
@@ -81,10 +72,8 @@ df_metrics <- raw_metrics %>% filter(model =="Weighted", methods == "XG") %>%
     .groups = "drop"
   )
 
-df_metrics
-
-table(all_coords_ben$Taxa, all_coords_ben$S)
-
+#data for Table S3
+df_metrics 
 
 #Overall S 
 overall_df_metrics <-   raw_metrics %>% filter(model =="Weighted", methods == "XG") %>% 
@@ -98,10 +87,12 @@ overall_df_metrics <-   raw_metrics %>% filter(model =="Weighted", methods == "X
     .groups = "drop"
   )
 
+overall_df_metrics
 
 ############################
-# ## ) T-tests             ####
+# ## ) T-tests and Table2      ####
 ############################
+raw_long <- raw %>% pivot_longer(all_of(comp_cols), names_to = "Variable", values_to = "Values")
 
 t_list <- list()
 
@@ -137,6 +128,10 @@ adjusted_pbonf <- p.adjust(df_tt$p_v, method = "bonferroni")
 #significant <- adjusted_p > 0.05
 df_tt$p_value <- adjusted_pbonf
 
+#p-values beow 0.001 to < 0.001
+df_tt$p_valueC <- df_tt$p_value
+df_tt$p_valueC[df_tt$p_value < 0.001] <- "< 0.001"
+
 add_stars <- function(p) {
   if (p < 0.001) return("***")
   else if (p < 0.01) return("**")
@@ -148,11 +143,11 @@ add_stars <- function(p) {
 #Create table with T-test results
 df_wide <- df_tt %>%
   mutate(
-    stars = sapply(p_value, add_stars),
+    #stars = sapply(p_value, add_stars),
     cell_text = paste0("t = ", round(t, 2),  
-                       ", p = ", ifelse(p_value < 0.001, sprintf("%.2e", p_value), 
-                                        round(p_value, 3)), 
-                       " ", stars)
+                       ", p = ", ifelse(p_value < 0.001, "< 0.001", 
+                                        round(p_value, 3)) 
+                     )#  " ", stars)
   ) %>%
   pivot_wider(
     names_from = Variable,
@@ -160,141 +155,35 @@ df_wide <- df_tt %>%
     id_cols = Taxa
   )
 
-# View result
+# View result --> Table 3
 print(df_wide)
 
 #plot desnities (optional)
 
-##Sigficance levels 
-pvals_tt <- as.data.frame(df_tt)
-pvals_tt$star <- ""
-pvals_tt$star[pvals_tt$p.value > .05]  <- "ns" #non-significant
-pvals_tt$star[pvals_tt$p.value<= .05]  <- "s"  #significant
+# ##Sigficance levels 
+# pvals_tt <- as.data.frame(df_tt)
+# pvals_tt$star <- ""
+# pvals_tt$star[pvals_tt$p.value > .05]  <- "ns" #non-significant
+# pvals_tt$star[pvals_tt$p.value<= .05]  <- "s"  #significant
+# 
+# pvals_tt$star <- forcats::fct_relevel(
+#   pvals_tt$star,
+#   "s",
+#   "ns"
+# )
 
-pvals_tt$star <- forcats::fct_relevel(
-  pvals_tt$star,
-  "s",
-  "ns"
-)
-
-
-#graph of densities
-raw_long_filtered <- raw_long %>% filter(Model == "Weighted", Method == "XG") %>%
-    dplyr::select(Taxa, Variable, Values, S)
-
-ggplot(raw_long_filtered, aes(Values, fill=S)) + 
-  geom_density(alpha= 0.5) +
-
-    facet_grid(Taxa ~Variable )
+# 
+# #graph of densities
+# raw_long_filtered <- raw_long %>% filter(Model == "Weighted", Method == "XG") %>%
+#     dplyr::select(Taxa, Variable, Values, S)
+# 
+# ggplot(raw_long_filtered, aes(Values, fill=S)) + 
+#   geom_density(alpha= 0.5) +
+# 
+#     facet_grid(Taxa ~Variable )
 
 ############################
-# ## ) AOV            ####
-############################
-
-aov_list <- list()
-
-for (sp in species_list) { 
-  sub <- raw_long %>% filter(Taxa == sp, Model == "Weighted", Method == "XG")
-  #hist(sub$Values )
-  sub$S <- as.factor(sub$S)
-  sub$Variable <- as.factor(sub$Variable)
-  
-  a <- aov(Values ~ S*Variable, data=sub)
-  aov_list[[sp]] <- summary(a)
-  
-           
-}
-
-aov_list
-############################
-# ## ) LMM             ####
-############################
-
-#disitrbution of values per variable
-ggplot(raw_long, aes(Values, color=Variable))+geom_density()
-
-raw_long <- raw %>% pivot_longer(all_of(comp_cols), names_to = "Variable", values_to = "Values")
-
-ggplot(raw[raw$Taxa == "Tapinoma melanocephalum" & raw$Model == "Weighted"& raw$Method == "XG",], aes(PCA_1, fill=S))+geom_histogram()
-
-
-coef_sp <- list()
-emmeans_sp <- list()
-contrasts_sp<- list()
-
-#LMM for each species
-for (sp in species_list) { 
-   
- # sp <- species_list[8]
-  sub <- raw_long %>% filter(Taxa == sp, Model == "Weighted", Method == "XG")
-  #hist(sub$Values )
-  sub$S <- as.factor(sub$S)
-  sub$Variable <- as.factor(sub$Variable)
-  
- # hist(sub$Values )
-  fits <-  lmer(as.formula("Values ~ S*Variable + (1|Replicate)"),
-         data = sub)
-  # 
-  # fits3 <- glm(as.formula("Values ~ S*Variable"),
-  #             data = sub)
-  # 
-  print(sp)
-  #print(summary(fits))
-  #print(anova(fits))
-  coef_sp[[sp]] <- summary(fits)
-  #res <- simulateResiduals(fits3)
-  #plot(res)
-  
-  #Dharma::simulateresiduals(model)
-  # performance::check_model(fits3)
-  #plots if needed
- # plot_redres(fits3, type = "std_cond")
-  #plot_resqq(fits3)
-
-  
-   emean <- emmeans(fits, pairwise ~ S | Variable, adjust = "tukey")
-   #print(emean)  %>% bind_rows
-   emean_df <- as.data.frame(emean$emmeans)
-   emean_df$Taxa <- sp 
-   emmeans_sp[[sp]] <- emean_df
-   
-   contrast_df <- as.data.frame(emean$contrasts)
-   contrast_df$Taxa <- sp 
-   contrasts_sp[[sp]] <-contrast_df 
- 
-}
-
-emmeans_long <- emmeans_sp %>% bind_rows
-contrast_long <- contrasts_sp %>% bind_rows
-contrast_long_p <- contrast_long
-
-#remove non significant contrasts
-contrast_long_p$estimate[contrast_long_p$p.value > 0.05] <- 0
-
-#because i am inerested in S2- S1 not S1-S2
-contrast_long_p$estimate <- contrast_long_p$estimate * (-1)
-
-
-#get abs sum of contrasts
-t2 <- contrasts_sp %>% bind_rows() %>% dplyr::select( contrast, estimate, Variable, p.value, Taxa)  %>% group_by (Taxa) %>% pivot_wider(names_from = contrast, values_from = estimate, names_prefix = "A")
-
-sum_diff <- data.frame(matrix(nrow=13, ncol=0))
-sum_diff$Taxa <- species_list  
-
-for (sp in species_list){
-  sum_diff$sum[sum_diff$Taxa == sp] <-  sum(abs(t2$`AS1 - S2`[t2$Taxa == sp]))
-}
-print(sum_diff)
-
-sum_diff_v <- data.frame(matrix(nrow=5, ncol=0))
-sum_diff_v$Variable <- comp_cols  
-for (variable_v in comp_cols){
-  sum_diff_v$sum[sum_diff_v$Variable == variable_v] <-  sum(abs(t2$`AS1 - S2`[t2$Variable == variable_v]))
-}
-
-print(sum_diff_v)
-############################
-# ## ) (F2X) SHAP values ####
+# ## ) (F3) SHAP values ####
 ############################
 
 ##Df with mean   
@@ -383,89 +272,25 @@ shift_legend3 <- function(p) {
   
   lemon::reposition_legend( p, "center", panel=names(pnls) )
 }
-shift_legend3(p)
+a <- shift_legend3(p)
+grid.draw(a)
 
+#pdf("~/Internship UNIL/Figure3.pdf",
+pdf("/Figure3.pdf",
+    width = 10, 
+    height = 19)
+grid.draw(a)
+dev.off()
 
-
-
-
-
-
-
-
-
-
-############################
-# ## ) (FSX) Rank & Contrast ####
-############################
-
-#rank difference of emmeans 
-wide_mean <- emmeans_long %>% dplyr::select(Taxa, S, emmean, Variable) %>% pivot_wider(names_from = Variable, values_from = emmean)
-sub_rank <- lapply(1:nrow(wide_mean), function(i) rank(wide_mean[i, comp_cols])) %>% bind_rows() %>% mutate(S = wide_mean$S, Taxa = wide_mean$Taxa)
-
-#setting rank differences
-rank_diff <- sub_rank %>%
-  pivot_longer(cols = all_of(comp_cols),
-               names_to = "Variable",
-               # names_prefix = "rank_",
-               values_to = "Rank") %>% dplyr::select(Taxa, Variable, Rank, S) %>%
-  pivot_wider(names_from = S, values_from = Rank, names_prefix = "rank_") %>%
-  mutate(RankDiff = rank_S2 - rank_S1) %>% dplyr::select(Taxa, Variable, RankDiff, rank_S1 , rank_S2)
-
-# order rank difference
-rank_diff$RankDiff<- as.character(rank_diff$RankDiff)
-rank_diff$RankDiff <- forcats::fct_relevel(
-  rank_diff$RankDiff,
-  "-3", "-2", "-1", "0",
-  "1","2","3"
-)
-
-rank_palette <- c("#B10318", "#D82526", "#F26C64","white", "#9FCD99", "#69B764" ,"#309343"   )
-
-#plot contrasts and rank differences 
-heatmapp_rank <- ggplot(rank_diff, aes(Variable, Taxa, fill = RankDiff)) +
-  geom_tile(color = "grey80") +
-  geom_point(data = as.data.frame(contrast_long_p), aes(Variable, Taxa, color= estimate), size = 8, inherit.aes = FALSE)+
-  scale_fill_manual(values = rank_palette) +
-  scale_color_paletteer_c("ggthemes::Classic Orange-Blue")+
-  labs(
-    #title = title_c,
-    y = "Species",
-    x="Variables"
-  ) + 
-  #geom_text(aes(label=stars), color="black", size=5) + 
-  theme_minimal(base_size = 14) +
-  theme(legend.position= "bottom", axis.text.x = element_text(angle = 45, hjust = 1))
-
-
-
-
-
-
-
-#mod_meth_ord <- list()
-mod_meth_ord#[["RF_Equal"]] <- sum_diff %>% arrange(sum)
-t2 <- contrasts_sp %>% bind_rows() %>% select( contrast, estimate, Variable, p.value, Taxa)  %>% group_by (Taxa) %>% pivot_wider(names_from = contrast, values_from = estimate, names_prefix = "A")
-
-sum_diff <- data.frame(matrix(nrow=13, ncol=0))
-sum_diff$Taxa <- species_list  
-
-  for (sp in species_list){
-    sum_diff$sum[sum_diff$Taxa == sp] <-  sum(abs(t2$`AS1 - S2`[t2$Taxa == sp]))
-    
-  }
-  sum(abs(t2$`AS1 - S2`))
-list_diff[[species]] <- sum_diff
 
 ############################
 # ##  ) (F1 & FS1) Map S1-S2    ####
 ############################
 
-############################
-# ##  ) (F1 & FS1) Map S1-S2    ####
-############################
-pathallsp <- "//wsl.localhost/Ubuntu/home/admin_ait/internship-snakemake-2025/results/species/AssignVariables/"
-allV_files <- list.files(pathallsp,  pattern = "_allv\\.csv$", full.names = T)
+#load data and occurrences
+load(paste0(my_path, "/data/distribution/AntmapsPolGeneral.RData"))
+pathallsp <- "/results/species/AssignVariables/"
+allV_files <- list.files(paste0(my_path, pathallsp),  pattern = "_allv\\.csv$", full.names = T)
 all_coords <- lapply(allV_files, function(f) {
   df <- read.csv(f, sep = ",", stringsAsFactors = FALSE)
   df <- df %>%  filter(Occurrence ==1 )
@@ -473,17 +298,17 @@ all_coords <- lapply(allV_files, function(f) {
   return(df)
 }) %>% bind_rows() #%>% select(BEN, S, Taxa)
 
-
-all_coords_ben <- all_coords %>% left_join(ant_ll %>% 
+#Add geomoetry to each coordinate
+all_coords_ben <- all_coords %>% left_join(antmaps_pol %>% 
                                              dplyr::select(BEN, geometry),
                                            by = "BEN") %>% st_as_sf()
-
-
+#order the periods 
 all_coords_ben$S <- forcats::fct_relevel(
   all_coords_ben$S ,
   "S1","S2" 
 )
 
+#update periods names (S1 = T1 and S2 = T2)
 all_coords_ben <- all_coords_ben %>%
   mutate(
     S_new = case_when(
@@ -524,11 +349,11 @@ ben_wide <- ben_s_sp_df %>%
               values_fill = 0)           # fill missing with 0
 
 #merge antmaps bentities
-facet_df <- ant_ll %>%
+facet_df <- antmaps_pol %>%
   st_drop_geometry() %>%
   distinct(BEN) %>%
   left_join(ben_wide, by = c("BEN")) %>%
-  left_join(ant_ll %>% dplyr::select(BEN, geometry), by = "BEN") %>%
+  left_join(antmaps_pol %>% dplyr::select(BEN, geometry), by = "BEN") %>%
   st_as_sf()
 
 df <- facet_df %>%
@@ -545,11 +370,13 @@ df<- df %>% filter(! is.na(Taxa))
 df$S_unique <- as.factor(df$S_unique)
 
 all_coords_ben <- all_coords_ben %>% arrange(desc(S_new))
-all_coords_ben
+
+# #change projection antmaps_pol
+# antmaps_pol_R <- st_transform(antmaps_pol, "+proj=robin +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs")
 
 #map LH
-ggplot(data=all_coords_ben[all_coords_ben$Taxa == "Linepithema humile",])+
-  geom_sf(data = ant_ll$geometry, fill = "grey93")+
+LH_map <- ggplot(data=all_coords_ben[all_coords_ben$Taxa == "Linepithema humile",])+
+  geom_sf(data = antmaps_pol$geometry, fill = "grey93")+
   geom_sf(aes(fill=as.factor(S_new)))+
   geom_point(data=all_coords[all_coords$Taxa == "Linepithema humile",],
              aes(x=decimallongitude, y=decimallatitude, color=S_new, alpha =S_new), 
@@ -574,12 +401,27 @@ ggplot(data=all_coords_ben[all_coords_ben$Taxa == "Linepithema humile",])+
         legend.text =  element_text(size = 13) ,
         legend.title =  element_text(size = 13, face="bold") ,
         legend.position = "bottom")+ 
-  facet_wrap(~Taxa) 
+  facet_wrap(~Taxa) + 
+  #  ggspatial::annotation_scale(
+  #   location = "bl",
+  #   bar_cols = c("grey60", "white"),
+  #   #text_family = "ArcherPro Book"
+  # ) +
+  ggspatial::annotation_north_arrow(
+    location = "bl", which_north = "true",
+    pad_x = unit(0.4, "in"), pad_y = unit(0.4, "in"))
+
+#pdf("~/Internship UNIL/Figures_M/Figure1.pdf",
+pdf("/Figure1.pdf",
+    width = 15, 
+    height = 6)
+LH_map
+dev.off()
 
 
 #map rest of species
-ggplot(data=all_coords_ben[all_coords_ben$Taxa != "Linepithema humile",])+
-  geom_sf(data = ant_ll$geometry, fill = "grey93")+
+all_map <- ggplot(data=all_coords_ben[all_coords_ben$Taxa != "Linepithema humile",])+
+  geom_sf(data = antmaps_pol$geometry, fill = "grey93")+
   geom_sf(aes(fill=as.factor(S_new)))+
   geom_point(data=all_coords[all_coords$Taxa != "Linepithema humile",],
              aes(x=decimallongitude, y=decimallatitude, color=S_new, alpha =S_new), 
@@ -603,8 +445,18 @@ ggplot(data=all_coords_ben[all_coords_ben$Taxa != "Linepithema humile",])+
         strip.text.x = element_text(size = 13),
         legend.text =  element_text(size = 13) ,
         legend.title =  element_text(size = 13, face="bold") ,
-        legend.position = "bottom")+ 
-  facet_wrap(~Taxa, ncol= 2) 
+        legend.position = "bottom")+
+   facet_wrap(~Taxa, ncol= 2)#+
+  # ggspatial::annotation_north_arrow(
+  #   location = "bl", which_north = "true",
+  #   pad_x = unit(0.4, "in"), pad_y = unit(0.4, "in"))
+
+#pdf("~/Internship UNIL/Figures_M/FigureS1.pdf",
+pdf("/FigureS1.pdf",
+    width = 10, 
+    height = 15)
+all_map
+dev.off()
 
 ############################
 # ##  ) VIF and Variable correlation    ####
