@@ -298,6 +298,22 @@ all_coords <- lapply(allV_files, function(f) {
   return(df)
 }) %>% bind_rows() #%>% select(BEN, S, Taxa)
 
+#number of occurrences per Period
+# Step 1: Calculate occurrences per species (already done in your code)
+occurrences <- all_coords %>%
+  filter(Occurrence == 1) %>%
+  group_by(S, Taxa) %>%
+  summarise(n = n(), .groups = "drop")
+
+# Step 2: Calculate mean and SD for S1 and S2
+result <- occurrences %>%
+  group_by(S) %>%
+  summarise(
+    Mean = mean(n),
+    SD = sd(n),
+    Count = n()  # Number of species in the group
+  )
+
 #Add geomoetry to each coordinate
 all_coords_ben <- all_coords %>% left_join(antmaps_pol %>% 
                                              dplyr::select(BEN, geometry),
@@ -446,15 +462,20 @@ all_map <- ggplot(data=all_coords_ben[all_coords_ben$Taxa != "Linepithema humile
         legend.text =  element_text(size = 13) ,
         legend.title =  element_text(size = 13, face="bold") ,
         legend.position = "bottom")+
-   facet_wrap(~Taxa, ncol= 2)#+
+   facet_wrap(~Taxa, ncol= 3)#+
   # ggspatial::annotation_north_arrow(
   #   location = "bl", which_north = "true",
   #   pad_x = unit(0.4, "in"), pad_y = unit(0.4, "in"))
 
 #pdf("~/Internship UNIL/Figures_M/FigureS1.pdf",
-pdf("/FigureS1.pdf",
-    width = 10, 
-    height = 15)
+pdf("/FigureS1.pdf",    
+width = 12,
+height = 12)
+
+# jpeg("~/Internship UNIL/Figures_M/FigureS1.jpg",
+#     res= 300,
+#     width = 100, 
+#     height = 150)
 all_map
 dev.off()
 
