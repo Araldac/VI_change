@@ -78,8 +78,8 @@ antmaps_pol$NAME[antmaps_pol$BEN=="BEN20610"] <- "Italy" #complete data with BEN
 
 #### Assign bentities to occurrences, if not in an exact poygon finds the nearest ####
 cat("\nAssigning bentities to occurrences (this may take a few minutes)...\n")
-#LH_C_B<-coords2admin2(occ_PA)
-LH_C_B <- occ_PA
+LH_C_B<-coords2admin2(occ_PA)
+#LH_C_B <- occ_PA
 
 #LH_C_B$MPD <- NA
 for (ben in unique(LH_C_B$BEN)){
