@@ -26,6 +26,7 @@ dependencies: #by chatbot
   - r-sp
   - r-terra
   - r-devtools
+  - r-rcpp
   # spatial libs required by sf:
  # - gdal
   #- proj
