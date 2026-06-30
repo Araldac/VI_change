@@ -27,14 +27,17 @@ library(paletteer)
 library(fitdistrplus)
 library(betareg)
 library(mgcv)
+library(this.path)
 
 ############################
 # ##  1) Parameters    ####
 ############################
-my_path <- "//wsl.localhost/Ubuntu/home/admin_ait/internship-snakemake-2025" # add the working directory in the snakemake workflow
+#my_path <- "//wsl.localhost/Ubuntu/home/admin_ait/internship-snakemake-2025" # add the working directory in the snakemake workflow
+my_path <- dirname(dirname(dirname(this.path::this.dir()))) # Get path to the VI_change folder
 
-data_path   <- "/results/species/XGboost/bind_SHAP.csv"       # Chemin vers votre fichier CSV
-data_path_metrics   <- "/results/species/XGboost/bind_metrics.csv"       # Chemin vers votre fichier CSV
+
+data_path   <- "/results/species/XGboost/bind_SHAP.csv"
+data_path_metrics   <- "/results/species/XGboost/bind_metrics.csv"
             # facteur S1 / S2
 
 comp_cols<- c("MPD", "PCA_1", "PCA_2", "trade", "HM")
