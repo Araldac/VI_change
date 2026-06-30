@@ -163,37 +163,36 @@ print(df_wide)
 
 #plot desnities (optional)
 
-# ##Sigficance levels 
-# pvals_tt <- as.data.frame(df_tt)
-# pvals_tt$star <- ""
-# pvals_tt$star[pvals_tt$p.value > .05]  <- "ns" #non-significant
-# pvals_tt$star[pvals_tt$p.value<= .05]  <- "s"  #significant
-# 
-# pvals_tt$star <- forcats::fct_relevel(
-#   pvals_tt$star,
-#   "s",
-#   "ns"
-# )
+#Sigficance levels
+pvals_tt <- as.data.frame(df_tt)
+pvals_tt$star <- ""
+pvals_tt$star[pvals_tt$p.value > .05]  <- "ns" #non-significant
+pvals_tt$star[pvals_tt$p.value<= .05]  <- "s"  #significant
 
-# 
-# #graph of densities
-# raw_long_filtered <- raw_long %>% filter(Model == "Weighted", Method == "XG") %>%
-#     dplyr::select(Taxa, Variable, Values, S)
-# 
-# ggplot(raw_long_filtered, aes(Values, fill=S)) + 
-#   geom_density(alpha= 0.5) +
-# 
-#     facet_grid(Taxa ~Variable )
+pvals_tt$star <- forcats::fct_relevel(
+  pvals_tt$star,
+  "s",
+  "ns"
+)
+
+#
+#graph of densities
+raw_long_filtered <- raw_long %>% filter(Model == "Weighted", Method == "XG") %>%
+    dplyr::select(Taxa, Variable, Values, S)
+
+ggplot(raw_long_filtered, aes(Values, fill=S)) +
+  geom_density(alpha= 0.5) +
+  facet_grid(Taxa ~Variable )
 
 ############################
 # ## ) (F3) SHAP values ####
 ############################
 
 ##Df with mean   
-raw_long_S <- raw_long %>% 
-  filter(Method == "XG", Model == "Weighted" ) %>% 
-  group_by(Taxa, S, Variable) %>% 
-  summarise(meanI=mean(Values), sdI = sd(Values)) 
+raw_long_S <- raw_long %>%
+  filter(Method == "XG", Model == "Weighted" ) %>%
+  group_by(Taxa, S, Variable) %>%
+  summarise(meanI=mean(Values), sdI = sd(Values))
 
 #variables as factor in specific order
 raw_long_S$Variable <- forcats::fct_relevel(
@@ -279,7 +278,7 @@ a <- shift_legend3(p)
 grid.draw(a)
 
 #pdf("~/Internship UNIL/Figure3.pdf",
-pdf("/Figure3.pdf",
+pdf(paste0(my_path, "/workflow/scripts/Extra/Figure3.pdf"),
     width = 10, 
     height = 19)
 grid.draw(a)
@@ -431,7 +430,7 @@ LH_map <- ggplot(data=all_coords_ben[all_coords_ben$Taxa == "Linepithema humile"
     pad_x = unit(0.4, "in"), pad_y = unit(0.4, "in"))
 
 #pdf("~/Internship UNIL/Figures_M/Figure1.pdf",
-pdf("/Figure1.pdf",
+pdf(paste0(my_path, "/workflow/scripts/Extra/Figure1.pdf"),
     width = 15, 
     height = 6)
 LH_map
@@ -471,7 +470,7 @@ all_map <- ggplot(data=all_coords_ben[all_coords_ben$Taxa != "Linepithema humile
   #   pad_x = unit(0.4, "in"), pad_y = unit(0.4, "in"))
 
 #pdf("~/Internship UNIL/Figures_M/FigureS1.pdf",
-pdf("/FigureS1.pdf",    
+pdf(paste0(my_path, "/workflow/scripts/Extra/FigureS1.pdf"),    
 width = 12,
 height = 12)
 
