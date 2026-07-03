@@ -26,6 +26,7 @@ mamba install -c conda-forge -c bioconda snakemake
 
 ## Roadmap
 
+- 0. Add the /data folder and add it in the /VI_change folder in your local machine 
 - 1. Obtaining first records csv for each species on script worflow/scripts/VariablesPrerp/Trade_first_records.R
 - 2. "Dry run" to test wether the dependencies of the data, rules and scripts work well run 
   
