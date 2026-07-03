@@ -415,7 +415,9 @@ LH_map <- ggplot(data=all_coords_ben[all_coords_ben$Taxa == "Linepithema humile"
         strip.text.x = element_text(size = 13, face = "italic"),
         legend.text =  element_text(size = 13) ,
         legend.title =  element_text(size = 13, face="bold") ,
-        legend.position = "bottom")+ 
+        legend.position = "bottom",
+        axis.ticks.x=element_blank(),
+        axis.ticks.y=element_blank())+ 
   facet_wrap(~Taxa) + 
   #  ggspatial::annotation_scale(
   #   location = "bl",
@@ -460,7 +462,9 @@ all_map <- ggplot(data=all_coords_ben[all_coords_ben$Taxa != "Linepithema humile
         strip.text.x = element_text(size = 13, face = "italic"),
         legend.text =  element_text(size = 13) ,
         legend.title =  element_text(size = 13, face="bold") ,
-        legend.position = "bottom")+
+        legend.position = "bottom",
+        axis.ticks.x=element_blank(),
+        axis.ticks.y=element_blank()))+
    facet_wrap(~Taxa, ncol= 3)#+
   # ggspatial::annotation_north_arrow(
   #   location = "bl", which_north = "true",
