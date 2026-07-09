@@ -464,7 +464,7 @@ all_map <- ggplot(data=all_coords_ben[all_coords_ben$Taxa != "Linepithema humile
         legend.title =  element_text(size = 13, face="bold") ,
         legend.position = "bottom",
         axis.ticks.x=element_blank(),
-        axis.ticks.y=element_blank()))+
+        axis.ticks.y=element_blank())+
    facet_wrap(~Taxa, ncol= 3)#+
   # ggspatial::annotation_north_arrow(
   #   location = "bl", which_north = "true",
