@@ -277,13 +277,8 @@ shift_legend3 <- function(p) {
 a <- shift_legend3(p)
 grid.draw(a)
 
-<<<<<<< HEAD
 #pdf("~/Internship UNIL/Figure3.pdf",
 pdf(paste0(my_path, "/workflow/scripts/Extra/Figure3.pdf"),
-=======
-pdf("~/Internship UNIL/Figures_M/Figure3.pdf",
-#pdf("/Figure3.pdf",
->>>>>>> 6c0a5fb013f5b90e547dbd641f37c91060ee7887
     width = 10, 
     height = 19)
 grid.draw(a)
@@ -511,7 +506,7 @@ pca_c <- dudi.pca(dataRaw, center=TRUE, scale=TRUE, nf=length(comp_cols), scannf
 s.corcircle(pca_c$co)
 
 #VIF of variables
-vif_1 <- vif(dataRaw)
-print(vif_1)
+#vif_1 <- vif(dataRaw)
+#print(vif_1)
 
 
