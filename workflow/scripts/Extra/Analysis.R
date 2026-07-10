@@ -113,7 +113,7 @@ for (sp in species_list) {
       filter(Taxa == sp, Model == "Weighted", Method == "XG", S == "S2") %>%
       dplyr::select(var_name)
     
-    tt <- t.test(sub1, sub2)
+    tt <- t.test(sub2, sub1)
     
     df_tt$t[i] <- tt$statistic
     df_tt$p_v[i] <- tt$p.value
@@ -159,30 +159,31 @@ df_wide <- df_tt %>%
   )
 
 # View result --> Table 3
-print(df_wide)
+View(df_wide)
 
 #plot desnities (optional)
 
-#Sigficance levels
-pvals_tt <- as.data.frame(df_tt)
-pvals_tt$star <- ""
-pvals_tt$star[pvals_tt$p.value > .05]  <- "ns" #non-significant
-pvals_tt$star[pvals_tt$p.value<= .05]  <- "s"  #significant
+# ##Sigficance levels 
+ pvals_tt <- as.data.frame(df_tt)
+# pvals_tt$star <- ""
+# pvals_tt$star[pvals_tt$p.value > .05]  <- "ns" #non-significant
+# pvals_tt$star[pvals_tt$p.value<= .05]  <- "s"  #significant
+# 
+# pvals_tt$star <- forcats::fct_relevel(
+#   pvals_tt$star,
+#   "s",
+#   "ns"
+# )
 
-pvals_tt$star <- forcats::fct_relevel(
-  pvals_tt$star,
-  "s",
-  "ns"
-)
-
-#
-#graph of densities
-raw_long_filtered <- raw_long %>% filter(Model == "Weighted", Method == "XG") %>%
-    dplyr::select(Taxa, Variable, Values, S)
-
-ggplot(raw_long_filtered, aes(Values, fill=S)) +
-  geom_density(alpha= 0.5) +
-  facet_grid(Taxa ~Variable )
+# 
+# #graph of densities
+# raw_long_filtered <- raw_long %>% filter(Model == "Weighted", Method == "XG") %>%
+#     dplyr::select(Taxa, Variable, Values, S)
+# 
+# ggplot(raw_long_filtered, aes(Values, fill=S)) +
+#   geom_density(alpha= 0.5) +
+# 
+#     facet_grid(Taxa ~Variable )
 
 ############################
 # ## ) (F3) SHAP values ####
@@ -194,25 +195,11 @@ raw_long_S <- raw_long %>%
   group_by(Taxa, S, Variable) %>%
   summarise(meanI=mean(Values), sdI = sd(Values))
 
-#variables as factor in specific order
-raw_long_S$Variable <- forcats::fct_relevel(
-  raw_long_S$Variable,
-  "MPD",
-  "HM","trade","PCA_1","PCA_2"
-)
-
-raw_long$Variable <- forcats::fct_relevel(
-  raw_long$Variable,
-  "MPD",
-  "HM","trade","PCA_1","PCA_2"
-)
-
-
 ##Sigficance levels 
 pvals_sig <- as.data.frame(pvals_tt)
 pvals_sig$star <- ""
 pvals_sig$star[pvals_sig$p_value > .05]  <- "non-significant" #non-significant
-pvals_sig$star[pvals_sig$p_value<= .05]  <- "significant"  #significant
+pvals_sig$star[pvals_sig$p_value <= .05]  <- "significant"  #significant
 
 pvals_sig$star <- forcats::fct_relevel(
   pvals_sig$star,
@@ -220,10 +207,23 @@ pvals_sig$star <- forcats::fct_relevel(
   "non-significant"
 )
 
-#join to df
+#join to df --> mean per period and significance  
 raw_long_S2 <- raw_long_S %>%
   left_join(pvals_sig %>% dplyr::select(Taxa, Variable, star),
             by = c("Taxa", "Variable"))
+
+raw_long_S2$V_name <- raw_long_S2$Variable
+raw_long_S2$V_name[raw_long_S2$Variable == "MPD"] <- "Mean Phylogenetic Distance"
+raw_long_S2$V_name[raw_long_S2$Variable == "HM"] <- "Human Modification"
+raw_long_S2$V_name[raw_long_S2$Variable == "trade"] <- "Trade"
+
+
+#variables as factor in specific order
+raw_long_S2$V_name <- forcats::fct_relevel(raw_long_S2$V_name ,
+  "Mean Phylogenetic Distance",
+  "Human Modification","Trade","PCA_1","PCA_2"
+)
+
 
 #set palette
 palette8 <- c(
@@ -235,14 +235,14 @@ palette8 <- c(
   
 )
 #plot
-p<- ggplot(data = raw_long_S2, aes(x=S, y=meanI, group=Variable, color=Variable, linetype=star)) +
+p<- ggplot(data = raw_long_S2, aes(x=S, y=meanI, group=V_name, color=V_name, linetype=star)) +
   geom_point(show.legend = TRUE, size = 2)+
   geom_line()+
   labs(y = "SHAP value", x="")+
-  scale_fill_manual(values = palette8, labels =c("Mean Phylogenetic Distance",
-                                                 "Human Modification","Trade","PCA_1","PCA_2"))+
-  scale_color_manual(values = palette8, drop = FALSE, labels =c("Mean Phylogenetic Distance",
-                                                                "Human Modification","Trade","PCA_1","PCA_2") ) +
+  # # scale_fill_manual(values = palette8, labels =c("Mean Phylogenetic Distance",
+  # #                                                "Human Modification","Trade","PCA_1","PCA_2"))+
+   scale_color_manual(values = palette8 )+ #, drop = FALSE, labels =c("Mean Phylogenetic Distance",
+  #                                                               "Human Modification","Trade","PCA_1","PCA_2") ) +
   theme_bw()+
   labs(
     color = "Variable",
@@ -277,8 +277,13 @@ shift_legend3 <- function(p) {
 a <- shift_legend3(p)
 grid.draw(a)
 
+<<<<<<< HEAD
 #pdf("~/Internship UNIL/Figure3.pdf",
 pdf(paste0(my_path, "/workflow/scripts/Extra/Figure3.pdf"),
+=======
+pdf("~/Internship UNIL/Figures_M/Figure3.pdf",
+#pdf("/Figure3.pdf",
+>>>>>>> 6c0a5fb013f5b90e547dbd641f37c91060ee7887
     width = 10, 
     height = 19)
 grid.draw(a)
@@ -418,7 +423,9 @@ LH_map <- ggplot(data=all_coords_ben[all_coords_ben$Taxa == "Linepithema humile"
         strip.text.x = element_text(size = 13, face = "italic"),
         legend.text =  element_text(size = 13) ,
         legend.title =  element_text(size = 13, face="bold") ,
-        legend.position = "bottom")+ 
+        legend.position = "bottom",
+        axis.ticks.x=element_blank(),
+        axis.ticks.y=element_blank())+ 
   facet_wrap(~Taxa) + 
   #  ggspatial::annotation_scale(
   #   location = "bl",
@@ -463,7 +470,9 @@ all_map <- ggplot(data=all_coords_ben[all_coords_ben$Taxa != "Linepithema humile
         strip.text.x = element_text(size = 13, face = "italic"),
         legend.text =  element_text(size = 13) ,
         legend.title =  element_text(size = 13, face="bold") ,
-        legend.position = "bottom")+
+        legend.position = "bottom",
+        axis.ticks.x=element_blank(),
+        axis.ticks.y=element_blank())+
    facet_wrap(~Taxa, ncol= 3)#+
   # ggspatial::annotation_north_arrow(
   #   location = "bl", which_north = "true",
