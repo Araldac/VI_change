@@ -164,7 +164,7 @@ View(df_wide)
 #plot desnities (optional)
 
 # ##Sigficance levels 
- pvals_tt <- as.data.frame(df_tt)
+pvals_tt <- as.data.frame(df_tt)
 # pvals_tt$star <- ""
 # pvals_tt$star[pvals_tt$p.value > .05]  <- "ns" #non-significant
 # pvals_tt$star[pvals_tt$p.value<= .05]  <- "s"  #significant
