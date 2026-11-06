@@ -17,10 +17,11 @@ output <- args[3]
  pkg <- c("spacesXYZ", "geosphere", "parallel", "raster", "readr", "colorspace", "rgl", "ade4", "farver",  "devtools")
  lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
 
- pkg <- c("magrittr", "CoordinateCleaner", "countrycode", "rnaturalearth", "sf", "sp", "sfheaders", "dplyr", "tidyr", "terra")
+ pkg <- c("magrittr", "CoordinateCleaner", "countrycode", "rnaturalearth", "sf", "sp", "sfheaders", "dplyr", "tidyr", "terra", "GeoThinneR")
 lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
 # install.packages("devtools")
-devtools::install_github("jmestret/GeoThinneR")
+#devtools::install_github("jmestret/GeoThinneR")
+
 ################################################################################
 #Functions
 ################################################################################

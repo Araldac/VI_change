@@ -27,6 +27,13 @@ dependencies: #by chatbot
   - r-terra
   - r-devtools
   - r-rcpp
+  # For GeoThinneR
+  - r-data.table
+  - r-doparallel
+  - r-fields
+  - r-foreach
+  - r-matrixstats
+  - r-nabor
   # spatial libs required by sf:
  # - gdal
   #- proj

@@ -12,7 +12,7 @@ anth_2016 <- args[2]
 HF_2016 <- args[3] 
 output_2016<- args[4] 
 
-devtools::install_github("Nowosad/popgrids")
+#devtools::install_github("Nowosad/popgrids")
 #download/install packages
 pkg <- c( "countrycode", "zoo", "dplyr", "tidyr", "purrr", "pbapply", "terra","raster", "popgrids") #, "", "", "")
 lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
