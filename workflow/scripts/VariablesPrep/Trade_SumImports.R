@@ -121,7 +121,7 @@ cat("Native countries : ", nativeCountries, " first date : ", firstRecord_date, 
 #Set Native area as frist record as the first record date  
 for (i in 1:length(nativeCountries)){
   print(c(firstRecord_date, nativeCountries[i]))
-    iso3_first_records[nrow(iso3_first_records) + 1, ] <- c(firstRecord_date, nativeCountries[i])
+  iso3_first_records[nrow(iso3_first_records) + 1, ] <- c(nativeCountries[i], firstRecord_date)
 
 }
 
