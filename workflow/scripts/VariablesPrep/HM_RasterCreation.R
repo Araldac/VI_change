@@ -14,7 +14,7 @@ anth_2025 <- args[4]
 output_1970 <- args[5] 
 output_2025<- args[6] 
 
-devtools::install_github("Nowosad/popgrids")
+#devtools::install_github("Nowosad/popgrids")
 #download/install packages
 pkg <- c( "countrycode", "zoo", "dplyr", "tidyr", "purrr", "pbapply", "terra","raster", "popgrids", "sp", "scales", "RColorBrewer")
 lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
