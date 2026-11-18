@@ -1,0 +1,26 @@
+# Environment for workflow/scripts/Extra/ShapPlot.ipynb (not used by Snakemake).
+# Same Python, numpy, pandas, scikit-learn, xgboost and shap versions as the
+# workflow's XGboost environment (see XGboost.linux-64.pin.txt), plus Jupyter
+# and plotting, so the notebook's models and SHAP values match the workflow's.
+#
+# Create:  conda env create -f workflow/envs/ShapPlot.yaml
+# Use:     conda activate ShapPlot
+#          cd workflow/scripts/Extra
+#          jupyter notebook ShapPlot.ipynb
+name: ShapPlot
+
+channels:
+    - conda-forge
+
+dependencies:
+    - python=3.14.3
+    - numpy=2.5.4
+    - pandas=3.1.1
+    - scikit-learn=1.9.1
+    - xgboost=3.4.2
+    - shap=0.52.0
+    - enlighten=1.14.1
+    - tqdm=4.70.1
+    - matplotlib
+    - ipywidgets
+    - notebook
