@@ -59,7 +59,7 @@ sample_PA <- function(data, S, n_rounds, region_outbuf){
   # Sample all rounds at once
   total_pts <- nrow(data) * n_rounds
   bg_rand_all <- terra::spatSample(region_outbuf, total_pts, 
-                                   "random", na.rm=TRUE, as.points=TRUE)
+                                   "random", na.rm=TRUE, as.points=TRUE, exhaustive=TRUE)
   pa_all <- terra::as.data.frame(bg_rand_all, geom="XY")
   
   # Add PA_N and S columns
