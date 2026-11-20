@@ -10,7 +10,7 @@ FR_NISO_forSMK<- function(first_records, species_name, acronym){
   
   #save first records
   FR_SP <- first_records[first_records$Taxon == species_name, ]
-  file_path <- paste0("//wsl.localhost/Ubuntu/home/admin_ait/internship-snakemake-2025/data/variables/Trade/", acronym, "_first_records.csv" )
+  file_path <- paste0("data/variables/Trade/", acronym, "_first_records.csv" )
   write.csv(FR_SP, file= file_path)
   cat("first record", min(FR_SP$FirstRecord), "\n")
   #give list of names
@@ -23,10 +23,13 @@ FR_NISO_forSMK<- function(first_records, species_name, acronym){
   return(as.vector(iso_list))}
 
 
-#load data
-first_records <- read.csv("data/variables/Trade/alien_ant_first_records.tsv", sep = "\t")
-load("data/distribution/AntmapsPolGeneral.RData")
+library(dplyr)
+library(sf)
 
+#load data
+first_records <- read.csv("data/variables/Trade/alien_ant_first_records.tsv", sep = "\t", na.strings = "")
+load("data/distribution/AntmapsPolGeneral.RData")
+load("data/distribution/LH_dis.RData") 
 
 
 FR_NISO_forSMK(first_records, "Linepithema humile", "LH")
