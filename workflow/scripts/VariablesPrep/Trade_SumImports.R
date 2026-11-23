@@ -43,8 +43,10 @@ sum_import<-function(data, iso3_first_records, ISOcountry, min_year=max(firstRec
     
   
  
+    # imports of year y only, from countries where the species is present
     all_t <- sum(data %>%
-                filter(iso3_origin %in% c_w_lh,
+                filter(year == y,
+                      iso3_origin %in% c_w_lh,
                       iso3_destination == ISOcountry,
                       !is.na(FLOW_split)) %>%
                 pull(FLOW_split),
