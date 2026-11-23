@@ -425,11 +425,19 @@ convert_historical_to_iso3 <- function(trade_data,
 
 
 #### #### interpolate the NAs with the data before and after #### ####
+# Interpolate by year, separately for each original (historical) country pair, so that
+# historical entities merged into the same ISO3 pair (e.g. Newfoundland and Canada)
+# are not interpolated into each other.
+# Rows are sorted by year first, because the trade table is not in year order.
+# Years before the first or after the last available value stay NA.
 process_pair <- function(data, pair) {
   if (pair[1] != pair[2]) {
     result <- data %>%
       filter(iso3_origin == pair[1], iso3_destination == pair[2]) %>%
-      mutate(FLOW_split = na.approx(FLOW_split, na.rm = FALSE))
+      group_by(original_origin, original_destination) %>%
+      arrange(year, .by_group = TRUE) %>%
+      mutate(FLOW_split = na.approx(FLOW_split, x = year, na.rm = FALSE)) %>%
+      ungroup()
     return(result)
   } else {
     return(NULL)
