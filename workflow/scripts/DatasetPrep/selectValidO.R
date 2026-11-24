@@ -19,9 +19,12 @@ output <- args[3]
 ################################################################################
 
 occ_thin20_colsR <- read.csv(data_thinned)
+# Namibia's ISO2 code "NA" is read as missing; GBIF leaves the field empty when the country
+# is unknown, so a missing code here is Namibia
+occ_thin20_colsR$countrycode[is.na(occ_thin20_colsR$countrycode)] <- "NA"
 head(occ_thin20_colsR)
-##filter occurrences with published dataset 
-first_records_df <- read.csv(first_record)
+##filter occurrences with published dataset
+first_records_df <- read.csv(first_record, na.strings = "") # keep Namibia's ISO2 code "NA"
 head(first_records_df)
 
 occ_valid <- occ_thin20_colsR

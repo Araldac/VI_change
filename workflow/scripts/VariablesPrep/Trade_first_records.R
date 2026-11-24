@@ -11,7 +11,7 @@ FR_NISO_forSMK<- function(first_records, species_name, acronym){
   #save first records
   FR_SP <- first_records[first_records$Taxon == species_name, ]
   file_path <- paste0("data/variables/Trade/", acronym, "_first_records.csv" )
-  write.csv(FR_SP, file= file_path)
+  write.csv(FR_SP, file= file_path, na = "") # missing values as empty fields, so "NA" always means Namibia
   cat("first record", min(FR_SP$FirstRecord), "\n")
   #give list of names
   

@@ -97,7 +97,7 @@ sum_import<-function(data, iso3_first_records, ISOcountry, min_year=first_trade_
 
 #### #### load dataset #### ####
 cat("loading datasets \n")
-first_records <- read.csv(firstRecord_Countries, sep=",")
+first_records <- read.csv(firstRecord_Countries, sep=",", na.strings = "") # keep Namibia's ISO2 code "NA"
 head(first_records)
 HistTrade <- read.csv(historicalTrade)
 
@@ -106,8 +106,7 @@ first_records$ISO2 <- first_records$Region
 }
 #### #### prepare first occurrences document #### ####
 
-#If Namibia is present count it as NA not <NA> 
-#first_records$ISO2[is.na(first_records$ISO2)] <- "NA"
+#Namibia ("NA") is kept as text by na.strings = "" above; only truly missing codes are dropped
 first_records <- first_records %>% tidyr::drop_na(ISO2)
 
 cat("select only firsts records in mainland not in islands \n ")
