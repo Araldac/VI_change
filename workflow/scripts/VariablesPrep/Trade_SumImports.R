@@ -11,9 +11,11 @@
 args <- commandArgs(trailingOnly = TRUE)
 historicalTrade <- args[1]
 firstRecord_Countries <- args[2]
-firstRecord_date <- args[3]
+firstRecord_date <- args[3] # not used any more: native countries count from first_trade_year
 nativeCountries <- args[4]
 output <- args[5] 
+
+first_trade_year <- 1827 # trade data are available from 1827
 
 library(devtools)
 #install.packages("MazamaSpatialUtils", repos = "http://cran.us.r-project.org")
@@ -28,14 +30,16 @@ lapply(pkg, function(x) require(x, quietly = TRUE, character.only = TRUE))
 
 #### #### Sum imports from countries where the species is present  #### ####
 
-sum_import<-function(data, iso3_first_records, ISOcountry, min_year=max(firstRecord_date,1827), max_year=2014){
+sum_import<-function(data, iso3_first_records, ISOcountry, min_year=first_trade_year, max_year=2014){
   year_sumimport <- data.frame(ISO3= character(), year=numeric(), Sum=numeric(),stringsAsFactors = FALSE )
 
-  c_w_lh <- c() #countries with the species present
+  #countries with the species present: start with the native range and all records
+  #dated up to min_year (records before the first year of trade data count from that year)
+  c_w_lh <- iso3_first_records$iso3[as.numeric(iso3_first_records$FirstRecord) <= min_year]
   
   for (y in min_year:max_year){
     
-    if (y %in% iso3_first_records$FirstRecord) {
+    if (y > min_year && y %in% iso3_first_records$FirstRecord) {
       new_iso3 <- iso3_first_records$iso3[iso3_first_records$FirstRecord == y]
       c_w_lh <- c(c_w_lh, new_iso3)
       #print(paste("Year:", y, "Added:", paste(new_iso3, collapse = ", ")))
@@ -119,11 +123,11 @@ head(iso3_first_records)
 nativeCountries <- strsplit(nativeCountries, " +")
 nativeCountries<-unlist(nativeCountries)
 
-cat("Native countries : ", nativeCountries, " first date : ", firstRecord_date, "\n")
-#Set Native area as frist record as the first record date  
+cat("Native countries : ", nativeCountries, " counted from : ", first_trade_year, "\n")
+#Native range counts from the first year of trade data, for all species
 for (i in 1:length(nativeCountries)){
-  print(c(firstRecord_date, nativeCountries[i]))
-  iso3_first_records[nrow(iso3_first_records) + 1, ] <- c(nativeCountries[i], firstRecord_date)
+  print(c(first_trade_year, nativeCountries[i]))
+  iso3_first_records[nrow(iso3_first_records) + 1, ] <- c(nativeCountries[i], first_trade_year)
 
 }
 
