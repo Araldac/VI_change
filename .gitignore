@@ -8,3 +8,5 @@ PCA_ax1-2.RData
 *.err}
 *.out}
 workflow/scripts/Extra/.Rhistory
+
+.Rhistory
