@@ -123,7 +123,7 @@ historical_to_iso3_split <- list(
   
   # French Indochina → Vietnam, Laos, Cambodia
   "INDOCHI" = c("VNM", "LAO", "KHM"),
-  "FRAIND" = c("VNM", "LAO", "KHM"),
+  "FRAIND" = c("IND"),  # French India (Pondicherry, Karikal, Yanam, Mahe, Chandernagore), not Indochina
   
   # French Oceania → French Polynesia
   "FRAOCEA" = c("PYF"),
