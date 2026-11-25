@@ -58,6 +58,42 @@ LH_C_B$ISO[LH_C_B$ISO == "NA"] <- NA
  LH_C_B$ISO[LH_C_B$BEN== "BEN20569"]<-"LA" #Lesser Antilles islands
  LH_C_B$ISO[LH_C_B$BEN== "BEN20126"]<- NA #Europa Island (uninhabited )
 
+ # Other island regions with no country code in Antmaps (ISO "NA"), assigned to their country as above.
+ # Without this they get no trade value, and since most of their points are presences,
+ # the missing value itself would become a signal for presence
+ LH_C_B$ISO[LH_C_B$BEN== "BEN20555"]<-"ECU" #Galapagos Islands as Ecuador
+ LH_C_B$ISO[LH_C_B$BEN== "BEN20011"]<-"IND" #Andaman and Nicobar Islands as India
+ LH_C_B$ISO[LH_C_B$BEN== "BEN20586"]<-"JPN" #Ogasawara Islands as Japan
+ LH_C_B$ISO[LH_C_B$BEN== "BEN20587"]<-"JPN" #Oki Islands as Japan
+ LH_C_B$ISO[LH_C_B$BEN== "BEN20597"]<-"JPN" #Satsunan Islands as Japan
+ LH_C_B$ISO[LH_C_B$BEN== "BEN20606"]<-"AUS" #Torres Strait Islands as Australia
+ LH_C_B$ISO[LH_C_B$BEN== "BEN20588"]<-"ITA" #Pantelleria Island as Italy
+ LH_C_B$ISO[LH_C_B$BEN== "BEN20589"]<-"ITA" #Pelagie Islands as Italy
+ LH_C_B$ISO[LH_C_B$BEN== "BEN20591"]<-"ITA" #Pontine Islands as Italy
+ LH_C_B$ISO[LH_C_B$BEN== "BEN20610"]<-"ITA" #Tuscan Archipelago as Italy
+ LH_C_B$ISO[LH_C_B$BEN== "BEN20556"]<-"TUN" #Galite Islands as Tunisia
+ LH_C_B$ISO[LH_C_B$BEN== "BEN20553"]<-"IDN" #Enggano Island as Indonesia
+ LH_C_B$ISO[LH_C_B$BEN== "BEN20567"]<-"IDN" #Krakatau Islands as Indonesia
+ LH_C_B$ISO[LH_C_B$BEN== "BEN20605"]<-"IDN" #Thousand Islands (north of Jakarta) as Indonesia
+ LH_C_B$ISO[LH_C_B$BEN== "BEN20573"]<-"PNG" #Louisiade Archipelago as Papua New Guinea
+ LH_C_B$ISO[LH_C_B$BEN== "BEN20546"]<-"RUS" #Commander Islands as Russia
+ LH_C_B$ISO[LH_C_B$BEN== "BEN20593"]<-"MEX" #Revillagigedo Islands as Mexico
+ LH_C_B$ISO[LH_C_B$BEN== "BEN20571"]<-"KIR" #Line Islands as Kiribati
+ LH_C_B$ISO[LH_C_B$BEN== "BEN20590"]<-"KIR" #Phoenix Islands as Kiribati
+ LH_C_B$ISO[LH_C_B$BEN== "BEN20536"]<-"PYF" #Austral Islands as French Polynesia
+ LH_C_B$ISO[LH_C_B$BEN== "BEN20557"]<-"PYF" #Gambier Islands as French Polynesia
+ LH_C_B$ISO[LH_C_B$BEN== "BEN20577"]<-"PYF" #Marquesas Islands as French Polynesia
+ LH_C_B$ISO[LH_C_B$BEN== "BEN20609"]<-"PYF" #Tuamotu Islands as French Polynesia
+ # Mascarene Islands: Reunion lies west of 56.5 E, Mauritius and Rodrigues east of it
+ # (as for French Guiana, the trade data have no separate values for Reunion after 1996)
+ LH_C_B$ISO[LH_C_B$BEN== "BEN20578" & LH_C_B$decimallongitude <  56.5]<-"REU" #Reunion
+ LH_C_B$ISO[LH_C_B$BEN== "BEN20578" & LH_C_B$decimallongitude >= 56.5]<-"MUS" #Mauritius and Rodrigues
+ # No usable trade data: left without a trade value, like Europa Island
+ LH_C_B$ISO[LH_C_B$BEN== "BEN20273"]<- NA #Micronesia (Yap): almost no FSM data in the trade data
+ LH_C_B$ISO[LH_C_B$BEN== "BEN20542"]<- NA #Caroline Islands: almost no FSM data in the trade data
+ LH_C_B$ISO[LH_C_B$BEN== "BEN20543"]<- NA #Chagos Archipelago: no trade data
+ LH_C_B$ISO[LH_C_B$BEN== "BEN20599"]<- NA #Senkaku Islands (uninhabited)
+
 
 # check the data
 cat("For S1 :\n")
