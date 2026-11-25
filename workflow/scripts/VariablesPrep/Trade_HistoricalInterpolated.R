@@ -218,7 +218,21 @@ historical_to_iso3_split <- list(
   "KNA"=c("LA"),
   "ATG"=c("LA"),
   "MTQ"=c("LA"),
-  "GLP"=c("LA")
+  "GLP"=c("LA"),
+
+  # Old codes used by TRADHIST that are no longer standard ISO3 codes
+  "ROM" = c("ROU"),          # Romania (ISO3 code until 2002)
+  "YAR" = c("YEM"),          # North Yemen (until 1990)
+  "YMD" = c("YEM"),          # South Yemen (until 1990)
+  "HWI" = c("USA"),          # Hawaii (before US statehood)
+  "ANT" = c("CUW"),          # Netherlands Antilles (until 2010), mostly Curacao
+  "GEL" = c("KIR", "TUV"),   # Gilbert and Ellice Islands (until 1976)
+
+  # Yugoslavia: TRADHIST's YUG covers different territories over time, so YUG is
+  # recoded by period before the conversion (see "Yugoslavia" in the Code section)
+  "YUG_SRB" = c("SRB"),                                     # up to 1918: Kingdom of Serbia
+  "YUG_SFRY" = c("SRB", "HRV", "SVN", "BIH", "MKD", "MNE"), # 1919-1991: Yugoslavia
+  "YUG_FRY" = c("SRB", "MNE")                               # from 1992: Serbia and Montenegro
 )
 
 
@@ -388,24 +402,27 @@ convert_historical_to_iso3 <- function(trade_data,
   cat(sprintf("Unique destination codes (ISO3): %d\n", 
               length(unique(result$iso3_destination))))
   
-  # Check for unmapped codes
-  unmapped_origin <- setdiff(
-    unique(trade_data[[origin_col]]),
-    c(names(historical_to_iso3_split), unique(result$iso3_origin))
+  # Check for codes that nothing else can match: after conversion, every code should be a
+  # standard ISO3 code (used for the first records) or an Antmaps code (used for the points)
+  known_codes <- c(countrycode::codelist$iso3c, unique(antmaps_pol$ISO), "LA")
+  converted <- bind_rows(
+    data.frame(code = result$iso3_origin, year = result[[year_col]], flow = result$FLOW_split),
+    data.frame(code = result$iso3_destination, year = result[[year_col]], flow = result$FLOW_split)
   )
-  unmapped_dest <- setdiff(
-    unique(trade_data[[dest_col]]),
-    c(names(historical_to_iso3_split), unique(result$iso3_destination))
-  )
-  
-  if (length(unmapped_origin) > 0) {
-    cat("\n⚠ WARNING: Unmapped origin codes found:\n")
-    print(unmapped_origin)
-  }
-  
-  if (length(unmapped_dest) > 0) {
-    cat("\n⚠ WARNING: Unmapped destination codes found:\n")
-    print(unmapped_dest)
+  unmatched <- converted %>%
+    filter(!is.na(code), !code %in% known_codes) %>%
+    group_by(code) %>%
+    summarise(first_year = min(year), last_year = max(year),
+              share_of_trade_pct = 100 * sum(flow, na.rm = TRUE) / sum(converted$flow, na.rm = TRUE))
+
+  if (nrow(unmatched) > 0) {
+    cat("\n⚠ WARNING: these codes are not standard ISO3 or Antmaps codes, so their trade",
+        "will not be matched to any country. Add them to historical_to_iso3_split:\n")
+    print(as.data.frame(unmatched))
+    warning(sprintf("%d trade codes cannot be matched: %s", nrow(unmatched),
+                    paste(unmatched$code, collapse = ", ")))
+  } else {
+    cat("\n✓ All converted codes are standard ISO3 or Antmaps codes\n")
   }
   
   # Show sample split weights
@@ -456,6 +473,17 @@ bitrade3 <- read_excel(trade3)
 
 #join th three datasets
 all_bitrade<-rbind(bitrade1[,1:6], bitrade2, bitrade3)
+
+#### #### Yugoslavia #### ####
+# TRADHIST's YUG means the Kingdom of Serbia up to 1918, Yugoslavia from 1919 to 1991, and
+# Serbia and Montenegro from 1992 (TRADHIST has almost no YUG data after 2009).
+# Recode it by period so each period is split among the right successors.
+yug_period <- function(code, year) {
+  ifelse(code != "YUG", code,
+         ifelse(year <= 1918, "YUG_SRB", ifelse(year <= 1991, "YUG_SFRY", "YUG_FRY")))
+}
+all_bitrade$iso_o <- yug_period(all_bitrade$iso_o, all_bitrade$year)
+all_bitrade$iso_d <- yug_period(all_bitrade$iso_d, all_bitrade$year)
 
 #### #### convert dataset to current iso #### #### 
 trade_iso3 <- convert_historical_to_iso3(
