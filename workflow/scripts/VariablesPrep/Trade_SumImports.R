@@ -113,6 +113,10 @@ cat("select only firsts records in mainland not in islands \n ")
 #select only firsts records in mainland not in islands
 iso2_first_records<-first_records[nchar(first_records$ISO2) == 2,]
 iso2_first_records$iso3 <- countrycode::countrycode(iso2_first_records$ISO2, origin="iso2c", destination="iso3c")
+#The trade table merges these islands into "LA" (Lesser Antilles, as in Antmaps; see
+#Trade_HistoricalInterpolated.R), so a first record on any of them makes "LA" a source
+lesser_antilles <- c("BRB", "GRD", "VCT", "LCA", "DMA", "KNA", "ATG", "MTQ", "GLP")
+iso2_first_records$iso3[iso2_first_records$iso3 %in% lesser_antilles] <- "LA"
 #iso2_first_records$iso3<-iso2ToIso3(iso2_first_records$ISO2) # add iso 2 columns
 #iso3_first_records<-iso2_first_records[3:4]#just select year and country code
 iso3_first_records <- iso2_first_records %>% select(iso3, FirstRecord)
