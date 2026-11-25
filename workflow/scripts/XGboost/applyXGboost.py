@@ -51,7 +51,7 @@ def features_ml_models(X, y, methods, model, random_seed, variables, is_binary=F
     Args:
         X (pd.DataFrame): Feature matrix
         y (pd.Series): Target variable (either binary or multiclass)
-        random_seed (int): Random seed for train/test split
+        random_seed (int): Random seed for the bootstrap sample
         is_binary (bool): Whether this is binary classification
 
     Returns:
@@ -74,10 +74,17 @@ def features_ml_models(X, y, methods, model, random_seed, variables, is_binary=F
                 target_encoder.classes_ = target_encoder.classes_[::-1]
                 y_encoded = target_encoder.transform(y)
 
-        # Train and test split
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y_encoded, stratify=y_encoded, test_size=0.25, random_state=random_seed
-    )
+    # Bootstrap sample: presences and background points are drawn separately, with replacement,
+    # keeping their numbers. The model is trained on this sample and evaluated on the rows that
+    # were not drawn (out-of-bag rows).
+    rng = np.random.default_rng(random_seed)
+    idx = np.concatenate([
+        rng.choice(np.flatnonzero(y_encoded == k), size=np.sum(y_encoded == k), replace=True)
+        for k in np.unique(y_encoded)
+    ])
+    oob = np.setdiff1d(np.arange(len(y_encoded)), idx)
+    X_train, y_train = X.iloc[idx], y_encoded[idx]
+    X_test, y_test = X.iloc[oob], y_encoded[oob]
 
     if methods == "XG":    
         models = {

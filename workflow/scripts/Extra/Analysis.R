@@ -93,14 +93,12 @@ overall_df_metrics <-   raw_metrics %>% filter(model =="Weighted", methods == "X
 overall_df_metrics
 
 ############################
-# ## ) T-tests and Table2      ####
+# ## ) z-tests and Table2      ####
 ############################
 raw_long <- raw %>% pivot_longer(all_of(comp_cols), names_to = "Variable", values_to = "Values")
 
-t_list <- list()
-
-df_tt <- data.frame(matrix(ncol=4, nrow=13*5))
-colnames(df_tt) <- c("Taxa", "Variable", "t", "p_value")
+df_zt <- data.frame(matrix(ncol=4, nrow=13*5))
+colnames(df_zt) <- c("Taxa", "Variable", "z", "p_value")
 
 i= 1
 for (sp in species_list) { 
@@ -113,27 +111,56 @@ for (sp in species_list) {
       filter(Taxa == sp, Model == "Weighted", Method == "XG", S == "S2") %>%
       dplyr::select(var_name)
     
-    tt <- t.test(sub2, sub1)
-    
-    df_tt$t[i] <- tt$statistic
-    df_tt$p_v[i] <- tt$p.value
-    df_tt$Taxa[i] <- sp
-    df_tt$Variable[i] <- var_name
+    ## Previous approach, kept for comparison: Welch t-test across replicates.
+    ## To use it instead of the z-test, uncomment these 4 lines and comment out the z-test below.
+    # tt <- t.test(sub2, sub1)
+    # df_zt$z[i] <- tt$statistic # t value
+    # df_zt$p_v[i] <- tt$p.value
+    # test_label <- "t"
+
+    ## z-test on the bootstrap replicates: the SD of the 100 bootstrap values is the
+    ## standard error of each period's estimate (Efron & Tibshirani 1986, 1993), and the
+    ## difference between the two independent periods is tested with z = (S2 - S1) / sqrt(SE1^2 + SE2^2)
+    ## (Altman & Bland 2003)
+    v1 <- sub1[[1]]
+    v2 <- sub2[[1]]
+    z <- (mean(v2) - mean(v1)) / sqrt(sd(v1)^2 + sd(v2)^2)
+    df_zt$z[i] <- z
+    df_zt$p_v[i] <- 2 * pnorm(-abs(z))
+    test_label <- "z"
+
+    df_zt$Taxa[i] <- sp
+    df_zt$Variable[i] <- var_name
     
     i = i+1
     
   }}
 
-# Assume 'p_values' is a vector of your 65 raw p-values, apply Bonferroni corection
-#adjusted_pBH <- p.adjust(df_tt$p_v, method = "BH")
-adjusted_pbonf <- p.adjust(df_tt$p_v, method = "bonferroni")
+# Assume 'p_values' is a vector of your 65 raw p-values, apply the Benjamini-Hochberg correction
+# (controls the false discovery rate). Previous Bonferroni correction kept below for comparison.
+adjusted_pBH <- p.adjust(df_zt$p_v, method = "BH")
+#adjusted_pbonf <- p.adjust(df_zt$p_v, method = "bonferroni")
 # Check which are significant at FDR 0.05
 #significant <- adjusted_p > 0.05
-df_tt$p_value <- adjusted_pbonf
+df_zt$p_value <- adjusted_pBH
+#df_zt$p_value <- adjusted_pbonf
 
 #p-values beow 0.001 to < 0.001
-df_tt$p_valueC <- df_tt$p_value
-df_tt$p_valueC[df_tt$p_value < 0.001] <- "< 0.001"
+df_zt$p_valueC <- df_zt$p_value
+df_zt$p_valueC[df_zt$p_value < 0.001] <- "< 0.001"
+
+# Check of the z-test assumption: the bootstrap values of each species, variable and period
+# should look roughly bell-shaped
+pdf(paste0(my_path, "/workflow/scripts/Extra/bootstrap_distributions.pdf"), width = 12, height = 30)
+print(
+  raw_long %>%
+    filter(Model == "Weighted", Method == "XG") %>%
+    ggplot(aes(x = Values, fill = S)) +
+    geom_histogram(bins = 20, alpha = 0.6, position = "identity") +
+    facet_wrap(~ Taxa + Variable, scales = "free", ncol = 5) +
+    theme_bw()
+)
+dev.off()
 
 add_stars <- function(p) {
   if (p < 0.001) return("***")
@@ -143,11 +170,11 @@ add_stars <- function(p) {
 }
 
 
-#Create table with T-test results
-df_wide <- df_tt %>%
+#Create table with z-test results
+df_wide <- df_zt %>%
   mutate(
     #stars = sapply(p_value, add_stars),
-    cell_text = paste0("t = ", round(t, 2),  
+    cell_text = paste0(test_label, " = ", round(z, 2),
                        ", p = ", ifelse(p_value < 0.001, "< 0.001", 
                                         round(p_value, 3)) 
                      )#  " ", stars)
@@ -164,13 +191,13 @@ View(df_wide)
 #plot desnities (optional)
 
 # ##Sigficance levels 
-pvals_tt <- as.data.frame(df_tt)
-# pvals_tt$star <- ""
-# pvals_tt$star[pvals_tt$p.value > .05]  <- "ns" #non-significant
-# pvals_tt$star[pvals_tt$p.value<= .05]  <- "s"  #significant
+pvals_zt <- as.data.frame(df_zt)
+# pvals_zt$star <- ""
+# pvals_zt$star[pvals_zt$p.value > .05]  <- "ns" #non-significant
+# pvals_zt$star[pvals_zt$p.value<= .05]  <- "s"  #significant
 # 
-# pvals_tt$star <- forcats::fct_relevel(
-#   pvals_tt$star,
+# pvals_zt$star <- forcats::fct_relevel(
+#   pvals_zt$star,
 #   "s",
 #   "ns"
 # )
@@ -196,7 +223,7 @@ raw_long_S <- raw_long %>%
   summarise(meanI=mean(Values), sdI = sd(Values))
 
 ##Sigficance levels 
-pvals_sig <- as.data.frame(pvals_tt)
+pvals_sig <- as.data.frame(pvals_zt)
 pvals_sig$star <- ""
 pvals_sig$star[pvals_sig$p_value > .05]  <- "non-significant" #non-significant
 pvals_sig$star[pvals_sig$p_value <= .05]  <- "significant"  #significant
